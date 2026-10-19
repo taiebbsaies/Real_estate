@@ -72,6 +72,63 @@ export function currentMonth(date: Date = new Date()): string {
   return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
 }
 
+export type TunisDateParts = {
+  year: number;
+  month: number;
+  day: number;
+};
+
+export function tunisDateParts(date: Date = new Date()): TunisDateParts {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Africa/Tunis",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(date);
+
+  const value = (type: string) =>
+    Number(parts.find((part) => part.type === type)?.value);
+
+  return { year: value("year"), month: value("month"), day: value("day") };
+}
+
+export function tunisDayIso(date: Date = new Date()): string {
+  const { year, month, day } = tunisDateParts(date);
+
+  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+export function currentMonthTunis(date: Date = new Date()): string {
+  return tunisDayIso(date).slice(0, 7);
+}
+
+export function dayOfMonthTunis(date: Date = new Date()): number {
+  return tunisDateParts(date).day;
+}
+
+export function daysLeftInMonthTunis(date: Date = new Date()): number {
+  const { day } = tunisDateParts(date);
+
+  return daysInMonth(currentMonthTunis(date)) - day;
+}
+
+export function forecastVariable(
+  spent: number,
+  fixedSpent: number,
+  dayOfMonth: number,
+  daysOfTheMonth: number,
+): number {
+  if (dayOfMonth < 1) {
+    return spent;
+  }
+
+  const variableSpent = Math.max(0, spent - fixedSpent);
+  const daysLeft = Math.max(0, daysOfTheMonth - dayOfMonth);
+  const dailyAverage = variableSpent / dayOfMonth;
+
+  return Math.round(spent + dailyAverage * daysLeft);
+}
+
 export function previousMonth(month: string): string {
   const [year, monthNumber] = month.split("-").map(Number);
   return currentMonth(new Date(Date.UTC(year, monthNumber - 2, 1)));

@@ -3,7 +3,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { getUserId } from "@/lib/budget/current-user";
 import {
-  currentMonth,
+  currentMonthTunis,
   nextMonth,
   previousMonth,
 } from "@/lib/budget/calculations";
@@ -72,7 +72,7 @@ function alertBarColor(level: "normal" | "warning" | "exceeded"): string {
 async function ExpensesContent({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;
   const rawMonth = typeof params.month === "string" ? params.month : "";
-  const month = MONTH_PATTERN.test(rawMonth) ? rawMonth : currentMonth();
+  const month = MONTH_PATTERN.test(rawMonth) ? rawMonth : currentMonthTunis();
   const rawCategory = typeof params.category === "string" ? params.category : "";
   const category = (BUDGET_CATEGORIES as readonly string[]).includes(rawCategory)
     ? (rawCategory as BudgetCategory)

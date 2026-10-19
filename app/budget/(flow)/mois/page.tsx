@@ -3,8 +3,8 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { getUserId } from "@/lib/budget/current-user";
 import {
-  currentMonth,
-  daysLeftInMonth,
+  currentMonthTunis,
+  daysLeftInMonthTunis,
   nextMonth,
   previousMonth,
 } from "@/lib/budget/calculations";
@@ -85,7 +85,7 @@ function AlertBanner({
 async function MonthContent({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;
   const rawMonth = typeof params.month === "string" ? params.month : "";
-  const month = MONTH_PATTERN.test(rawMonth) ? rawMonth : currentMonth();
+  const month = MONTH_PATTERN.test(rawMonth) ? rawMonth : currentMonthTunis();
 
   const userId = await getUserId();
   const [budget, previousBudget, summary] = await Promise.all([
@@ -95,8 +95,8 @@ async function MonthContent({ searchParams }: { searchParams: SearchParams }) {
   ]);
 
   const monthLabel = formatMonthLabel(month);
-  const isCurrentMonth = month === currentMonth();
-  const daysLeft = isCurrentMonth ? daysLeftInMonth(new Date()) : null;
+  const isCurrentMonth = month === currentMonthTunis();
+  const daysLeft = isCurrentMonth ? daysLeftInMonthTunis() : null;
 
   const percentWidth = Math.min(100, Math.max(0, summary.percentUsed));
   const barColor =
