@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { connection } from "next/server";
 import { isValidObjectId } from "mongoose";
 import { getUserId } from "@/lib/budget/current-user";
 import { millimesToTnd } from "@/lib/budget/calculations";
@@ -24,6 +25,7 @@ function EditSkeleton() {
 }
 
 async function EditExpenseContent({ params }: { params: Params }) {
+  await connection();
   const { id } = await params;
 
   if (!isValidObjectId(id)) {
