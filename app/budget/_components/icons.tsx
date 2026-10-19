@@ -1,4 +1,5 @@
 import type { SVGProps } from "react";
+import type { BudgetCategory } from "@/lib/constants/budget";
 
 function Icon({ children, ...props }: SVGProps<SVGSVGElement>) {
   return (
@@ -93,4 +94,88 @@ export function ArrowLeftIcon(props: SVGProps<SVGSVGElement>) {
       <path d="M19 12H5" />
     </Icon>
   );
+}
+
+export function HomeIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <path d="m3 11 9-8 9 8" />
+      <path d="M5 9.5V21h14V9.5" />
+      <path d="M10 21v-6h4v6" />
+    </Icon>
+  );
+}
+
+export function ShoppingBagIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" />
+      <path d="M3 6h18" />
+      <path d="M16 10a4 4 0 0 1-8 0" />
+    </Icon>
+  );
+}
+
+export function ZapIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <path d="M13 2 3 14h7l-1 8 11-13h-7l1-7Z" />
+    </Icon>
+  );
+}
+
+export function WifiIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <path d="M5 13a10 10 0 0 1 14 0" />
+      <path d="M8.5 16.5a5 5 0 0 1 7 0" />
+      <path d="M2 8.82a15 15 0 0 1 20 0" />
+      <path d="M12 20h.01" />
+    </Icon>
+  );
+}
+
+export function WrenchIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+    </Icon>
+  );
+}
+
+export function ShieldIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
+    </Icon>
+  );
+}
+
+export function MoreHorizontalIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <path d="M5 12h.01" />
+      <path d="M12 12h.01" />
+      <path d="M19 12h.01" />
+    </Icon>
+  );
+}
+
+const CATEGORY_ICONS = {
+  LOYER: HomeIcon,
+  CHARGES: ShoppingBagIcon,
+  ENERGIE: ZapIcon,
+  INTERNET: WifiIcon,
+  REPARATIONS: WrenchIcon,
+  ASSURANCE: ShieldIcon,
+  DIVERS: MoreHorizontalIcon,
+} as const satisfies Record<BudgetCategory, unknown>;
+
+export function CategoryIcon({
+  category,
+  ...props
+}: SVGProps<SVGSVGElement> & { category: BudgetCategory }) {
+  const Component = CATEGORY_ICONS[category];
+
+  return <Component {...props} />;
 }

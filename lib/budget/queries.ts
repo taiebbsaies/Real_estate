@@ -194,6 +194,17 @@ export async function listExpenses(
   return docs.map(serializeExpense);
 }
 
+export async function getExpense(
+  userId: string,
+  id: string,
+): Promise<SerializedExpense | null> {
+  await connectDB();
+
+  const doc = await Expense.findOne({ _id: id, userId }).lean<LeanExpenseDoc>();
+
+  return doc ? serializeExpense(doc) : null;
+}
+
 export async function getHistory(
   userId: string,
   monthsCount = 6,

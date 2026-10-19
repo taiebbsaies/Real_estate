@@ -16,7 +16,7 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   NotebookIcon,
-} from "../_components/icons";
+} from "../../_components/icons";
 
 export const metadata: Metadata = {
   title: "Budget du mois — HomeCheck",
