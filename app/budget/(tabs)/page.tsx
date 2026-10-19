@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { connection } from "next/server";
 import { getUserId } from "@/lib/budget/current-user";
 import {
   currentMonthTunis,
@@ -204,6 +205,7 @@ function AlertBanner({
 }
 
 async function HomeContent({ searchParams }: { searchParams: SearchParams }) {
+  await connection();
   const params = await searchParams;
   const rawMonth = typeof params.month === "string" ? params.month : "";
   const month = MONTH_PATTERN.test(rawMonth) ? rawMonth : currentMonthTunis();
