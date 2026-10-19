@@ -72,6 +72,16 @@ export function currentMonth(date: Date = new Date()): string {
   return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
 }
 
+export function previousMonth(month: string): string {
+  const [year, monthNumber] = month.split("-").map(Number);
+  return currentMonth(new Date(Date.UTC(year, monthNumber - 2, 1)));
+}
+
+export function nextMonth(month: string): string {
+  const [year, monthNumber] = month.split("-").map(Number);
+  return currentMonth(new Date(Date.UTC(year, monthNumber, 1)));
+}
+
 export function remaining(limit: number, spent: number): number {
   return limit - spent;
 }
