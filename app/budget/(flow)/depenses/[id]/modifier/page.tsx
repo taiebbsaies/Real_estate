@@ -38,7 +38,7 @@ async function EditExpenseContent({ params }: { params: Params }) {
   }
 
   return (
-    <>
+    <div className="md:mx-auto md:w-full md:max-w-[560px]">
       <ScreenHeader
         title="Modifier la dépense"
         backHref="/budget/depenses"
@@ -56,7 +56,7 @@ async function EditExpenseContent({ params }: { params: Params }) {
           }}
         />
       </div>
-    </>
+    </div>
   );
 }
 

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Fraunces, Public_Sans } from "next/font/google";
+import SideNav from "./_components/SideNav";
 import "./budget.css";
 
 const fraunces = Fraunces({
@@ -21,8 +22,11 @@ export default function BudgetLayout({ children }: LayoutProps<"/budget">) {
     <div
       className={`${fraunces.variable} ${publicSans.variable} budget-module`}
     >
-      <div className="mx-auto flex min-h-dvh w-full max-w-[480px] flex-col">
-        {children}
+      <SideNav />
+      <div className="md:pl-[260px]">
+        <div className="mx-auto flex min-h-dvh w-full max-w-[480px] flex-col md:max-w-[1100px] md:px-6 lg:px-10">
+          {children}
+        </div>
       </div>
     </div>
   );

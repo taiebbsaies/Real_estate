@@ -230,7 +230,7 @@ async function HomeContent({ searchParams }: { searchParams: SearchParams }) {
   const recentExpenses = expenses.slice(0, 5);
 
   return (
-    <div className="flex flex-col gap-4 px-4 pt-6">
+    <div className="flex flex-col gap-4 px-4 pt-6 md:pt-10">
       <header className="flex flex-col gap-1">
         <h1 className="budget-heading text-[28px] font-semibold tracking-tight text-[var(--budget-secondary)]">
           Budget
@@ -351,15 +351,16 @@ async function HomeContent({ searchParams }: { searchParams: SearchParams }) {
         </section>
       )}
 
-      {isCurrentMonth && summary.budget && (
-        <ForecastCard summary={summary} month={month} />
-      )}
+      <div className="flex flex-col gap-4 lg:grid lg:grid-cols-2 lg:items-start lg:gap-6">
+        <div className="flex flex-col gap-4 lg:gap-6">
+          {isCurrentMonth && summary.budget && (
+            <ForecastCard summary={summary} month={month} />
+          )}
 
       <section className="flex flex-col gap-5 rounded-[16px] border border-[var(--budget-border)] bg-[var(--budget-surface)] p-5">
         <h2 className="budget-heading text-[18px] font-medium text-[var(--budget-secondary)]">
           Répartition par catégorie
         </h2>
-
         {categories.length === 0 ? (
           <p className="text-[13px] text-[var(--budget-muted)]">
             Aucune dépense ce mois-ci.
@@ -403,8 +404,9 @@ async function HomeContent({ searchParams }: { searchParams: SearchParams }) {
           </div>
         )}
       </section>
+        </div>
 
-      {recentExpenses.length > 0 && (
+        {recentExpenses.length > 0 && (
         <section className="flex flex-col gap-4 rounded-[16px] border border-[var(--budget-border)] bg-[var(--budget-surface)] p-5">
           <h2 className="budget-heading text-[18px] font-medium text-[var(--budget-secondary)]">
             Dernières dépenses
@@ -450,7 +452,8 @@ async function HomeContent({ searchParams }: { searchParams: SearchParams }) {
             Voir tout
           </Link>
         </section>
-      )}
+        )}
+      </div>
     </div>
   );
 }

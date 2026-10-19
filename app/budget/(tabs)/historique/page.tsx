@@ -91,7 +91,7 @@ async function HistoryContent() {
   const chronologicalBars = [...completeEntries].reverse();
 
   return (
-    <div className="flex flex-col gap-4 px-4 pt-6">
+    <div className="flex flex-col gap-4 px-4 pt-6 md:pt-10">
       <header>
         <h1 className="budget-heading text-[28px] font-semibold tracking-tight text-[var(--budget-secondary)]">
           Historique
@@ -114,7 +114,7 @@ async function HistoryContent() {
           </Link>
         </section>
       ) : (
-        <>
+        <div className="flex flex-col gap-4 lg:grid lg:grid-cols-2 lg:items-start lg:gap-6">
           {completeEntries.length > 0 && (
             <section className="flex flex-col gap-4 rounded-[16px] border border-[var(--budget-border)] bg-[var(--budget-surface)] p-5">
               <h2 className="budget-heading text-[18px] font-medium text-[var(--budget-secondary)]">
@@ -216,7 +216,7 @@ async function HistoryContent() {
               );
             })}
           </div>
-        </>
+        </div>
       )}
     </div>
   );

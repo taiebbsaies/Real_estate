@@ -107,7 +107,7 @@ async function MonthContent({ searchParams }: { searchParams: SearchParams }) {
         : "var(--budget-secondary)";
 
   return (
-    <div className="flex flex-col gap-4 px-4 pt-6">
+    <div className="flex flex-col gap-4 px-4 pt-6 md:mx-auto md:w-full md:max-w-[560px] md:pt-10">
       <header className="flex flex-col gap-1">
         <div className="flex items-center gap-1">
           <Link

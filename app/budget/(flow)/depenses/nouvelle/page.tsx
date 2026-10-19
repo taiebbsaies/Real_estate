@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function NewExpensePage() {
   return (
-    <>
+    <div className="md:mx-auto md:w-full md:max-w-[560px]">
       <ScreenHeader
         title="Nouvelle dépense"
         backHref="/budget/depenses"
@@ -17,6 +17,6 @@ export default function NewExpensePage() {
       <div className="px-4 pb-8 pt-2">
         <ExpenseForm mode="create" />
       </div>
-    </>
+    </div>
   );
 }

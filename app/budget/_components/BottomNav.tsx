@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { DashboardIcon, HistoryIcon, ReceiptIcon } from "./icons";
 
-const TABS = [
+export const TABS = [
   {
     href: "/budget",
     label: "Accueil",
@@ -31,7 +31,7 @@ export default function BottomNav() {
   return (
     <nav
       aria-label="Navigation du module budget"
-      className="fixed bottom-0 left-0 right-0 z-50 border-t border-[var(--budget-border)] bg-[var(--budget-surface)] pb-[env(safe-area-inset-bottom)]"
+      className="fixed bottom-0 left-0 right-0 z-50 border-t border-[var(--budget-border)] bg-[var(--budget-surface)] pb-[env(safe-area-inset-bottom)] md:hidden"
     >
       <div className="mx-auto flex h-16 w-full max-w-[480px] items-stretch">
         {TABS.map(({ href, label, Icon, isActive }) => {

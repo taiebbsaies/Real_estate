@@ -13,7 +13,7 @@ export default function ScreenHeader({
   backLabel,
 }: ScreenHeaderProps) {
   return (
-    <header className="flex items-center gap-1 px-4 pt-6">
+    <header className="flex items-center gap-1 px-4 pt-6 md:pt-10">
       <Link
         href={backHref}
         aria-label={backLabel}

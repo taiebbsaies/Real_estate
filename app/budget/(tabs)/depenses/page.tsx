@@ -105,7 +105,7 @@ async function ExpensesContent({ searchParams }: { searchParams: SearchParams })
   const percentWidth = Math.min(100, Math.max(0, summary.percentUsed));
 
   return (
-    <div className="flex flex-col gap-5 px-4 pt-6">
+    <div className="flex flex-col gap-5 px-4 pt-6 md:pt-10">
       <header className="flex flex-col gap-1">
         <h1 className="budget-heading text-[28px] font-semibold tracking-tight text-[var(--budget-secondary)]">
           Dépenses
@@ -129,11 +129,12 @@ async function ExpensesContent({ searchParams }: { searchParams: SearchParams })
         </div>
       </header>
 
-      <nav
-        aria-label="Filtrer par catégorie"
-        className="overflow-x-auto pb-1"
-      >
-        <div className="flex w-max gap-2">
+      <div className="flex w-full flex-col gap-5 md:mx-auto md:max-w-[720px]">
+        <nav
+          aria-label="Filtrer par catégorie"
+          className="overflow-x-auto pb-1"
+        >
+          <div className="flex w-max gap-2 md:w-full md:flex-wrap">
           <Link
             href={buildHref(month, undefined)}
             aria-current={category === undefined ? "true" : undefined}
@@ -255,6 +256,7 @@ async function ExpensesContent({ searchParams }: { searchParams: SearchParams })
           </div>
         </section>
       )}
+      </div>
     </div>
   );
 }
