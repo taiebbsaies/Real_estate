@@ -9,43 +9,48 @@ export const metadata: Metadata = {
 
 export default function LoginPage() {
   return (
-    <div className="flex min-h-full flex-1 flex-col items-center justify-center bg-zinc-50 px-4 py-12 dark:bg-zinc-950">
+    <div className="relative flex min-h-full flex-1 flex-col items-center justify-center linear-grid px-4 py-16">
       <main className="w-full max-w-md">
-        <div className="rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="relative rounded-2xl border border-zinc-200/90 bg-white/90 p-8 shadow-xl shadow-zinc-950/5 backdrop-blur-md dark:border-zinc-800/90 dark:bg-[#111114]/90 dark:shadow-black/50">
           <div className="mb-8 text-center">
             <Link
               href="/"
-              className="text-sm font-semibold tracking-tight text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+              className="inline-flex items-center gap-2 group"
             >
-              HomeCheck
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-zinc-950 text-xs font-bold text-white shadow-xs dark:bg-white dark:text-zinc-950">
+                H
+              </div>
+              <span className="text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+                HomeCheck
+              </span>
             </Link>
-            <h1 className="mt-3 text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
-              Welcome back
+            <h1 className="mt-4 text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+              Bon retour parmi nous
             </h1>
-            <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-              Sign in to access your dashboard, listings, and maintenance tasks.
+            <p className="mt-1.5 text-xs text-zinc-500 leading-relaxed">
+              Connectez-vous pour accéder à vos inspections, annonces et interventions.
             </p>
           </div>
 
           <LoginForm />
 
-          <p className="mt-6 text-center text-sm text-zinc-600 dark:text-zinc-400">
-            Don&apos;t have an account?{" "}
+          <p className="mt-6 text-center text-xs text-zinc-500">
+            Vous n&apos;avez pas de compte ?{" "}
             <Link
               href="/signup"
-              className="font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+              className="font-semibold text-zinc-950 hover:underline dark:text-zinc-100"
             >
-              Create account
+              Créer un compte
             </Link>
           </p>
         </div>
 
-        <p className="mt-6 text-center text-sm text-zinc-500 dark:text-zinc-500">
+        <p className="mt-6 text-center text-xs text-zinc-500">
           <Link
             href="/"
-            className="font-medium text-zinc-700 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-zinc-100"
+            className="font-medium hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
           >
-            ← Back to home
+            ← Retour à l&apos;accueil
           </Link>
         </p>
       </main>

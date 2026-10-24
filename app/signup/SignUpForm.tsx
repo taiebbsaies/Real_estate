@@ -10,22 +10,89 @@ const initialState: SignUpState = {
 
 function fieldClass(hasError: boolean) {
   const base =
-    "block w-full rounded-lg border bg-white px-3 py-2.5 text-zinc-900 shadow-sm transition-colors placeholder:text-zinc-400 focus:outline-none focus:ring-2 dark:bg-zinc-950 dark:text-zinc-50 dark:placeholder:text-zinc-500";
+    "block w-full rounded-xl border bg-white/70 px-3.5 py-2.5 text-sm text-zinc-900 shadow-xs backdrop-blur-xs transition-all placeholder:text-zinc-400 focus:outline-none focus:ring-2 dark:bg-[#151518]/80 dark:text-zinc-100 dark:placeholder:text-zinc-600";
   if (hasError) {
-    return `${base} border-red-500 focus:border-red-500 focus:ring-red-500/20 dark:border-red-500`;
+    return `${base} border-red-500/80 focus:border-red-500 focus:ring-red-500/20 dark:border-red-500/70`;
   }
-  return `${base} border-zinc-300 focus:border-blue-600 focus:ring-blue-600/20 dark:border-zinc-700 dark:focus:border-blue-500`;
+  return `${base} border-zinc-200 focus:border-zinc-950 focus:ring-zinc-950/10 dark:border-zinc-800 dark:focus:border-zinc-200 dark:focus:ring-white/10`;
 }
 
 const labelClass =
-  "mb-1.5 block text-sm font-medium text-zinc-700 dark:text-zinc-300";
+  "mb-1.5 block text-xs font-semibold tracking-wide uppercase text-zinc-600 dark:text-zinc-400";
 
 export default function SignUpForm() {
   const [state, formAction, pending] = useActionState(signUp, initialState);
   const [showPassword, setShowPassword] = useState(false);
+  const [selectedRole, setSelectedRole] = useState<"TENANT" | "OWNER" | "TECHNICIAN">("TENANT");
 
   return (
     <form action={formAction} className="space-y-5" noValidate>
+      <div>
+        <label className={labelClass}>
+          Votre rôle sur HomeCheck
+        </label>
+        <div className="grid grid-cols-3 gap-2.5">
+          <label
+            onClick={() => setSelectedRole("TENANT")}
+            className={`flex flex-col items-center justify-center rounded-xl border p-3 text-center cursor-pointer transition-all ${
+              selectedRole === "TENANT"
+                ? "border-zinc-950 bg-zinc-950 text-white shadow-xs dark:border-white dark:bg-white dark:text-zinc-950"
+                : "border-zinc-200 bg-white/60 text-zinc-700 hover:border-zinc-300 dark:border-zinc-800 dark:bg-[#151518]/60 dark:text-zinc-300 dark:hover:border-zinc-700"
+            }`}
+          >
+            <input
+              type="radio"
+              name="role"
+              value="TENANT"
+              checked={selectedRole === "TENANT"}
+              onChange={() => setSelectedRole("TENANT")}
+              className="sr-only"
+            />
+            <span className="text-xs font-bold">Locataire</span>
+            <span className="mt-0.5 text-[10px] opacity-75">Recherche & location</span>
+          </label>
+
+          <label
+            onClick={() => setSelectedRole("OWNER")}
+            className={`flex flex-col items-center justify-center rounded-xl border p-3 text-center cursor-pointer transition-all ${
+              selectedRole === "OWNER"
+                ? "border-zinc-950 bg-zinc-950 text-white shadow-xs dark:border-white dark:bg-white dark:text-zinc-950"
+                : "border-zinc-200 bg-white/60 text-zinc-700 hover:border-zinc-300 dark:border-zinc-800 dark:bg-[#151518]/60 dark:text-zinc-300 dark:hover:border-zinc-700"
+            }`}
+          >
+            <input
+              type="radio"
+              name="role"
+              value="OWNER"
+              checked={selectedRole === "OWNER"}
+              onChange={() => setSelectedRole("OWNER")}
+              className="sr-only"
+            />
+            <span className="text-xs font-bold">Propriétaire</span>
+            <span className="mt-0.5 text-[10px] opacity-75">Gestion & annonces</span>
+          </label>
+
+          <label
+            onClick={() => setSelectedRole("TECHNICIAN")}
+            className={`flex flex-col items-center justify-center rounded-xl border p-3 text-center cursor-pointer transition-all ${
+              selectedRole === "TECHNICIAN"
+                ? "border-zinc-950 bg-zinc-950 text-white shadow-xs dark:border-white dark:bg-white dark:text-zinc-950"
+                : "border-zinc-200 bg-white/60 text-zinc-700 hover:border-zinc-300 dark:border-zinc-800 dark:bg-[#151518]/60 dark:text-zinc-300 dark:hover:border-zinc-700"
+            }`}
+          >
+            <input
+              type="radio"
+              name="role"
+              value="TECHNICIAN"
+              checked={selectedRole === "TECHNICIAN"}
+              onChange={() => setSelectedRole("TECHNICIAN")}
+              className="sr-only"
+            />
+            <span className="text-xs font-bold">Technicien</span>
+            <span className="mt-0.5 text-[10px] opacity-75">Interventions</span>
+          </label>
+        </div>
+      </div>
       <div className="grid gap-5 sm:grid-cols-2">
         <div>
           <label htmlFor="firstName" className={labelClass}>
@@ -99,22 +166,6 @@ export default function SignUpForm() {
       </div>
 
       <div>
-        <label htmlFor="role" className={labelClass}>
-          Account type / Role
-        </label>
-        <select
-          id="role"
-          name="role"
-          defaultValue="TENANT"
-          className="block w-full rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-zinc-900 shadow-sm transition-colors focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50 dark:focus:border-blue-500"
-        >
-          <option value="TENANT">Locataire (Tenant)</option>
-          <option value="OWNER">Propriétaire (Owner)</option>
-          <option value="TECHNICIAN">Technicien (Technician)</option>
-        </select>
-      </div>
-
-      <div>
         <label htmlFor="password" className={labelClass}>
           Password
         </label>
@@ -134,14 +185,14 @@ export default function SignUpForm() {
           <button
             type="button"
             onClick={() => setShowPassword((v) => !v)}
-            className="absolute inset-y-0 right-0 px-3 text-sm font-medium text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200"
+            className="absolute inset-y-0 right-0 px-3 text-xs font-semibold text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200"
             aria-label={showPassword ? "Hide password" : "Show password"}
           >
-            {showPassword ? "Hide" : "Show"}
+            {showPassword ? "Masquer" : "Afficher"}
           </button>
         </div>
         <p id="password-hint" className="mt-1.5 text-xs text-zinc-500 dark:text-zinc-400">
-          At least 8 characters.
+          Au moins 8 caractères.
         </p>
         {state.errors?.password?.map((error) => (
           <p id="password-error" key={error} className="mt-1.5 text-sm text-red-600 dark:text-red-400">
@@ -152,7 +203,7 @@ export default function SignUpForm() {
 
       <div>
         <label htmlFor="confirmPassword" className={labelClass}>
-          Confirm password
+          Confirmer le mot de passe
         </label>
         <input
           id="confirmPassword"
@@ -184,8 +235,8 @@ export default function SignUpForm() {
           role="status"
           className={
             state.success
-              ? "rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800 dark:border-green-900/50 dark:bg-green-950/40 dark:text-green-300"
-              : "rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-300"
+              ? "rounded-xl border border-emerald-500/20 bg-emerald-50/80 px-4 py-3 text-xs font-medium text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300"
+              : "rounded-xl border border-red-500/20 bg-red-50/80 px-4 py-3 text-xs font-medium text-red-800 dark:bg-red-950/40 dark:text-red-300"
           }
         >
           {state.message}
@@ -195,9 +246,9 @@ export default function SignUpForm() {
       <button
         type="submit"
         disabled={pending}
-        className="flex h-11 w-full items-center justify-center rounded-full bg-zinc-900 px-4 text-sm font-medium text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
+        className="flex h-11 w-full items-center justify-center rounded-xl bg-zinc-950 px-4 text-sm font-semibold text-white shadow-xs transition-all hover:bg-zinc-800 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200"
       >
-        {pending ? "Creating account…" : "Create account"}
+        {pending ? "Création du compte…" : "Créer mon compte"}
       </button>
     </form>
   );
