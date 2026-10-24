@@ -2,8 +2,12 @@ import dns from "node:dns";
 import "server-only";
 import mongoose from "mongoose";
 
-// Workaround: use Google's DNS for MongoDB SRV lookups.
-dns.setServers(["8.8.8.8", "8.8.4.4"]);
+try {
+  dns.setDefaultResultOrder("ipv4first");
+  dns.setServers(["8.8.8.8", "8.8.4.4", "1.1.1.1"]);
+} catch {
+  // Ignore in environments where setting DNS servers is restricted
+}
 
 function getMongoUri(): string {
   const uri = process.env.MONGODB_URI;
@@ -38,6 +42,13 @@ export async function connectDB() {
   }
 
   if (!cached.promise) {
+    try {
+      dns.setDefaultResultOrder("ipv4first");
+      dns.setServers(["8.8.8.8", "8.8.4.4", "1.1.1.1"]);
+    } catch {
+      // Ignore
+    }
+
     cached.promise = mongoose.connect(getMongoUri(), {
       bufferCommands: false,
     });

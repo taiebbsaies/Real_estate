@@ -27,6 +27,10 @@ export const signUpSchema = z
       .max(72, "Password must not exceed 72 characters"),
 
     confirmPassword: z.string(),
+    role: z
+      .enum(["TENANT", "OWNER", "TECHNICIAN"])
+      .default("TENANT")
+      .optional(),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
@@ -34,3 +38,14 @@ export const signUpSchema = z
   });
 
 export type SignUpInput = z.infer<typeof signUpSchema>;
+
+export const loginSchema = z.object({
+  email: z
+    .string()
+    .trim()
+    .email("Enter a valid email address")
+    .transform((value) => value.toLowerCase()),
+  password: z.string().min(1, "Password is required"),
+});
+
+export type LoginInput = z.infer<typeof loginSchema>;
