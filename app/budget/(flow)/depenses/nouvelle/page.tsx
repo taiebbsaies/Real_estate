@@ -3,7 +3,7 @@ import ScreenHeader from "@/app/budget/_components/ScreenHeader";
 import ExpenseForm from "@/app/budget/_components/ExpenseForm";
 
 export const metadata: Metadata = {
-  title: "Nouvelle dépense — HomeCheck",
+  title: "Nouvelle dépense",
 };
 
 export default function NewExpensePage() {

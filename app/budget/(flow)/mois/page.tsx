@@ -18,9 +18,12 @@ import {
   ChevronRightIcon,
   NotebookIcon,
 } from "../../_components/icons";
+import Card from "../../_components/ui/Card";
+import Alert from "../../_components/ui/Alert";
+import EmptyState from "../../_components/ui/EmptyState";
 
 export const metadata: Metadata = {
-  title: "Budget du mois — HomeCheck",
+  title: "Budget du mois",
 };
 
 const MONTH_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/;
@@ -30,9 +33,9 @@ type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 function MonthSkeleton() {
   return (
     <div className="flex flex-col gap-4 px-4 pt-14" aria-hidden="true">
-      <div className="h-8 w-48 animate-pulse rounded bg-[var(--budget-skeleton)]" />
-      <div className="h-44 animate-pulse rounded-[16px] bg-[var(--budget-skeleton)]" />
-      <div className="h-44 animate-pulse rounded-[16px] bg-[var(--budget-skeleton)]" />
+      <div className="h-8 w-48 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
+      <div className="h-44 animate-pulse rounded-2xl bg-zinc-200 dark:bg-zinc-800" />
+      <div className="h-44 animate-pulse rounded-2xl bg-zinc-200 dark:bg-zinc-800" />
     </div>
   );
 }
@@ -52,34 +55,34 @@ function AlertBanner({
 }) {
   if (level === "exceeded") {
     return (
-      <div className="flex items-start gap-2 rounded-xl border border-[var(--budget-primary)]/20 bg-[var(--budget-primary-soft)] p-3">
-        <p className="text-[13px] font-medium leading-snug text-[var(--budget-primary)]">
+      <Alert kind="error">
+        <p className="font-medium leading-snug">
           Plafond de {monthLabel} dépassé de {formatTnd(Math.abs(remainingMillimes))}.
         </p>
-      </div>
+      </Alert>
     );
   }
 
   if (level === "warning") {
     return (
-      <div className="flex items-start gap-2 rounded-xl border border-[var(--budget-warning)]/20 bg-[var(--budget-warning-soft)] p-3">
-        <p className="text-[13px] font-medium leading-snug text-[var(--budget-warning)]">
+      <Alert kind="warning">
+        <p className="font-medium leading-snug">
           Vous avez atteint {percent.toLocaleString("fr-FR")} % de votre plafond.
         </p>
-      </div>
+      </Alert>
     );
   }
 
   return (
-    <div className="flex items-start gap-2 rounded-xl border border-[var(--budget-secondary)]/10 bg-[var(--budget-secondary-soft)] p-3">
-      <p className="text-[13px] leading-snug text-[var(--budget-secondary)]">
+    <Alert kind="success">
+      <p className="leading-snug">
         Il vous reste{" "}
-        <span className="budget-tabular font-semibold">
+        <span className="tabular-nums font-semibold">
           {formatTnd(remainingMillimes)}
         </span>
         {daysLeft !== null ? ` pour ${daysLeft} jour${daysLeft > 1 ? "s" : ""}` : ""}.
       </p>
-    </div>
+    </Alert>
   );
 }
 
@@ -103,10 +106,10 @@ async function MonthContent({ searchParams }: { searchParams: SearchParams }) {
   const percentWidth = Math.min(100, Math.max(0, summary.percentUsed));
   const barColor =
     summary.alertLevel === "exceeded"
-      ? "var(--budget-primary)"
+      ? "bg-red-500"
       : summary.alertLevel === "warning"
-        ? "var(--budget-warning)"
-        : "var(--budget-secondary)";
+        ? "bg-amber-500"
+        : "bg-emerald-500";
 
   return (
     <div className="flex flex-col gap-4 px-4 pt-6 md:mx-auto md:w-full md:max-w-[560px] md:pt-10">
@@ -115,11 +118,11 @@ async function MonthContent({ searchParams }: { searchParams: SearchParams }) {
           <Link
             href="/budget"
             aria-label="Retour à l'accueil du budget"
-            className="-ml-2 flex h-11 w-11 items-center justify-center text-[var(--budget-muted)] transition-colors hover:text-[var(--budget-text)]"
+            className="-ml-2 flex h-11 w-11 items-center justify-center text-zinc-500 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
           >
             <ArrowLeftIcon className="h-5 w-5" />
           </Link>
-          <h1 className="budget-heading text-[24px] font-semibold tracking-tight text-[var(--budget-secondary)]">
+          <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
             Budget du mois
           </h1>
         </div>
@@ -127,15 +130,17 @@ async function MonthContent({ searchParams }: { searchParams: SearchParams }) {
           <Link
             href={`/budget/mois?month=${previousMonth(month)}`}
             aria-label="Mois précédent"
-            className="flex h-11 w-11 items-center justify-center text-[var(--budget-muted)] transition-colors hover:text-[var(--budget-text)]"
+            className="flex h-11 w-11 items-center justify-center text-zinc-500 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
           >
             <ChevronLeftIcon className="h-5 w-5" />
           </Link>
-          <span className="text-[16px] font-medium">{monthLabel}</span>
+          <span className="text-base font-medium text-zinc-900 dark:text-zinc-100">
+            {monthLabel}
+          </span>
           <Link
             href={`/budget/mois?month=${nextMonth(month)}`}
             aria-label="Mois suivant"
-            className="flex h-11 w-11 items-center justify-center text-[var(--budget-muted)] transition-colors hover:text-[var(--budget-text)]"
+            className="flex h-11 w-11 items-center justify-center text-zinc-500 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
           >
             <ChevronRightIcon className="h-5 w-5" />
           </Link>
@@ -143,32 +148,28 @@ async function MonthContent({ searchParams }: { searchParams: SearchParams }) {
       </header>
 
       {!budget && (
-        <section className="flex flex-col items-center gap-4 rounded-[16px] border border-[var(--budget-border)] bg-[var(--budget-surface)] p-5 text-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[var(--budget-secondary-soft)]">
-            <NotebookIcon className="h-7 w-7 text-[var(--budget-secondary)]" />
-          </div>
-          <h2 className="budget-heading text-[22px] font-semibold text-[var(--budget-secondary)]">
-            Bienvenue dans votre budget
-          </h2>
-          <p className="max-w-[280px] text-[14px] leading-relaxed text-[var(--budget-muted)]">
-            Fixez un plafond mensuel pour suivre vos dépenses de logement.
-          </p>
-        </section>
+        <Card padded={false} className="p-6">
+          <EmptyState
+            icon={NotebookIcon}
+            title="Bienvenue dans votre budget"
+            description="Fixez un plafond mensuel pour suivre vos dépenses de logement."
+          />
+        </Card>
       )}
 
       {budget && (
-        <section className="flex flex-col gap-4 rounded-[16px] border border-[var(--budget-border)] bg-[var(--budget-surface)] p-5">
-          <h2 className="budget-heading text-[18px] font-medium text-[var(--budget-secondary)]">
+        <Card className="flex flex-col gap-4">
+          <h2 className="text-base font-bold text-zinc-950 dark:text-zinc-50">
             Aperçu
           </h2>
 
           <div className="flex items-baseline justify-between">
-            <span className="text-[12px] text-[var(--budget-muted)]">Dépensé</span>
+            <span className="text-xs text-zinc-500 dark:text-zinc-400">Dépensé</span>
             <span
-              className={`budget-tabular text-[15px] font-medium ${
+              className={`tabular-nums text-[15px] font-medium ${
                 summary.remaining < 0
-                  ? "text-[var(--budget-primary)]"
-                  : "text-[var(--budget-text)]"
+                  ? "text-red-600 dark:text-red-400"
+                  : "text-zinc-900 dark:text-zinc-100"
               }`}
             >
               {formatTnd(summary.spent)}
@@ -176,12 +177,12 @@ async function MonthContent({ searchParams }: { searchParams: SearchParams }) {
           </div>
 
           <div className="flex items-baseline justify-between">
-            <span className="text-[12px] text-[var(--budget-muted)]">Reste</span>
+            <span className="text-xs text-zinc-500 dark:text-zinc-400">Reste</span>
             <span
-              className={`budget-tabular text-[15px] font-semibold ${
+              className={`tabular-nums text-[15px] font-semibold ${
                 summary.remaining < 0
-                  ? "text-[var(--budget-primary)]"
-                  : "text-[var(--budget-secondary)]"
+                  ? "text-red-600 dark:text-red-400"
+                  : "text-emerald-600 dark:text-emerald-400"
               }`}
             >
               {formatTnd(summary.remaining)}
@@ -189,19 +190,19 @@ async function MonthContent({ searchParams }: { searchParams: SearchParams }) {
           </div>
 
           <div className="flex flex-col gap-2">
-            <div className="h-[10px] overflow-hidden rounded-full bg-[var(--budget-border)]">
+            <div className="h-2.5 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
               <div
-                className="h-full rounded-full"
-                style={{ width: `${percentWidth}%`, backgroundColor: barColor }}
+                className={`h-full rounded-full ${barColor}`}
+                style={{ width: `${percentWidth}%` }}
               />
             </div>
             <div className="flex items-center justify-between px-1">
-              <span className="text-[12px] text-[var(--budget-muted)]">
+              <span className="text-xs text-zinc-500 dark:text-zinc-400">
                 {daysLeft !== null
                   ? `${daysLeft} jour${daysLeft > 1 ? "s" : ""} restant${daysLeft > 1 ? "s" : ""}`
                   : formatTnd(budget.limit)}
               </span>
-              <span className="budget-tabular text-[12px] font-medium text-[var(--budget-secondary)]">
+              <span className="tabular-nums text-xs font-medium text-zinc-900 dark:text-zinc-100">
                 {summary.percentUsed.toLocaleString("fr-FR")} %
               </span>
             </div>
@@ -214,7 +215,7 @@ async function MonthContent({ searchParams }: { searchParams: SearchParams }) {
             percent={summary.percentUsed}
             daysLeft={daysLeft}
           />
-        </section>
+        </Card>
       )}
 
       <BudgetForm
