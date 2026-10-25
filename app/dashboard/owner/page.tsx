@@ -24,12 +24,20 @@ export default async function OwnerDashboardPage() {
               Espace Propriétaire
             </span>
           </div>
-          <Link
-            href="/profile"
-            className="text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
-          >
-            Mon Profil
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link
+              href="/budget"
+              className="text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+            >
+              Mon budget
+            </Link>
+            <Link
+              href="/profile"
+              className="text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+            >
+              Mon Profil
+            </Link>
+          </div>
         </div>
       </header>
 
