@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getSession } from "@/lib/session";
 import { redirect } from "next/navigation";
+import { getMyComplaints } from "@/lib/complaints/queries";
 
 export const dynamic = "force-dynamic";
 
@@ -10,6 +11,11 @@ export default async function TenantDashboardPage() {
   if (!session || (session.activeRole !== "TENANT" && session.activeRole !== "ADMIN")) {
     redirect("/login");
   }
+
+  const complaints = await getMyComplaints();
+  const openComplaints = complaints.filter(
+    (complaint) => complaint.status === "pending" || complaint.status === "in_progress",
+  ).length;
 
   return (
     <div className="relative min-h-full linear-grid bg-[var(--background)] text-[var(--foreground)]">
@@ -120,8 +126,14 @@ export default async function TenantDashboardPage() {
               </span>
               <span className="text-xs font-semibold text-zinc-400">→</span>
             </div>
-            <p className="mt-3 text-3xl font-extrabold tracking-tight text-zinc-950 dark:text-zinc-50">0</p>
-            <p className="mt-1 text-xs text-zinc-500">Voir mes réclamations</p>
+            <p className="mt-3 text-3xl font-extrabold tracking-tight text-zinc-950 dark:text-zinc-50">
+              {complaints.length}
+            </p>
+            <p className="mt-1 text-xs text-zinc-500">
+              {openComplaints > 0
+                ? `${openComplaints} en cours de traitement`
+                : "Voir mes réclamations"}
+            </p>
           </Link>
         </div>
 

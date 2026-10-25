@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getSession } from "@/lib/session";
 import { redirect } from "next/navigation";
+import { getAllComplaints } from "@/lib/complaints/queries";
 
 export const dynamic = "force-dynamic";
 
@@ -10,6 +11,11 @@ export default async function OwnerDashboardPage() {
   if (!session || (session.activeRole !== "OWNER" && session.activeRole !== "ADMIN")) {
     redirect("/login");
   }
+
+  const complaints = await getAllComplaints();
+  const pendingComplaints = complaints.filter(
+    (complaint) => complaint.status === "pending",
+  ).length;
 
   return (
     <div className="min-h-full bg-zinc-50 dark:bg-zinc-950">
@@ -93,8 +99,14 @@ export default async function OwnerDashboardPage() {
             <span className="text-xs font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
               Réclamations
             </span>
-            <p className="mt-2 text-3xl font-bold text-zinc-900 dark:text-zinc-50">→</p>
-            <p className="mt-1 text-xs text-zinc-500">Gérer les réclamations</p>
+            <p className="mt-2 text-3xl font-bold text-zinc-900 dark:text-zinc-50">
+              {complaints.length}
+            </p>
+            <p className="mt-1 text-xs text-zinc-500">
+              {pendingComplaints > 0
+                ? `${pendingComplaints} en attente · Gérer les réclamations`
+                : "Gérer les réclamations"}
+            </p>
           </Link>
         </div>
       </main>
