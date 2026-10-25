@@ -1,8 +1,7 @@
 "use client";
 
 import { useActionState, useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { signIn, type LoginState } from "@/app/actions/auth";
 
 const initialState: LoginState = {
@@ -31,18 +30,23 @@ const roleLabels: Record<string, string> = {
 
 export default function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [state, formAction, pending] = useActionState(signIn, initialState);
   const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     if (state.success) {
+      const raw = searchParams.get("callbackUrl") ?? "/";
+      const callbackUrl =
+        raw.startsWith("/") && !raw.startsWith("//") ? raw : "/";
+
       const timer = setTimeout(() => {
-        router.push("/");
+        router.push(callbackUrl);
         router.refresh();
       }, 750);
       return () => clearTimeout(timer);
     }
-  }, [state.success, router]);
+  }, [state.success, router, searchParams]);
 
   return (
     <form action={formAction} className="space-y-5" noValidate>
