@@ -4,6 +4,7 @@ import { useActionState, useCallback, useEffect, useRef, useState } from "react"
 import { useFormStatus } from "react-dom";
 import { createComplaint, updateComplaint } from "@/app/actions/complaints";
 import type { ComplaintActionState, SerializedComplaint } from "@/lib/complaints/types";
+import { formatTestPropertyCode } from "@/lib/test-properties/display";
 import type { SerializedTestProperty } from "@/lib/test-properties/types";
 import { COMPLAINT_CATEGORIES, COMPLAINT_PRIORITIES } from "@/lib/constants/complaint";
 import { createComplaintSchema } from "@/lib/validations/complaint";
@@ -290,7 +291,7 @@ export default function ComplaintForm({ ownerId, testProperties = [], editTarget
               <option value="">Aucun appartement (réclamation générale)</option>
               {testProperties.map((property) => (
                 <option key={property._id} value={property._id}>
-                  {property.code} — {property.label}, {property.city}
+                  {formatTestPropertyCode(property.code)} — {property.label}, {property.city}
                 </option>
               ))}
             </select>

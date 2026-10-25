@@ -8,6 +8,7 @@ import {
   COMPLAINT_STATUSES,
   type ComplaintStatus,
 } from "@/lib/constants/complaint";
+import { formatTestPropertyCode } from "@/lib/test-properties/display";
 
 export const dynamic = "force-dynamic";
 
@@ -206,7 +207,7 @@ export default async function TechnicianComplaintsPage({
                           Appartement test
                         </span>
                         <span className="font-semibold text-zinc-700 dark:text-zinc-300">
-                          {complaint.property.code}
+                          {formatTestPropertyCode(complaint.property.code)}
                         </span>
                         <span aria-hidden="true">·</span>
                         <span>

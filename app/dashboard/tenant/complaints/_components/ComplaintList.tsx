@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { SerializedComplaint } from "@/lib/complaints/types";
+import { formatTestPropertyCode } from "@/lib/test-properties/display";
 import type { SerializedTestProperty } from "@/lib/test-properties/types";
 import ComplaintForm from "./ComplaintForm";
 import DeleteComplaintButton from "./DeleteComplaintButton";
@@ -158,7 +159,7 @@ function ComplaintCard({ complaint, onEdit }: ComplaintCardProps) {
             Appartement test
           </span>
           <span className="font-semibold text-zinc-700 dark:text-zinc-300">
-            {complaint.property.code}
+            {formatTestPropertyCode(complaint.property.code)}
           </span>
           <span aria-hidden="true">·</span>
           <span>
