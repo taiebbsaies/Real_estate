@@ -103,12 +103,12 @@ function ForecastCard({
         </div>
         {hasData &&
           (onTrack ? (
-            <span className="flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-[3px] text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+            <span className="flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
               <CheckCircleIcon className="h-3.5 w-3.5" />
               Sur la bonne voie
             </span>
           ) : (
-            <span className="flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-[3px] text-[11px] font-bold text-amber-600 dark:text-amber-400">
+            <span className="flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[11px] font-bold text-amber-600 dark:text-amber-400">
               <AlertTriangleIcon className="h-3.5 w-3.5" />
               Dépassement probable (≈ {formatTnd(forecast - limit)})
             </span>
@@ -364,7 +364,7 @@ async function HomeContent({ searchParams }: { searchParams: SearchParams }) {
         ) : (
           <div className="flex flex-col gap-4">
             {categories.map(([category, total]) => (
-              <div key={category} className="flex flex-col gap-[6px]">
+              <div key={category} className="flex flex-col gap-1.5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <CategoryIcon

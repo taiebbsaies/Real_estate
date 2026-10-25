@@ -49,7 +49,7 @@ function progressColor(entry: HistoryEntry): string {
 function HistoryBadge({ entry, isCurrent }: { entry: HistoryEntry; isCurrent: boolean }) {
   if (isCurrent) {
     return (
-      <span className="rounded-full border border-zinc-300 px-2 py-[3px] text-[11px] font-medium text-zinc-600 dark:border-zinc-700 dark:text-zinc-400">
+      <span className="rounded-full border border-zinc-300 px-2 py-0.5 text-[11px] font-medium text-zinc-600 dark:border-zinc-700 dark:text-zinc-400">
         En cours
       </span>
     );
@@ -60,7 +60,7 @@ function HistoryBadge({ entry, isCurrent }: { entry: HistoryEntry; isCurrent: bo
     const overshootPercent = Math.round(entry.percentUsed - 100);
 
     return (
-      <span className="flex items-center gap-1 rounded-full bg-red-500/10 px-2 py-[3px] text-[11px] font-bold text-red-600 dark:text-red-400">
+      <span className="flex items-center gap-1 rounded-full bg-red-500/10 px-2 py-0.5 text-[11px] font-bold text-red-600 dark:text-red-400">
         <AlertTriangleIcon className="h-3.5 w-3.5" />
         Dépassé de {formatTnd(overshoot).replace(" TND", "")} TND (+{overshootPercent} %)
       </span>
@@ -68,7 +68,7 @@ function HistoryBadge({ entry, isCurrent }: { entry: HistoryEntry; isCurrent: bo
   }
 
   return (
-    <span className="flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-[3px] text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+    <span className="flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
       <CheckCircleIcon className="h-3.5 w-3.5" />
       Respecté
     </span>
@@ -144,7 +144,7 @@ async function HistoryContent() {
                           height: `${Math.max(12, Math.round((entry.spent / maxSpent) * 100))}%`,
                         }}
                       />
-                      <span className="text-[9px] text-zinc-500 dark:text-zinc-400">
+                      <span className="text-[11px] text-zinc-500 dark:text-zinc-400">
                         {formatMonthShortLabel(entry.month)}
                       </span>
                     </div>

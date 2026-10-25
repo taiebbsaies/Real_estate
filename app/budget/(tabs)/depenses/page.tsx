@@ -143,7 +143,7 @@ async function ExpensesContent({ searchParams }: { searchParams: SearchParams })
           <div className="flex w-max gap-2 md:w-full md:flex-wrap">
           <Link
             href={buildHref(month, undefined)}
-            aria-current={category === undefined ? "true" : undefined}
+            aria-current={category === undefined ? "page" : undefined}
             className={`flex h-9 items-center whitespace-nowrap rounded-full px-4 text-[13px] font-medium transition-colors ${
               category === undefined
                 ? "bg-zinc-950 text-white dark:bg-white dark:text-zinc-950"
@@ -156,7 +156,7 @@ async function ExpensesContent({ searchParams }: { searchParams: SearchParams })
             <Link
               key={item}
               href={buildHref(month, item)}
-              aria-current={category === item ? "true" : undefined}
+              aria-current={category === item ? "page" : undefined}
               className={`flex h-9 items-center whitespace-nowrap rounded-full px-4 text-[13px] font-medium transition-colors ${
                 category === item
                   ? "bg-zinc-950 text-white dark:bg-white dark:text-zinc-950"
