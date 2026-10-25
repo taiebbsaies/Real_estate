@@ -24,6 +24,7 @@ function serializeComplaint(doc: IComplaint & { _id: unknown }): SerializedCompl
     status: doc.status,
     technicianId: doc.technicianId?.toString(),
     resolutionNotes: doc.resolutionNotes,
+    resolvedAt: doc.resolvedAt?.toISOString(),
     createdAt: doc.createdAt.toISOString(),
     updatedAt: doc.updatedAt.toISOString(),
   };

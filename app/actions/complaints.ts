@@ -18,6 +18,7 @@ import {
   type ComplaintStatus,
 } from "@/lib/constants/complaint";
 import type { ComplaintActionState } from "@/lib/complaints/types";
+import { getResolutionTimestampUpdate } from "@/lib/complaints/resolution";
 import { isTestPropertiesEnabled } from "@/lib/test-properties/config";
 import {
   getTestPropertyOwnerId,
@@ -443,6 +444,19 @@ export async function updateComplaintStatus(
       if (existing.status !== status) {
         unsetFields.resolutionNotes = "";
       }
+    }
+
+    // Record the real resolution time only when a complaint actually enters
+    // the resolved state. Legacy resolved complaints are never backfilled.
+    const resolutionUpdate = getResolutionTimestampUpdate(
+      existing.status,
+      status,
+    );
+    if (resolutionUpdate.setResolvedAt) {
+      setFields.resolvedAt = resolutionUpdate.setResolvedAt;
+    }
+    if (resolutionUpdate.clearResolvedAt) {
+      unsetFields.resolvedAt = "";
     }
 
     if (

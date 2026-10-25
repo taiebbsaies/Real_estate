@@ -27,6 +27,8 @@ export type SerializedComplaint = {
   status: ComplaintStatus;
   technicianId?: string;
   resolutionNotes?: string;
+  /** Set when the complaint entered the resolved state. Absent for legacy rows. */
+  resolvedAt?: string;
   createdAt: string;
   updatedAt: string;
 };
