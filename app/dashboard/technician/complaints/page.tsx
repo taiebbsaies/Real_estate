@@ -3,9 +3,17 @@ import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { getSession } from "@/lib/session";
 import { getAllComplaints } from "@/lib/complaints/queries";
-import StatusUpdateForm from "@/app/dashboard/owner/complaints/_components/StatusUpdateForm";
+import StatusUpdateForm from "@/app/dashboard/_components/StatusUpdateForm";
+import {
+  COMPLAINT_STATUSES,
+  type ComplaintStatus,
+} from "@/lib/constants/complaint";
 
 export const dynamic = "force-dynamic";
+
+type TechnicianComplaintsPageProps = {
+  searchParams: Promise<{ status?: string }>;
+};
 
 export const metadata: Metadata = {
   title: "Réclamations — Technicien | HomeCheck",
@@ -37,21 +45,40 @@ const PRIORITY_CONFIG: Record<string, { label: string; className: string }> = {
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("fr-FR", {
-    day: "2-digit", month: "short", year: "numeric",
+    day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit",
   });
 }
 
-export default async function TechnicianComplaintsPage() {
+const FILTER_OPTIONS: { value: "all" | ComplaintStatus; label: string }[] = [
+  { value: "all", label: "Toutes" },
+  { value: "pending", label: "En attente" },
+  { value: "in_progress", label: "En cours" },
+  { value: "resolved", label: "Résolues" },
+  { value: "rejected", label: "Rejetées" },
+];
+
+export default async function TechnicianComplaintsPage({
+  searchParams,
+}: TechnicianComplaintsPageProps) {
   const session = await getSession();
 
   if (!session || (session.activeRole !== "TECHNICIAN" && session.activeRole !== "ADMIN")) {
     redirect("/login");
   }
 
-  const complaints = await getAllComplaints();
-  const myActive = complaints.filter((c) => c.status === "in_progress").length;
-  const pending = complaints.filter((c) => c.status === "pending").length;
-  const resolved = complaints.filter((c) => c.status === "resolved").length;
+  const { status } = await searchParams;
+  const activeFilter = COMPLAINT_STATUSES.includes(status as ComplaintStatus)
+    ? (status as ComplaintStatus)
+    : null;
+
+  const allComplaints = await getAllComplaints();
+  const complaints = activeFilter
+    ? allComplaints.filter((complaint) => complaint.status === activeFilter)
+    : allComplaints;
+
+  const myActive = allComplaints.filter((c) => c.status === "in_progress").length;
+  const pending = allComplaints.filter((c) => c.status === "pending").length;
+  const resolved = allComplaints.filter((c) => c.status === "resolved").length;
 
   return (
     <div className="min-h-full bg-zinc-50 dark:bg-zinc-950">
@@ -98,10 +125,46 @@ export default async function TechnicianComplaintsPage() {
           ))}
         </div>
 
+        {/* Status filter */}
+        <nav className="mb-6 flex flex-wrap gap-2" aria-label="Filtrer les interventions par statut">
+          {FILTER_OPTIONS.map((option) => {
+            const isActive =
+              option.value === "all"
+                ? activeFilter === null
+                : activeFilter === option.value;
+            const count =
+              option.value === "all"
+                ? allComplaints.length
+                : allComplaints.filter((c) => c.status === option.value).length;
+            return (
+              <Link
+                key={option.value}
+                href={
+                  option.value === "all"
+                    ? "/dashboard/technician/complaints"
+                    : `/dashboard/technician/complaints?status=${option.value}`
+                }
+                aria-current={isActive ? "page" : undefined}
+                className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
+                  isActive
+                    ? "bg-zinc-950 text-white dark:bg-zinc-50 dark:text-zinc-950"
+                    : "border border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                }`}
+              >
+                {option.label} ({count})
+              </Link>
+            );
+          })}
+        </nav>
+
         {complaints.length === 0 ? (
           <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-200 bg-white py-16 text-center dark:border-zinc-800 dark:bg-zinc-900">
             <span className="text-3xl">✅</span>
-            <p className="mt-3 text-sm font-semibold text-zinc-600 dark:text-zinc-400">Aucune réclamation en attente.</p>
+            <p className="mt-3 text-sm font-semibold text-zinc-600 dark:text-zinc-400">
+              {activeFilter
+                ? "Aucune intervention ne correspond à ce filtre."
+                : "Aucune réclamation disponible pour le moment."}
+            </p>
           </div>
         ) : (
           <ul className="space-y-5">
@@ -120,6 +183,7 @@ export default async function TechnicianComplaintsPage() {
                           {complaint.title}
                         </h2>
                         <p className="mt-1 text-xs text-zinc-500">Soumise le {formatDate(complaint.createdAt)}</p>
+                        <p className="mt-0.5 text-[11px] text-zinc-400">Mise à jour le {formatDate(complaint.updatedAt)}</p>
                       </div>
                       <div className="flex flex-wrap gap-2">
                         <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${statusCfg.className}`}>
@@ -128,6 +192,11 @@ export default async function TechnicianComplaintsPage() {
                         <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${priorityCfg.className}`}>
                           {priorityCfg.label}
                         </span>
+                        {complaint.technicianId && (
+                          <span className="rounded-full bg-indigo-100 px-2.5 py-0.5 text-[11px] font-semibold text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-400">
+                            Assignée
+                          </span>
+                        )}
                       </div>
                     </div>
 
@@ -146,7 +215,10 @@ export default async function TechnicianComplaintsPage() {
                       <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-zinc-500">
                         Mettre à jour l&apos;intervention
                       </p>
-                      <StatusUpdateForm complaint={complaint} />
+                      <StatusUpdateForm
+                        key={`${complaint._id}-${complaint.status}-${complaint.updatedAt}`}
+                        complaint={complaint}
+                      />
                     </div>
                   </article>
                 </li>

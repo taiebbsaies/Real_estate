@@ -103,17 +103,19 @@ function formatDate(iso: string) {
 
 // ─── Empty state ──────────────────────────────────────────────────────────────
 
-function EmptyState() {
+function EmptyState({ filtered }: { filtered: boolean }) {
   return (
     <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-200 bg-zinc-50/50 py-16 text-center dark:border-zinc-800 dark:bg-zinc-900/30">
       <span className="text-4xl" aria-hidden="true">
         📋
       </span>
       <h3 className="mt-4 text-sm font-semibold text-zinc-700 dark:text-zinc-300">
-        Aucune réclamation
+        {filtered ? "Aucun résultat" : "Aucune réclamation"}
       </h3>
       <p className="mt-1 text-xs text-zinc-500">
-        Vous n&apos;avez pas encore soumis de réclamation.
+        {filtered
+          ? "Aucune réclamation ne correspond à ce statut."
+          : "Vous n'avez pas encore soumis de réclamation."}
       </p>
     </div>
   );
@@ -176,12 +178,22 @@ function ComplaintCard({ complaint, onEdit }: ComplaintCardProps) {
 
       {/* Footer */}
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-zinc-100 pt-3 dark:border-zinc-800/80">
-        <time
-          dateTime={complaint.createdAt}
-          className="text-[11px] text-zinc-400"
-        >
-          Date de création : {formatDate(complaint.createdAt)}
-        </time>
+        <div className="space-y-0.5">
+          <time
+            dateTime={complaint.createdAt}
+            className="block text-[11px] text-zinc-400"
+          >
+            Créée le {formatDate(complaint.createdAt)}
+          </time>
+          {complaint.updatedAt !== complaint.createdAt && (
+            <time
+              dateTime={complaint.updatedAt}
+              className="block text-[11px] text-zinc-400"
+            >
+              Mise à jour le {formatDate(complaint.updatedAt)}
+            </time>
+          )}
+        </div>
 
         <div className="flex flex-wrap items-center gap-2">
           {canEdit && (
@@ -271,7 +283,7 @@ export default function ComplaintList({ complaints }: ComplaintListProps) {
 
       {/* Cards */}
       {filtered.length === 0 ? (
-        <EmptyState />
+        <EmptyState filtered={filter !== "all"} />
       ) : (
         <ul className="space-y-4">
           {filtered.map((c) => (
