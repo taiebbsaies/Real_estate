@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { getSession } from "@/lib/session";
-import { getMyComplaints } from "@/app/actions/complaints";
+import { getMyComplaints } from "@/lib/complaints/queries";
 import ComplaintForm from "./_components/ComplaintForm";
 import ComplaintList from "./_components/ComplaintList";
 import OfflineBanner from "./_components/OfflineBanner";

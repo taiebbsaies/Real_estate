@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { SerializedComplaint } from "@/app/actions/complaints";
+import type { SerializedComplaint } from "@/lib/complaints/types";
 import ComplaintForm from "./ComplaintForm";
 import DeleteComplaintButton from "./DeleteComplaintButton";
 

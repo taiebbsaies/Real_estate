@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { getSession } from "@/lib/session";
-import { getAllComplaints } from "@/app/actions/complaints";
+import { getAllComplaints } from "@/lib/complaints/queries";
 import StatusUpdateForm from "./_components/StatusUpdateForm";
 
 export const dynamic = "force-dynamic";

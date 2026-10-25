@@ -13,29 +13,31 @@ import {
   updateStatusSchema,
   deleteComplaintSchema,
 } from "@/lib/validations/complaint";
-import type { ComplaintCategory, ComplaintPriority, ComplaintStatus } from "@/lib/constants/complaint";
+import {
+  isComplaintStatusTransitionAllowed,
+  type ComplaintStatus,
+} from "@/lib/constants/complaint";
+import type { ComplaintActionState } from "@/lib/complaints/types";
 
-// ─── Shared types ─────────────────────────────────────────────────────────────
+export type { ComplaintActionState } from "@/lib/complaints/types";
 
-export type ComplaintActionState = {
-  success: boolean;
-  message: string;
-  errors?: Record<string, string[]>;
+const STAFF_ROLES = ["OWNER", "TECHNICIAN", "ADMIN"] as const;
+
+const STATUS_LABELS: Record<ComplaintStatus, string> = {
+  pending: "En attente",
+  in_progress: "En cours",
+  resolved: "Résolue",
+  rejected: "Rejetée",
 };
 
-export type SerializedComplaint = {
-  _id: string;
-  tenantId: string;
-  title: string;
-  description: string;
-  category: ComplaintCategory;
-  priority: ComplaintPriority;
-  status: ComplaintStatus;
-  technicianId?: string;
-  resolutionNotes?: string;
-  createdAt: string;
-  updatedAt: string;
-};
+const REVALIDATE_PATHS = [
+  "/dashboard/tenant/complaints",
+  "/dashboard/tenant",
+  "/dashboard/owner/complaints",
+  "/dashboard/owner",
+  "/dashboard/technician/complaints",
+  "/dashboard/technician",
+];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -46,6 +48,12 @@ function fieldErrors(error: ZodError): Record<string, string[]> {
       (entry): entry is [string, string[]] => entry[1] !== undefined,
     ),
   );
+}
+
+function revalidateComplaintPages() {
+  for (const path of REVALIDATE_PATHS) {
+    revalidatePath(path);
+  }
 }
 
 function unauthorized(): ComplaintActionState {
@@ -60,11 +68,27 @@ function notFound(): ComplaintActionState {
   return { success: false, message: "Réclamation introuvable." };
 }
 
+function isDuplicateKeyError(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    error.code === 11000
+  );
+}
+
+function optionalFormValue(value: FormDataEntryValue | null): string | undefined {
+  if (typeof value !== "string") return undefined;
+  const trimmed = value.trim();
+  return trimmed === "" ? undefined : trimmed;
+}
+
 // ─── CREATE ───────────────────────────────────────────────────────────────────
 
 /**
  * Create a new complaint — TENANT only.
  * tenantId is always derived from the verified session, never from client input.
+ * An optional clientKey makes offline retries idempotent.
  */
 export async function createComplaint(
   _prevState: ComplaintActionState | null,
@@ -81,6 +105,7 @@ export async function createComplaint(
     description: formData.get("description"),
     category: formData.get("category"),
     priority: formData.get("priority"),
+    clientKey: optionalFormValue(formData.get("clientKey")),
   });
 
   if (!parsed.success) {
@@ -100,10 +125,20 @@ export async function createComplaint(
       status: "pending",
     });
 
-    revalidatePath("/dashboard/tenant/complaints");
+    revalidateComplaintPages();
 
     return { success: true, message: "Réclamation soumise avec succès." };
   } catch (error: unknown) {
+    // A retried offline draft may already have reached the database even if
+    // the client never received the response. Treat it as a success.
+    if (isDuplicateKeyError(error) && parsed.data.clientKey) {
+      revalidateComplaintPages();
+      return {
+        success: true,
+        message: "Cette réclamation a déjà été enregistrée. Aucun doublon créé.",
+      };
+    }
+
     console.error("[createComplaint] error:", error);
     return {
       success: false,
@@ -164,7 +199,7 @@ export async function updateComplaint(
       };
     }
 
-    revalidatePath("/dashboard/tenant/complaints");
+    revalidateComplaintPages();
 
     return { success: true, message: "Réclamation modifiée avec succès." };
   } catch (error: unknown) {
@@ -223,7 +258,7 @@ export async function deleteComplaint(
       };
     }
 
-    revalidatePath("/dashboard/tenant/complaints");
+    revalidateComplaintPages();
 
     return { success: true, message: "Réclamation supprimée avec succès." };
   } catch (error: unknown) {
@@ -238,7 +273,11 @@ export async function deleteComplaint(
 // ─── UPDATE STATUS (Owner / Technician / Admin) ───────────────────────────────
 
 /**
- * Change the status of any complaint — OWNER, TECHNICIAN, or ADMIN only.
+ * Change the status of a complaint — OWNER, TECHNICIAN, or ADMIN only.
+ *
+ * Staff can only apply an allowed transition. Technicians can only work on
+ * unassigned complaints or complaints already assigned to them, and they claim
+ * an unassigned complaint when they start or resolve it.
  */
 export async function updateComplaintStatus(
   _prevState: ComplaintActionState | null,
@@ -247,15 +286,15 @@ export async function updateComplaintStatus(
   const session = await getSession();
   if (!session) return unauthorized();
 
-  const allowedRoles = ["OWNER", "TECHNICIAN", "ADMIN"] as const;
-  if (!allowedRoles.includes(session.activeRole as (typeof allowedRoles)[number])) {
-    return forbidden();
-  }
+  const isStaff = STAFF_ROLES.includes(
+    session.activeRole as (typeof STAFF_ROLES)[number],
+  );
+  if (!isStaff) return forbidden();
 
   const parsed = updateStatusSchema.safeParse({
     id: formData.get("id"),
     status: formData.get("status"),
-    resolutionNotes: formData.get("resolutionNotes") ?? undefined,
+    resolutionNotes: optionalFormValue(formData.get("resolutionNotes")),
   });
 
   if (!parsed.success) {
@@ -273,22 +312,99 @@ export async function updateComplaintStatus(
   try {
     await connectDB();
 
-    const updateFields: Record<string, unknown> = { status };
-    if (resolutionNotes !== undefined) {
-      updateFields.resolutionNotes = resolutionNotes;
+    const existing = await Complaint.findById(id)
+      .select("status technicianId")
+      .lean();
+
+    if (!existing) return notFound();
+
+    if (
+      session.activeRole === "TECHNICIAN" &&
+      existing.technicianId &&
+      existing.technicianId.toString() !== session.userId
+    ) {
+      return forbidden();
     }
 
-    const result = await Complaint.updateOne(
-      { _id: id },
-      { $set: updateFields },
-    );
+    if (!isComplaintStatusTransitionAllowed(existing.status, status)) {
+      return {
+        success: false,
+        message: `Transition non autorisée : ${STATUS_LABELS[existing.status]} → ${STATUS_LABELS[status]}.`,
+      };
+    }
 
-    if (result.matchedCount === 0) return notFound();
+    if (
+      (status === "resolved" || status === "rejected") &&
+      !resolutionNotes
+    ) {
+      return {
+        success: false,
+        message:
+          status === "resolved"
+            ? "Une note de résolution est requise pour clôturer une réclamation."
+            : "Un motif est requis pour rejeter une réclamation.",
+        errors: {
+          resolutionNotes: [
+            "Ce champ est obligatoire pour ce changement de statut.",
+          ],
+        },
+      };
+    }
 
-    revalidatePath("/dashboard/owner/complaints");
-    revalidatePath("/dashboard/technician/complaints");
+    const setFields: Record<string, unknown> = { status };
+    const unsetFields: Record<string, unknown> = {};
 
-    return { success: true, message: "Statut mis à jour avec succès." };
+    if (resolutionNotes) {
+      setFields.resolutionNotes = resolutionNotes;
+    } else if (status === "pending" || status === "in_progress") {
+      // Reopening a complaint should not keep a stale resolution note.
+      if (existing.status !== status) {
+        unsetFields.resolutionNotes = "";
+      }
+    }
+
+    if (
+      session.activeRole === "TECHNICIAN" &&
+      !existing.technicianId &&
+      (status === "in_progress" || status === "resolved")
+    ) {
+      setFields.technicianId = session.userId;
+    }
+
+    const update: Record<string, unknown> = { $set: setFields };
+    if (Object.keys(unsetFields).length > 0) {
+      update.$unset = unsetFields;
+    }
+
+    // The status filter makes concurrent transitions fail instead of
+    // silently overwriting a status another staff member just set.
+    const filter: Record<string, unknown> = {
+      _id: id,
+      status: existing.status,
+    };
+    if (session.activeRole === "TECHNICIAN") {
+      filter.$or = [
+        { technicianId: session.userId },
+        { technicianId: { $exists: false } },
+      ];
+    }
+
+    const result = await Complaint.updateOne(filter, update);
+
+    if (result.matchedCount === 0) {
+      return {
+        success: false,
+        message:
+          "La réclamation a été modifiée entre-temps. Rechargez la page et réessayez.",
+      };
+    }
+
+    revalidateComplaintPages();
+
+    return {
+      success: true,
+      message: `Statut mis à jour : ${STATUS_LABELS[status]}.`,
+    };
   } catch (error: unknown) {
     console.error("[updateComplaintStatus] error:", error);
     return {
@@ -296,70 +412,4 @@ export async function updateComplaintStatus(
       message: "Impossible de mettre à jour le statut. Veuillez réessayer.",
     };
   }
-}
-
-// ─── READ QUERIES ─────────────────────────────────────────────────────────────
-
-/**
- * Fetch the authenticated tenant's own complaints, newest first.
- * Returns plain serializable objects (no Mongoose documents on client boundary).
- */
-export async function getMyComplaints(): Promise<SerializedComplaint[]> {
-  const session = await getSession();
-  if (!session) return [];
-
-  await connectDB();
-
-  const docs = await Complaint.find({ tenantId: session.userId })
-    .sort({ createdAt: -1 })
-    .lean();
-
-  return docs.map((doc) => ({
-    _id: doc._id.toString(),
-    tenantId: doc.tenantId.toString(),
-    title: doc.title,
-    description: doc.description,
-    category: doc.category,
-    priority: doc.priority,
-    status: doc.status,
-    technicianId: doc.technicianId?.toString(),
-    resolutionNotes: doc.resolutionNotes,
-    createdAt: doc.createdAt.toISOString(),
-    updatedAt: doc.updatedAt.toISOString(),
-  }));
-}
-
-/**
- * Fetch ALL complaints for staff views — OWNER, TECHNICIAN, ADMIN only.
- * Optionally filter by status.
- */
-export async function getAllComplaints(
-  filterStatus?: ComplaintStatus,
-): Promise<SerializedComplaint[]> {
-  const session = await getSession();
-  if (!session) return [];
-
-  const allowedRoles = ["OWNER", "TECHNICIAN", "ADMIN"] as const;
-  if (!allowedRoles.includes(session.activeRole as (typeof allowedRoles)[number])) {
-    return [];
-  }
-
-  await connectDB();
-
-  const query = filterStatus ? { status: filterStatus } : {};
-  const docs = await Complaint.find(query).sort({ createdAt: -1 }).lean();
-
-  return docs.map((doc) => ({
-    _id: doc._id.toString(),
-    tenantId: doc.tenantId.toString(),
-    title: doc.title,
-    description: doc.description,
-    category: doc.category,
-    priority: doc.priority,
-    status: doc.status,
-    technicianId: doc.technicianId?.toString(),
-    resolutionNotes: doc.resolutionNotes,
-    createdAt: doc.createdAt.toISOString(),
-    updatedAt: doc.updatedAt.toISOString(),
-  }));
 }

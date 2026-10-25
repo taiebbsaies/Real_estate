@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { updateComplaintStatus } from "@/app/actions/complaints";
-import type { SerializedComplaint } from "@/app/actions/complaints";
+import type { SerializedComplaint } from "@/lib/complaints/types";
 
 const STATUS_OPTIONS = [
   { value: "pending", label: "En attente" },

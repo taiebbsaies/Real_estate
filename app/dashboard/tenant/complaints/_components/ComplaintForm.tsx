@@ -3,7 +3,7 @@
 import { useActionState, useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { createComplaint, updateComplaint } from "@/app/actions/complaints";
-import type { SerializedComplaint } from "@/app/actions/complaints";
+import type { SerializedComplaint } from "@/lib/complaints/types";
 import { COMPLAINT_CATEGORIES, COMPLAINT_PRIORITIES } from "@/lib/constants/complaint";
 
 // ─── Category / Priority labels ───────────────────────────────────────────────
