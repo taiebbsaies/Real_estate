@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
 
+import type { SessionPayload } from "@/lib/session";
+
 const SESSION_COOKIE_NAME = "homecheck_session";
 
 function getJwtSecret(): Uint8Array {
@@ -21,12 +23,12 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const token = request.cookies.get(SESSION_COOKIE_NAME)?.value;
 
-  let session: any = null;
+  let session: SessionPayload | null = null;
 
   if (token) {
     try {
       const { payload } = await jwtVerify(token, getJwtSecret());
-      session = payload;
+      session = payload as unknown as SessionPayload;
     } catch {
       // Invalid or expired token
     }
