@@ -100,7 +100,11 @@ export function removeDraft(ownerId: string, clientKey: string): void {
     const next = loadDrafts(ownerId).filter(
       (draft) => draft.clientKey !== clientKey,
     );
-    window.localStorage.setItem(storageKey(ownerId), JSON.stringify(next));
+    if (next.length === 0) {
+      window.localStorage.removeItem(storageKey(ownerId));
+    } else {
+      window.localStorage.setItem(storageKey(ownerId), JSON.stringify(next));
+    }
     notifyDraftsChanged();
   } catch {
     // Ignore.
