@@ -3,7 +3,7 @@ import {
   COMPLAINT_CATEGORIES,
   COMPLAINT_PRIORITIES,
   COMPLAINT_STATUSES,
-} from "@/models/complaint";
+} from "@/lib/constants/complaint";
 
 // ─── Shared field definitions ─────────────────────────────────────────────────
 

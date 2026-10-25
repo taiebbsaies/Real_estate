@@ -13,7 +13,7 @@ import {
   updateStatusSchema,
   deleteComplaintSchema,
 } from "@/lib/validations/complaint";
-import type { ComplaintCategory, ComplaintPriority, ComplaintStatus } from "@/models/complaint";
+import type { ComplaintCategory, ComplaintPriority, ComplaintStatus } from "@/lib/constants/complaint";
 
 // ─── Shared types ─────────────────────────────────────────────────────────────
 

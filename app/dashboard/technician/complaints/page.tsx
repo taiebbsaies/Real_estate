@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { getSession } from "@/lib/session";
 import { getAllComplaints } from "@/app/actions/complaints";
-import StatusUpdateForm from "../owner/complaints/_components/StatusUpdateForm";
+import StatusUpdateForm from "@/app/dashboard/owner/complaints/_components/StatusUpdateForm";
 
 export const dynamic = "force-dynamic";
 
