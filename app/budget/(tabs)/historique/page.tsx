@@ -42,8 +42,8 @@ function formatMonthShortLabel(month: string): string {
 
 function progressColor(entry: HistoryEntry): string {
   return entry.status === "depasse"
-    ? "bg-red-500"
-    : "bg-emerald-500/60";
+    ? "bg-red-500 dark:bg-red-400"
+    : "bg-emerald-500/60 dark:bg-emerald-400/60";
 }
 
 function HistoryBadge({ entry, isCurrent }: { entry: HistoryEntry; isCurrent: boolean }) {

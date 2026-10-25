@@ -106,10 +106,10 @@ async function MonthContent({ searchParams }: { searchParams: SearchParams }) {
   const percentWidth = Math.min(100, Math.max(0, summary.percentUsed));
   const barColor =
     summary.alertLevel === "exceeded"
-      ? "bg-red-500"
+      ? "bg-red-500 dark:bg-red-400"
       : summary.alertLevel === "warning"
-        ? "bg-amber-500"
-        : "bg-emerald-500";
+        ? "bg-amber-500 dark:bg-amber-400"
+        : "bg-emerald-500 dark:bg-emerald-400";
 
   return (
     <div className="flex flex-col gap-4 px-4 pt-6 md:mx-auto md:w-full md:max-w-[560px] md:pt-10">

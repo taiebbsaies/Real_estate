@@ -64,12 +64,12 @@ function buildHref(month: string, category: BudgetCategory | undefined): string 
 
 function alertBarColor(level: "normal" | "warning" | "exceeded"): string {
   if (level === "exceeded") {
-    return "bg-red-500";
+    return "bg-red-500 dark:bg-red-400";
   }
   if (level === "warning") {
-    return "bg-amber-500";
+    return "bg-amber-500 dark:bg-amber-400";
   }
-  return "bg-emerald-500";
+  return "bg-emerald-500 dark:bg-emerald-400";
 }
 
 async function ExpensesContent({ searchParams }: { searchParams: SearchParams }) {
