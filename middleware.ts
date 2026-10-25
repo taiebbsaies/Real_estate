@@ -40,7 +40,8 @@ export async function middleware(request: NextRequest) {
   // Protected paths check
   const isProtectedPath =
     pathname.startsWith("/dashboard") ||
-    pathname.startsWith("/profile");
+    pathname.startsWith("/profile") ||
+    pathname.startsWith("/budget");
 
   if (isProtectedPath) {
     if (!session) {
@@ -68,6 +69,7 @@ export const config = {
   matcher: [
     "/dashboard/:path*",
     "/profile/:path*",
+    "/budget/:path*",
     "/login",
     "/signup",
   ],

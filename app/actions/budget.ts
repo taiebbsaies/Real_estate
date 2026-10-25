@@ -59,8 +59,9 @@ export async function upsertBudget(
     };
   }
 
+  const userId = await getUserId();
+
   try {
-    const userId = await getUserId();
     await connectDB();
 
     const { month, limit, income } = parsed.data;
@@ -118,8 +119,9 @@ export async function createExpense(
     };
   }
 
+  const userId = await getUserId();
+
   try {
-    const userId = await getUserId();
     await connectDB();
 
     await Expense.create({ userId, ...parsed.data });
@@ -163,8 +165,9 @@ export async function updateExpense(
     return { success: false, message: "Dépense introuvable." };
   }
 
+  const userId = await getUserId();
+
   try {
-    const userId = await getUserId();
     await connectDB();
 
     const result = await Expense.updateOne(
@@ -219,8 +222,9 @@ export async function deleteExpense(
     return { success: false, message: "Dépense introuvable." };
   }
 
+  const userId = await getUserId();
+
   try {
-    const userId = await getUserId();
     await connectDB();
 
     const result = await Expense.deleteOne({ _id: id, userId });
