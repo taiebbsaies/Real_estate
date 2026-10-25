@@ -4,6 +4,13 @@ import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { upsertBudget } from "@/app/actions/budget";
 import { millimesToTnd } from "@/lib/budget/calculations";
+import Card from "../../../_components/ui/Card";
+import Alert from "../../../_components/ui/Alert";
+import { Button } from "../../../_components/ui/Button";
+import Field, {
+  fieldShellClass,
+  fieldErrorClass,
+} from "../../../_components/ui/Field";
 
 type BudgetFormProps = {
   month: string;
@@ -18,13 +25,9 @@ function SubmitButton() {
   const { pending } = useFormStatus();
 
   return (
-    <button
-      type="submit"
-      disabled={pending}
-      className="h-12 w-full rounded-xl bg-[var(--budget-primary)] text-[15px] font-semibold text-white transition-colors hover:bg-[var(--budget-primary-dark)] disabled:opacity-50"
-    >
+    <Button type="submit" variant="primary" className="w-full" disabled={pending}>
       {pending ? "Enregistrement…" : "Enregistrer"}
-    </button>
+    </Button>
   );
 }
 
@@ -56,8 +59,8 @@ export default function BudgetForm({
   }
 
   return (
-    <section className="flex flex-col gap-5 rounded-[16px] border border-[var(--budget-border)] bg-[var(--budget-surface)] p-5">
-      <h2 className="budget-heading text-[18px] font-medium text-[var(--budget-secondary)]">
+    <Card className="flex flex-col gap-5">
+      <h2 className="text-base font-bold text-zinc-950 dark:text-zinc-50">
         {hasBudget ? "Modifier le plafond" : "Plafond mensuel"}
       </h2>
 
@@ -65,16 +68,18 @@ export default function BudgetForm({
         <input type="hidden" name="month" value={month} />
 
         {state?.errors?.month?.map((error) => (
-          <p key={error} className="text-[13px] font-medium text-[var(--budget-primary)]">
+          <p key={error} className={fieldErrorClass}>
             {error}
           </p>
         ))}
 
-        <div className="flex flex-col gap-2">
-          <label htmlFor="limit" className="text-[13px] font-medium text-[var(--budget-muted)]">
-            Plafond mensuel (TND)
-          </label>
-          <div className="flex h-12 items-center rounded-xl border border-[var(--budget-border-strong)] bg-[var(--budget-input-bg)] px-4 transition-colors focus-within:border-[var(--budget-primary)]">
+        <Field
+          id="limit"
+          label="Plafond mensuel (TND)"
+          hint="Le montant maximum que vous autorisez pour ce mois."
+          errors={state?.errors?.limit}
+        >
+          <div className={fieldShellClass(!!state?.errors?.limit)}>
             <input
               id="limit"
               name="limit"
@@ -82,63 +87,53 @@ export default function BudgetForm({
               inputMode="decimal"
               autoComplete="off"
               required
+              aria-invalid={!!state?.errors?.limit}
+              aria-describedby={state?.errors?.limit ? "limit-error" : undefined}
               placeholder="Ex. 1 100,000"
               value={limit}
               onChange={(event) => setLimit(event.target.value)}
-              className="budget-tabular w-full bg-transparent text-[18px] font-semibold outline-none placeholder:font-normal placeholder:text-[var(--budget-muted)]/60"
+              className="tabular-nums w-full bg-transparent text-lg font-semibold text-zinc-900 outline-none placeholder:font-normal placeholder:text-zinc-400 dark:text-zinc-100 dark:placeholder:text-zinc-600"
             />
-            <span className="ml-2 shrink-0 text-[13px] font-medium text-[var(--budget-muted)]">
+            <span className="ml-2 shrink-0 text-[13px] font-medium text-zinc-500 dark:text-zinc-400">
               TND
             </span>
           </div>
-          <p className="text-[12px] text-[var(--budget-muted)]">
-            Le montant maximum que vous autorisez pour ce mois.
-          </p>
-          {state?.errors?.limit?.map((error) => (
-            <p key={error} className="text-[12px] font-medium text-[var(--budget-primary)]">
-              {error}
-            </p>
-          ))}
-        </div>
+        </Field>
 
-        <div className="flex flex-col gap-2">
-          <label htmlFor="income" className="text-[13px] font-medium text-[var(--budget-muted)]">
-            Revenu mensuel (optionnel)
-          </label>
-          <div className="flex h-12 items-center rounded-xl border border-[var(--budget-border-strong)] bg-[var(--budget-input-bg)] px-4 transition-colors focus-within:border-[var(--budget-primary)]">
+        <Field
+          id="income"
+          label="Revenu mensuel (optionnel)"
+          hint="Le revenu sert uniquement de repère, il n'est jamais requis."
+          errors={state?.errors?.income}
+        >
+          <div className={fieldShellClass(!!state?.errors?.income)}>
             <input
               id="income"
               name="income"
               type="text"
               inputMode="decimal"
               autoComplete="off"
+              aria-invalid={!!state?.errors?.income}
+              aria-describedby={state?.errors?.income ? "income-error" : undefined}
               placeholder="Ex. 1 800,000"
               value={income}
               onChange={(event) => setIncome(event.target.value)}
-              className="budget-tabular w-full bg-transparent text-[16px] font-medium outline-none placeholder:font-normal placeholder:text-[var(--budget-muted)]/60"
+              className="tabular-nums w-full bg-transparent text-base font-medium text-zinc-900 outline-none placeholder:font-normal placeholder:text-zinc-400 dark:text-zinc-100 dark:placeholder:text-zinc-600"
             />
-            <span className="ml-2 shrink-0 text-[13px] font-medium text-[var(--budget-muted)]">
+            <span className="ml-2 shrink-0 text-[13px] font-medium text-zinc-500 dark:text-zinc-400">
               TND
             </span>
           </div>
-          <p className="text-[12px] text-[var(--budget-muted)]">
-            Le revenu sert uniquement de repère, il n&apos;est jamais requis.
-          </p>
-          {state?.errors?.income?.map((error) => (
-            <p key={error} className="text-[12px] font-medium text-[var(--budget-primary)]">
-              {error}
-            </p>
-          ))}
-        </div>
+        </Field>
 
         {showReuseButton && (
           <button
             type="button"
             onClick={reusePreviousBudget}
-            className="h-11 rounded-xl border border-[var(--budget-border-strong)] px-4 text-left text-[13px] font-medium text-[var(--budget-text)] transition-colors hover:bg-[var(--budget-bg)]"
+            className="h-11 w-full rounded-xl border border-zinc-200 bg-white/60 px-4 text-left text-[13px] font-medium text-zinc-800 transition-colors hover:border-zinc-300 dark:border-zinc-800 dark:bg-[#151518]/60 dark:text-zinc-300 dark:hover:border-zinc-700"
           >
             Reprendre le budget de {previousMonthLabel} (
-            <span className="budget-tabular">
+            <span className="tabular-nums">
               {previousBudget ? millimesToTnd(previousBudget.limit) : ""} TND
             </span>
             )
@@ -148,18 +143,11 @@ export default function BudgetForm({
         <SubmitButton />
 
         {state?.message && (
-          <p
-            role="status"
-            className={`text-[13px] font-medium ${
-              state.success
-                ? "text-[var(--budget-secondary)]"
-                : "text-[var(--budget-primary)]"
-            }`}
-          >
-            {state.message}
-          </p>
+          <Alert kind={state.success ? "success" : "error"} role="status">
+            <p className="font-medium">{state.message}</p>
+          </Alert>
         )}
       </form>
-    </section>
+    </Card>
   );
 }
