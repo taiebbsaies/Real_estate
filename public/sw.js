@@ -1,4 +1,4 @@
-const CACHE_NAME = "homecheck-cache-v1";
+const CACHE_NAME = "homecheck-cache-v2";
 const STATIC_ASSETS = [
   "/",
   "/login",
@@ -6,6 +6,7 @@ const STATIC_ASSETS = [
   "/manifest.json",
   "/icons/icon-192x192.svg",
   "/icons/icon-512x512.svg",
+  "/dashboard/tenant/complaints",
 ];
 
 // Install Event - Pre-cache core shell
@@ -90,3 +91,20 @@ self.addEventListener("fetch", (event) => {
     );
   }
 });
+
+// Message Event - notify all clients when back online so they can sync drafts
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
+});
+
+// Online Event - broadcast to all open clients so they can attempt draft sync
+self.addEventListener("online", () => {
+  self.clients.matchAll({ type: "window" }).then((clients) => {
+    clients.forEach((client) => {
+      client.postMessage({ type: "ONLINE" });
+    });
+  });
+});
+
