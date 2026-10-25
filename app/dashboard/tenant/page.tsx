@@ -31,6 +31,12 @@ export default async function TenantDashboardPage() {
           </div>
           <div className="flex items-center gap-3">
             <Link
+              href="/dashboard/tenant/complaints"
+              className="text-xs font-medium text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100"
+            >
+              Mes réclamations
+            </Link>
+            <Link
               href="/profile"
               className="text-xs font-medium text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100"
             >
@@ -104,16 +110,19 @@ export default async function TenantDashboardPage() {
             <p className="mt-1 text-xs text-zinc-500">Inspection numérique validée</p>
           </div>
 
-          <div className="linear-card rounded-2xl border border-zinc-200/90 bg-white/90 p-5 shadow-xs backdrop-blur-md dark:border-zinc-800/90 dark:bg-[#111114]/90">
+          <Link
+            href="/dashboard/tenant/complaints"
+            className="linear-card block rounded-2xl border border-zinc-200/90 bg-white/90 p-5 shadow-xs backdrop-blur-md transition hover:border-zinc-400 dark:border-zinc-800/90 dark:bg-[#111114]/90 dark:hover:border-zinc-600"
+          >
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
-                Maintenance
+                Réclamations
               </span>
-              <span className="text-xs font-semibold text-emerald-500">À jour</span>
+              <span className="text-xs font-semibold text-zinc-400">→</span>
             </div>
             <p className="mt-3 text-3xl font-extrabold tracking-tight text-zinc-950 dark:text-zinc-50">0</p>
-            <p className="mt-1 text-xs text-zinc-500">Demandes de réparation en cours</p>
-          </div>
+            <p className="mt-1 text-xs text-zinc-500">Voir mes réclamations</p>
+          </Link>
         </div>
 
         {/* Section matching preview */}

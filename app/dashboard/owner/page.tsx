@@ -24,12 +24,20 @@ export default async function OwnerDashboardPage() {
               Espace Propriétaire
             </span>
           </div>
-          <Link
-            href="/profile"
-            className="text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
-          >
-            Mon Profil
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/dashboard/owner/complaints"
+              className="text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+            >
+              Réclamations
+            </Link>
+            <Link
+              href="/profile"
+              className="text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+            >
+              Mon Profil
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -76,6 +84,18 @@ export default async function OwnerDashboardPage() {
             <p className="mt-2 text-3xl font-bold text-zinc-900 dark:text-zinc-50">2</p>
             <p className="mt-1 text-xs text-zinc-500">Demandes de maintenance</p>
           </div>
+
+          {/* Complaints shortcut */}
+          <Link
+            href="/dashboard/owner/complaints"
+            className="col-span-full rounded-xl border border-zinc-200 bg-white p-5 shadow-sm transition hover:border-zinc-400 hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-600 sm:col-span-2 lg:col-span-1"
+          >
+            <span className="text-xs font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+              Réclamations
+            </span>
+            <p className="mt-2 text-3xl font-bold text-zinc-900 dark:text-zinc-50">→</p>
+            <p className="mt-1 text-xs text-zinc-500">Gérer les réclamations</p>
+          </Link>
         </div>
       </main>
     </div>
