@@ -17,6 +17,11 @@ export type {
 
 export interface IComplaint {
   tenantId: Types.ObjectId;
+  /**
+   * Optional development-only test apartment reference. Legacy complaints that
+   * do not target a specific apartment simply omit this field.
+   */
+  propertyId?: Types.ObjectId;
   title: string;
   description: string;
   category: ComplaintCategory;
@@ -39,6 +44,13 @@ const ComplaintSchema = new Schema<IComplaint>(
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
+      index: true,
+    },
+
+    propertyId: {
+      type: Schema.Types.ObjectId,
+      ref: "TestProperty",
+      default: undefined,
       index: true,
     },
 
@@ -103,6 +115,8 @@ const ComplaintSchema = new Schema<IComplaint>(
 
 // Compound index for tenant's complaints sorted by date
 ComplaintSchema.index({ tenantId: 1, createdAt: -1 });
+// Staff views filtering by the development-only test apartment
+ComplaintSchema.index({ propertyId: 1, createdAt: -1 });
 // Index for staff views filtered by status
 ComplaintSchema.index({ status: 1, createdAt: -1 });
 // Idempotency: one complaint per tenant and client-generated key

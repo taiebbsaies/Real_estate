@@ -18,6 +18,11 @@ import {
   type ComplaintStatus,
 } from "@/lib/constants/complaint";
 import type { ComplaintActionState } from "@/lib/complaints/types";
+import { isTestPropertiesEnabled } from "@/lib/test-properties/config";
+import {
+  getTestPropertyOwnerId,
+  tenantOccupiesTestProperty,
+} from "@/lib/test-properties/queries";
 
 export type { ComplaintActionState } from "@/lib/complaints/types";
 
@@ -105,6 +110,7 @@ export async function createComplaint(
     description: formData.get("description"),
     category: formData.get("category"),
     priority: formData.get("priority"),
+    propertyId: optionalFormValue(formData.get("propertyId")),
     clientKey: optionalFormValue(formData.get("clientKey")),
   });
 
@@ -116,12 +122,40 @@ export async function createComplaint(
     };
   }
 
+  const { propertyId, ...fields } = parsed.data;
+
   try {
     await connectDB();
 
+    if (propertyId) {
+      if (!isTestPropertiesEnabled()) {
+        return {
+          success: false,
+          message: "Les appartements de test ne sont pas activés.",
+          errors: { propertyId: ["Appartement de test indisponible."] },
+        };
+      }
+
+      const occupies = await tenantOccupiesTestProperty(
+        session.userId,
+        propertyId,
+      );
+      if (!occupies) {
+        return {
+          success: false,
+          message:
+            "Vous n'occupez pas cet appartement de test. Choisissez un appartement associé à votre compte.",
+          errors: {
+            propertyId: ["Occupation active requise pour cet appartement."],
+          },
+        };
+      }
+    }
+
     await Complaint.create({
       tenantId: session.userId,
-      ...parsed.data,
+      ...fields,
+      ...(propertyId ? { propertyId } : {}),
       status: "pending",
     });
 
@@ -168,6 +202,7 @@ export async function updateComplaint(
     description: formData.get("description"),
     category: formData.get("category"),
     priority: formData.get("priority"),
+    propertyId: optionalFormValue(formData.get("propertyId")),
   });
 
   if (!parsed.success) {
@@ -178,17 +213,53 @@ export async function updateComplaint(
     };
   }
 
-  const { id, ...fields } = parsed.data;
+  const { id, propertyId, ...fields } = parsed.data;
 
   if (!isValidObjectId(id)) return notFound();
 
   try {
     await connectDB();
 
+    if (propertyId) {
+      if (!isTestPropertiesEnabled()) {
+        return {
+          success: false,
+          message: "Les appartements de test ne sont pas activés.",
+          errors: { propertyId: ["Appartement de test indisponible."] },
+        };
+      }
+
+      const occupies = await tenantOccupiesTestProperty(
+        session.userId,
+        propertyId,
+      );
+      if (!occupies) {
+        return {
+          success: false,
+          message:
+            "Vous n'occupez pas cet appartement de test. Choisissez un appartement associé à votre compte.",
+          errors: {
+            propertyId: ["Occupation active requise pour cet appartement."],
+          },
+        };
+      }
+    }
+
+    const setFields: Record<string, unknown> = { ...fields };
+    if (propertyId) {
+      setFields.propertyId = propertyId;
+    }
+
+    const update: Record<string, unknown> = { $set: setFields };
+    // Removing the apartment is explicit: an empty select clears the link.
+    if (!propertyId) {
+      update.$unset = { propertyId: "" };
+    }
+
     // Ownership + status check in a single atomic query
     const result = await Complaint.updateOne(
       { _id: id, tenantId: session.userId, status: "pending" },
-      { $set: fields },
+      update,
     );
 
     if (result.matchedCount === 0) {
@@ -313,7 +384,7 @@ export async function updateComplaintStatus(
     await connectDB();
 
     const existing = await Complaint.findById(id)
-      .select("status technicianId")
+      .select("status technicianId propertyId")
       .lean();
 
     if (!existing) return notFound();
@@ -324,6 +395,17 @@ export async function updateComplaintStatus(
       existing.technicianId.toString() !== session.userId
     ) {
       return forbidden();
+    }
+
+    // Owners may only update complaints targeting their own test apartment.
+    // Legacy complaints without a property keep the previous behaviour.
+    if (session.activeRole === "OWNER" && existing.propertyId) {
+      const ownerId = await getTestPropertyOwnerId(
+        existing.propertyId.toString(),
+      );
+      if (!ownerId || ownerId !== session.userId) {
+        return forbidden();
+      }
     }
 
     if (!isComplaintStatusTransitionAllowed(existing.status, status)) {
