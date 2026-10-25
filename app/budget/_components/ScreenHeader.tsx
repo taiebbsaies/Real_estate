@@ -17,11 +17,11 @@ export default function ScreenHeader({
       <Link
         href={backHref}
         aria-label={backLabel}
-        className="-ml-2 flex h-11 w-11 items-center justify-center text-[var(--budget-muted)] transition-colors hover:text-[var(--budget-text)]"
+        className="-ml-2 flex h-11 w-11 items-center justify-center text-zinc-500 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
       >
         <ArrowLeftIcon className="h-5 w-5" />
       </Link>
-      <h1 className="budget-heading text-[24px] font-semibold tracking-tight text-[var(--budget-secondary)]">
+      <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
         {title}
       </h1>
     </header>

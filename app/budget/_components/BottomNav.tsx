@@ -31,7 +31,7 @@ export default function BottomNav() {
   return (
     <nav
       aria-label="Navigation du module budget"
-      className="fixed bottom-0 left-0 right-0 z-50 border-t border-[var(--budget-border)] bg-[var(--budget-surface)] pb-[env(safe-area-inset-bottom)] md:hidden"
+      className="fixed bottom-0 left-0 right-0 z-50 border-t border-zinc-200/80 bg-white/85 pb-[env(safe-area-inset-bottom)] backdrop-blur-md dark:border-zinc-800/80 dark:bg-[#08080a]/85 md:hidden"
     >
       <div className="mx-auto flex h-16 w-full max-w-[480px] items-stretch">
         {TABS.map(({ href, label, Icon, isActive }) => {
@@ -44,8 +44,8 @@ export default function BottomNav() {
               aria-current={active ? "page" : undefined}
               className={`flex min-w-[44px] flex-1 flex-col items-center justify-center gap-1 transition-colors ${
                 active
-                  ? "text-[var(--budget-primary)]"
-                  : "text-[var(--budget-muted)] hover:text-[var(--budget-text)]"
+                  ? "text-zinc-950 dark:text-zinc-100"
+                  : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
               }`}
             >
               <Icon className="h-5 w-5" />
