@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
+import type { SessionPayload } from "@/lib/session";
 
 const SESSION_COOKIE_NAME = "homecheck_session";
 
@@ -21,12 +22,12 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const token = request.cookies.get(SESSION_COOKIE_NAME)?.value;
 
-  let session: any = null;
+  let session: SessionPayload | null = null;
 
   if (token) {
     try {
       const { payload } = await jwtVerify(token, getJwtSecret());
-      session = payload;
+      session = payload as unknown as SessionPayload;
     } catch {
       // Invalid or expired token
     }
@@ -53,7 +54,7 @@ export async function middleware(request: NextRequest) {
     for (const [prefix, allowedRoles] of Object.entries(roleRoutePrefixes)) {
       if (pathname.startsWith(prefix)) {
         const userRole = session.activeRole || session.roles?.[0];
-        if (!allowedRoles.includes(userRole)) {
+        if (!userRole || !allowedRoles.includes(userRole)) {
           // Unauthorized for this role -> redirect to home or general dashboard
           return NextResponse.redirect(new URL("/", request.url));
         }

@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Hors ligne | HomeCheck</title>
+    <style>
+      :root { color-scheme: light dark; }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+        background: #f4f4f5;
+        color: #18181b;
+      }
+      main {
+        width: 100%;
+        max-width: 460px;
+        border: 1px solid #e4e4e7;
+        border-radius: 20px;
+        background: #fff;
+        padding: 32px;
+        text-align: center;
+        box-shadow: 0 8px 30px rgb(0 0 0 / 6%);
+      }
+      .logo {
+        width: 48px;
+        height: 48px;
+        margin: 0 auto 16px;
+        display: grid;
+        place-items: center;
+        border-radius: 14px;
+        background: #18181b;
+        color: #fff;
+        font-weight: 800;
+      }
+      h1 { margin: 0 0 8px; font-size: 22px; }
+      p { margin: 0 0 16px; font-size: 14px; line-height: 1.6; color: #52525b; }
+      .note {
+        border: 1px solid #bfdbfe;
+        border-radius: 12px;
+        background: #eff6ff;
+        padding: 12px;
+        font-size: 13px;
+        color: #1e40af;
+        text-align: left;
+      }
+      a {
+        display: inline-block;
+        margin-top: 20px;
+        border-radius: 12px;
+        background: #18181b;
+        padding: 11px 20px;
+        color: #fff;
+        font-size: 13px;
+        font-weight: 700;
+        text-decoration: none;
+      }
+      @media (prefers-color-scheme: dark) {
+        body { background: #09090b; color: #fafafa; }
+        main { background: #111114; border-color: #27272a; }
+        p { color: #a1a1aa; }
+        .note { background: #172554; border-color: #1e40af; color: #bfdbfe; }
+        a { background: #fafafa; color: #18181b; }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="logo" aria-hidden="true">H</div>
+      <h1>Vous êtes hors ligne</h1>
+      <p>
+        Cette page nécessite une connexion. Les pages privées ne sont pas
+        conservées dans le cache du service worker.
+      </p>
+      <div class="note">
+        <strong>Vos brouillons de réclamation sont conservés localement</strong>
+        sur cet appareil. Ils seront synchronisés lorsque la connexion reviendra
+        et que vous serez connecté.
+      </div>
+      <a href="/">Réessayer</a>
+    </main>
+  </body>
+</html>

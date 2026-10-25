@@ -1,33 +1,19 @@
 import "server-only";
 import mongoose, { Schema, type Model, type Types } from "mongoose";
+import {
+  COMPLAINT_CATEGORIES,
+  COMPLAINT_PRIORITIES,
+  COMPLAINT_STATUSES,
+  type ComplaintCategory,
+  type ComplaintPriority,
+  type ComplaintStatus,
+} from "@/lib/constants/complaint";
 
-export const COMPLAINT_CATEGORIES = [
-  "plumbing",
-  "electricity",
-  "heating",
-  "structural",
-  "noise",
-  "common_areas",
-  "other",
-] as const;
-
-export const COMPLAINT_PRIORITIES = [
-  "low",
-  "medium",
-  "high",
-  "urgent",
-] as const;
-
-export const COMPLAINT_STATUSES = [
-  "pending",
-  "in_progress",
-  "resolved",
-  "rejected",
-] as const;
-
-export type ComplaintCategory = (typeof COMPLAINT_CATEGORIES)[number];
-export type ComplaintPriority = (typeof COMPLAINT_PRIORITIES)[number];
-export type ComplaintStatus = (typeof COMPLAINT_STATUSES)[number];
+export type {
+  ComplaintCategory,
+  ComplaintPriority,
+  ComplaintStatus,
+} from "@/lib/constants/complaint";
 
 export interface IComplaint {
   tenantId: Types.ObjectId;
@@ -38,6 +24,11 @@ export interface IComplaint {
   status: ComplaintStatus;
   technicianId?: Types.ObjectId;
   resolutionNotes?: string;
+  /**
+   * Client-generated idempotency key. Used by the offline draft queue so a
+   * retry after a lost response cannot create a duplicate complaint.
+   */
+  clientKey?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -96,6 +87,13 @@ const ComplaintSchema = new Schema<IComplaint>(
       trim: true,
       maxlength: 1000,
     },
+
+    clientKey: {
+      type: String,
+      trim: true,
+      maxlength: 100,
+      default: undefined,
+    },
   },
   {
     timestamps: true,
@@ -107,6 +105,14 @@ const ComplaintSchema = new Schema<IComplaint>(
 ComplaintSchema.index({ tenantId: 1, createdAt: -1 });
 // Index for staff views filtered by status
 ComplaintSchema.index({ status: 1, createdAt: -1 });
+// Idempotency: one complaint per tenant and client-generated key
+ComplaintSchema.index(
+  { tenantId: 1, clientKey: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { clientKey: { $type: "string" } },
+  },
+);
 
 const Complaint: Model<IComplaint> =
   (mongoose.models.Complaint as Model<IComplaint>) ||
