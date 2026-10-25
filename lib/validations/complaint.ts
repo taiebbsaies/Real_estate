@@ -1,0 +1,82 @@
+import { z } from "zod";
+import {
+  COMPLAINT_CATEGORIES,
+  COMPLAINT_PRIORITIES,
+  COMPLAINT_STATUSES,
+} from "@/models/complaint";
+
+// ─── Shared field definitions ─────────────────────────────────────────────────
+
+const titleField = z
+  .string()
+  .trim()
+  .min(3, "Le titre doit contenir au moins 3 caractères.")
+  .max(120, "Le titre ne doit pas dépasser 120 caractères.");
+
+const descriptionField = z
+  .string()
+  .trim()
+  .min(10, "La description doit contenir au moins 10 caractères.")
+  .max(2000, "La description ne doit pas dépasser 2000 caractères.");
+
+const categoryField = z.enum(COMPLAINT_CATEGORIES, {
+  error: "Catégorie invalide.",
+});
+
+const priorityField = z.enum(COMPLAINT_PRIORITIES, {
+  error: "Priorité invalide.",
+});
+
+const statusField = z.enum(COMPLAINT_STATUSES, {
+  error: "Statut invalide.",
+});
+
+const idField = z
+  .string()
+  .trim()
+  .min(1, "Identifiant de réclamation manquant.");
+
+const resolutionNotesField = z
+  .string()
+  .trim()
+  .max(1000, "Les notes de résolution ne doivent pas dépasser 1000 caractères.")
+  .transform((v) => (v === "" ? undefined : v))
+  .optional();
+
+// ─── Schemas ──────────────────────────────────────────────────────────────────
+
+/** Used by tenants to submit a new complaint */
+export const createComplaintSchema = z.object({
+  title: titleField,
+  description: descriptionField,
+  category: categoryField,
+  priority: priorityField,
+});
+
+/** Used by tenants to edit their own pending complaint */
+export const updateComplaintSchema = z.object({
+  id: idField,
+  title: titleField,
+  description: descriptionField,
+  category: categoryField,
+  priority: priorityField,
+});
+
+/** Used by owners / technicians / admins to change status + resolution notes */
+export const updateStatusSchema = z.object({
+  id: idField,
+  status: statusField,
+  resolutionNotes: resolutionNotesField,
+});
+
+/** Used to delete a complaint */
+export const deleteComplaintSchema = z.object({
+  id: idField,
+});
+
+// ─── Inferred types ───────────────────────────────────────────────────────────
+
+export type CreateComplaintInput = z.infer<typeof createComplaintSchema>;
+export type UpdateComplaintInput = z.infer<typeof updateComplaintSchema>;
+export type UpdateStatusInput = z.infer<typeof updateStatusSchema>;
+export type DeleteComplaintInput = z.infer<typeof deleteComplaintSchema>;
