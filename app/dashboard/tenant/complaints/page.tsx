@@ -85,7 +85,7 @@ export default async function TenantComplaintsPage() {
 
         {/* Offline banner */}
         <div className="mb-6">
-          <OfflineBanner />
+          <OfflineBanner ownerId={session.userId} />
         </div>
 
         {/* KPI cards */}
@@ -118,7 +118,7 @@ export default async function TenantComplaintsPage() {
         <div className="grid gap-8 lg:grid-cols-[380px_1fr]">
           {/* New complaint form */}
           <section aria-label="Nouvelle réclamation">
-            <ComplaintForm />
+            <ComplaintForm ownerId={session.userId} />
           </section>
 
           {/* Complaint list */}
@@ -129,7 +129,7 @@ export default async function TenantComplaintsPage() {
               </h2>
               <span className="text-xs text-zinc-400">{total} au total</span>
             </div>
-            <ComplaintList complaints={complaints} />
+            <ComplaintList ownerId={session.userId} complaints={complaints} />
           </section>
         </div>
       </main>

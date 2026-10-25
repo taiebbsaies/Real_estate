@@ -1,10 +1,12 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState } from "react";
+import { useActionState, useCallback, useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { createComplaint, updateComplaint } from "@/app/actions/complaints";
-import type { SerializedComplaint } from "@/lib/complaints/types";
+import type { ComplaintActionState, SerializedComplaint } from "@/lib/complaints/types";
 import { COMPLAINT_CATEGORIES, COMPLAINT_PRIORITIES } from "@/lib/constants/complaint";
+import { createComplaintSchema } from "@/lib/validations/complaint";
+import { removeDraft, saveDraft } from "./OfflineBanner";
 
 // ─── Category / Priority labels ───────────────────────────────────────────────
 
@@ -24,6 +26,25 @@ const PRIORITY_LABELS: Record<string, string> = {
   high: "Haute",
   urgent: "Urgente",
 };
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function createClientKey(): string {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return crypto.randomUUID();
+  }
+  return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+function fieldErrors(error: {
+  flatten: () => { fieldErrors: Record<string, string[] | undefined> };
+}): Record<string, string[]> {
+  return Object.fromEntries(
+    Object.entries(error.flatten().fieldErrors).filter(
+      (entry): entry is [string, string[]] => entry[1] !== undefined,
+    ),
+  );
+}
 
 // ─── Submit button ─────────────────────────────────────────────────────────────
 
@@ -67,8 +88,6 @@ function SubmitButton({ label }: { label: string }) {
   );
 }
 
-// ─── Field error ──────────────────────────────────────────────────────────────
-
 function FieldError({ errors, field }: { errors?: Record<string, string[]>; field: string }) {
   const msgs = errors?.[field];
   if (!msgs?.length) return null;
@@ -82,32 +101,121 @@ function FieldError({ errors, field }: { errors?: Record<string, string[]>; fiel
 // ─── Props ────────────────────────────────────────────────────────────────────
 
 interface ComplaintFormProps {
+  /** Scopes local drafts to the authenticated tenant. */
+  ownerId: string;
   editTarget?: SerializedComplaint | null;
   onClose?: () => void;
 }
 
 // ─── Main form ────────────────────────────────────────────────────────────────
 
-export default function ComplaintForm({ editTarget, onClose }: ComplaintFormProps) {
+export default function ComplaintForm({ ownerId, editTarget, onClose }: ComplaintFormProps) {
   const isEditing = !!editTarget;
-  const action = isEditing ? updateComplaint : createComplaint;
-
-  const [state, formAction] = useActionState(action, null);
   const formRef = useRef<HTMLFormElement>(null);
-  const [dismissed, setDismissed] = useState(false);
+  const clientKeyRef = useRef<string | null>(null);
+  const [dismissedState, setDismissedState] = useState<ComplaintActionState | null>(null);
 
-  // Reset form and close on success
-  useEffect(() => {
-    if (state?.success) {
-      formRef.current?.reset();
-      setDismissed(false);
-      if (onClose) {
-        // Small delay so the user can see the success message briefly
-        const t = setTimeout(onClose, 1200);
-        return () => clearTimeout(t);
+  const submitAction = useCallback(
+    async (
+      previousState: ComplaintActionState | null,
+      formData: FormData,
+    ): Promise<ComplaintActionState> => {
+      if (isEditing) {
+        try {
+          return await updateComplaint(previousState, formData);
+        } catch {
+          return {
+            success: false,
+            message:
+              "Connexion requise pour modifier une réclamation. Votre modification n'a pas été enregistrée.",
+          };
+        }
       }
+
+      const raw = {
+        title: String(formData.get("title") ?? ""),
+        description: String(formData.get("description") ?? ""),
+        category: String(formData.get("category") ?? ""),
+        priority: String(formData.get("priority") ?? ""),
+      };
+
+      // Validate locally before creating a draft, so an offline draft that can
+      // never be accepted by the server is not queued.
+      const parsed = createComplaintSchema.safeParse(raw);
+      if (!parsed.success) {
+        return {
+          success: false,
+          message: "Veuillez corriger les champs en surbrillance.",
+          errors: fieldErrors(parsed.error),
+        };
+      }
+
+      const clientKey = clientKeyRef.current ?? createClientKey();
+      clientKeyRef.current = clientKey;
+
+      const draft = {
+        clientKey,
+        title: parsed.data.title,
+        description: parsed.data.description,
+        category: parsed.data.category,
+        priority: parsed.data.priority,
+      };
+
+      if (typeof navigator !== "undefined" && !navigator.onLine) {
+        saveDraft(ownerId, draft);
+        clientKeyRef.current = null;
+        return {
+          success: true,
+          localDraft: true,
+          message:
+            "Brouillon local enregistré sur cet appareil. Il n'a pas encore été envoyé au serveur.",
+        };
+      }
+
+      formData.set("clientKey", clientKey);
+
+      try {
+        const result = await createComplaint(previousState, formData);
+        if (result.success) {
+          removeDraft(ownerId, clientKey);
+          clientKeyRef.current = null;
+        } else {
+          // Keep the submitted data so it can be retried or synced later.
+          saveDraft(ownerId, draft);
+        }
+        return result;
+      } catch {
+        saveDraft(ownerId, draft);
+        clientKeyRef.current = null;
+        return {
+          success: true,
+          localDraft: true,
+          message:
+            "Connexion interrompue. Votre réclamation est conservée comme brouillon local et sera réessayée.",
+        };
+      }
+    },
+    [isEditing, ownerId],
+  );
+
+  const [state, formAction] = useActionState(submitAction, null);
+
+  // Reset on success (server save or local draft). This only touches the DOM
+  // and a ref, never React state synchronously.
+  useEffect(() => {
+    if (!state?.success) return;
+
+    formRef.current?.reset();
+    clientKeyRef.current = null;
+
+    if (onClose) {
+      // Small delay so the user can see the success message briefly
+      const t = setTimeout(onClose, 1200);
+      return () => clearTimeout(t);
     }
   }, [state, onClose]);
+
+  const showState = state && state !== dismissedState;
 
   return (
     <div className="rounded-2xl border border-zinc-200/90 bg-white/90 p-6 shadow-sm backdrop-blur-md dark:border-zinc-800/90 dark:bg-[#111114]/90">
@@ -116,22 +224,33 @@ export default function ComplaintForm({ editTarget, onClose }: ComplaintFormProp
       </h2>
 
       {/* Global feedback */}
-      {state && !dismissed && (
+      {showState && state && (
         <div
           role="alert"
           aria-live="assertive"
           className={`mb-4 flex items-start gap-3 rounded-xl border px-4 py-3 text-sm ${
             state.success
-              ? "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-800/60 dark:bg-emerald-950/40 dark:text-emerald-300"
+              ? state.localDraft
+                ? "border-blue-200 bg-blue-50 text-blue-800 dark:border-blue-800/60 dark:bg-blue-950/40 dark:text-blue-300"
+                : "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-800/60 dark:bg-emerald-950/40 dark:text-emerald-300"
               : "border-red-200 bg-red-50 text-red-800 dark:border-red-800/60 dark:bg-red-950/40 dark:text-red-300"
           }`}
         >
-          <span aria-hidden="true">{state.success ? "✅" : "❌"}</span>
-          <span className="flex-1">{state.message}</span>
+          <span aria-hidden="true">
+            {state.success ? (state.localDraft ? "📝" : "✅") : "❌"}
+          </span>
+          <span className="flex-1">
+            {state.localDraft && (
+              <span className="mr-2 inline-flex rounded-full bg-blue-200/70 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-blue-900 dark:bg-blue-900/60 dark:text-blue-200">
+                Brouillon local
+              </span>
+            )}
+            {state.message}
+          </span>
           <button
             type="button"
             aria-label="Fermer"
-            onClick={() => setDismissed(true)}
+            onClick={() => setDismissedState(state)}
             className="ml-auto shrink-0 text-xs opacity-60 hover:opacity-100"
           >
             ✕

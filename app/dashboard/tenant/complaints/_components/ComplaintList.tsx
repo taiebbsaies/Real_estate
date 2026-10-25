@@ -218,6 +218,7 @@ function ComplaintCard({ complaint, onEdit }: ComplaintCardProps) {
 type StatusFilter = "all" | "pending" | "in_progress" | "resolved" | "rejected";
 
 interface ComplaintListProps {
+  ownerId: string;
   complaints: SerializedComplaint[];
 }
 
@@ -231,7 +232,7 @@ const FILTER_OPTIONS: { value: StatusFilter; label: string }[] = [
 
 // ─── Main list ────────────────────────────────────────────────────────────────
 
-export default function ComplaintList({ complaints }: ComplaintListProps) {
+export default function ComplaintList({ ownerId, complaints }: ComplaintListProps) {
   const [filter, setFilter] = useState<StatusFilter>("all");
   const [editTarget, setEditTarget] = useState<SerializedComplaint | null>(null);
 
@@ -250,6 +251,7 @@ export default function ComplaintList({ complaints }: ComplaintListProps) {
         >
           <div className="w-full max-w-lg">
             <ComplaintForm
+              ownerId={ownerId}
               editTarget={editTarget}
               onClose={() => setEditTarget(null)}
             />
