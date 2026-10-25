@@ -26,6 +26,16 @@ export type ComplaintCategory = (typeof COMPLAINT_CATEGORIES)[number];
 export type ComplaintPriority = (typeof COMPLAINT_PRIORITIES)[number];
 export type ComplaintStatus = (typeof COMPLAINT_STATUSES)[number];
 
+export const COMPLAINT_CATEGORY_LABELS: Record<ComplaintCategory, string> = {
+  plumbing: "Plomberie",
+  electricity: "Électricité",
+  heating: "Chauffage",
+  structural: "Dommages structurels",
+  noise: "Nuisances sonores",
+  common_areas: "Parties communes",
+  other: "Autre",
+};
+
 /**
  * Allowed status transitions for staff members.
  * Keeping this list shared between the server and the UI means the options
