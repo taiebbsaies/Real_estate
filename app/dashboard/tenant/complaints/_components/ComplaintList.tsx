@@ -156,7 +156,7 @@ function ComplaintCard({ complaint, onEdit }: ComplaintCardProps) {
       {complaint.property && (
         <p className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px] text-zinc-500 dark:text-zinc-400">
           <span className="rounded-full bg-amber-100 px-2 py-0.5 font-bold uppercase tracking-wide text-amber-700 dark:bg-amber-950/50 dark:text-amber-300">
-            Appartement test
+            Appartement
           </span>
           <span className="font-semibold text-zinc-700 dark:text-zinc-300">
             {formatTestPropertyCode(complaint.property.code)}
