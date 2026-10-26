@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -21,12 +21,15 @@ export const metadata: Metadata = {
   },
   description: "Browse and manage real estate with HomeCheck.",
   manifest: "/manifest.json",
-  themeColor: "#18181b",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
     title: "HomeCheck",
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#18181b",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

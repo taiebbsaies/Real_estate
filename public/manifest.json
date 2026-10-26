@@ -4,7 +4,7 @@
   "description": "Application PWA intelligente dédiée à la gestion du cycle de vie d'un logement locatif.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
+  "background_color": "#fbfbfb",
   "theme_color": "#18181b",
   "orientation": "portrait-primary",
   "icons": [
