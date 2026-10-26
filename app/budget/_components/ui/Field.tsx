@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 
 export function fieldClass(hasError = false) {
   const base =
-    "block w-full rounded-xl border bg-white/70 px-3.5 py-2.5 text-sm text-zinc-900 shadow-xs backdrop-blur-xs transition-all placeholder:text-zinc-400 focus:outline-none focus:ring-2 dark:bg-[#151518]/80 dark:text-zinc-100 dark:placeholder:text-zinc-600";
+    "block w-full rounded-xl border bg-white/70 px-3.5 py-2.5 text-base text-zinc-900 shadow-xs backdrop-blur-xs transition-all placeholder:text-zinc-400 focus:outline-none focus:ring-2 md:text-sm dark:bg-[#151518]/80 dark:text-zinc-100 dark:placeholder:text-zinc-600";
   if (hasError) {
     return `${base} border-red-500/80 focus:border-red-500 focus:ring-red-500/20 dark:border-red-500/70`;
   }

@@ -10,7 +10,7 @@ const variantClasses: Record<ButtonVariant, string> = {
   primary:
     "h-11 bg-zinc-950 px-4 text-sm text-white hover:bg-zinc-800 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200",
   secondary:
-    "h-9 border border-zinc-200 bg-white/80 px-4 text-xs text-zinc-800 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800",
+    "h-11 border border-zinc-200 bg-white/80 px-4 text-xs text-zinc-800 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800",
   danger:
     "h-11 border border-red-500/50 px-4 text-sm text-red-600 hover:bg-red-50 dark:border-red-500/50 dark:text-red-400 dark:hover:bg-red-950/40",
   destructive:
