@@ -3,30 +3,28 @@ import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { getSession } from "@/lib/session";
 import { getAllComplaints } from "@/lib/complaints/queries";
+import { getComplaintStatistics } from "@/lib/complaints/statistics-queries";
+import {
+  buildOwnerComplaintsHref,
+  parseStatisticsPeriod,
+} from "@/lib/complaints/statistics";
+import ComplaintStatisticsSection from "./_components/ComplaintStatisticsSection";
 import StatusUpdateForm from "@/app/dashboard/_components/StatusUpdateForm";
 import {
+  COMPLAINT_CATEGORY_LABELS,
   COMPLAINT_STATUSES,
   type ComplaintStatus,
 } from "@/lib/constants/complaint";
+import { formatTestPropertyCode } from "@/lib/test-properties/display";
 
 export const dynamic = "force-dynamic";
 
 type OwnerComplaintsPageProps = {
-  searchParams: Promise<{ status?: string }>;
+  searchParams: Promise<{ status?: string; period?: string }>;
 };
 
 export const metadata: Metadata = {
   title: "Réclamations — Propriétaire | HomeCheck",
-};
-
-const CATEGORY_LABELS: Record<string, string> = {
-  plumbing: "Plomberie",
-  electricity: "Électricité",
-  heating: "Chauffage",
-  structural: "Dommages structurels",
-  noise: "Nuisances sonores",
-  common_areas: "Parties communes",
-  other: "Autre",
 };
 
 const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
@@ -66,19 +64,22 @@ export default async function OwnerComplaintsPage({
     redirect("/login");
   }
 
-  const { status } = await searchParams;
+  const { status, period } = await searchParams;
   const activeFilter = COMPLAINT_STATUSES.includes(status as ComplaintStatus)
     ? (status as ComplaintStatus)
     : null;
+  const statisticsPeriod = parseStatisticsPeriod(period);
 
-  const allComplaints = await getAllComplaints();
-  const complaints = activeFilter
-    ? allComplaints.filter((complaint) => complaint.status === activeFilter)
-    : allComplaints;
+  const [statistics, complaints] = await Promise.all([
+    getComplaintStatistics(statisticsPeriod),
+    getAllComplaints(activeFilter ?? undefined),
+  ]);
 
-  const pending = allComplaints.filter((c) => c.status === "pending").length;
-  const inProgress = allComplaints.filter((c) => c.status === "in_progress").length;
-  const resolved = allComplaints.filter((c) => c.status === "resolved").length;
+  if (!statistics) {
+    redirect("/login");
+  }
+
+  const statusCounts = statistics.allTime;
 
   return (
     <div className="min-h-full bg-zinc-50 dark:bg-zinc-950">
@@ -112,18 +113,19 @@ export default async function OwnerComplaintsPage({
           </p>
         </div>
 
-        {/* KPI cards */}
-        <div className="mb-8 grid gap-4 sm:grid-cols-3">
-          {[
-            { label: "En attente", value: pending, color: "text-amber-600 dark:text-amber-400" },
-            { label: "En cours", value: inProgress, color: "text-blue-600 dark:text-blue-400" },
-            { label: "Résolues", value: resolved, color: "text-emerald-600 dark:text-emerald-400" },
-          ].map(({ label, value, color }) => (
-            <div key={label} className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-              <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400">{label}</p>
-              <p className={`mt-2 text-3xl font-bold ${color}`}>{value}</p>
-            </div>
-          ))}
+        <ComplaintStatisticsSection
+          statistics={statistics}
+          period={statisticsPeriod}
+          activeStatus={activeFilter}
+        />
+
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <h2 className="text-sm font-bold text-zinc-900 dark:text-zinc-50">
+            Toutes les réclamations
+          </h2>
+          <span className="text-xs text-zinc-500 dark:text-zinc-400">
+            {complaints.length} affichée{complaints.length > 1 ? "s" : ""}
+          </span>
         </div>
 
         {/* Status filter */}
@@ -135,16 +137,15 @@ export default async function OwnerComplaintsPage({
                 : activeFilter === option.value;
             const count =
               option.value === "all"
-                ? allComplaints.length
-                : allComplaints.filter((c) => c.status === option.value).length;
+                ? statusCounts.total
+                : statusCounts[option.value];
             return (
               <Link
                 key={option.value}
-                href={
-                  option.value === "all"
-                    ? "/dashboard/owner/complaints"
-                    : `/dashboard/owner/complaints?status=${option.value}`
-                }
+                href={buildOwnerComplaintsHref({
+                  status: option.value === "all" ? null : option.value,
+                  period: statisticsPeriod,
+                })}
                 aria-current={isActive ? "page" : undefined}
                 className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
                   isActive
@@ -179,7 +180,7 @@ export default async function OwnerComplaintsPage({
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
                         <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
-                          {CATEGORY_LABELS[complaint.category] ?? complaint.category}
+                          {COMPLAINT_CATEGORY_LABELS[complaint.category] ?? complaint.category}
                         </p>
                         <h2 className="mt-0.5 text-sm font-bold text-zinc-900 dark:text-zinc-100">
                           {complaint.title}
@@ -190,6 +191,11 @@ export default async function OwnerComplaintsPage({
                         <p className="mt-0.5 text-[11px] text-zinc-400">
                           Mise à jour le {formatDate(complaint.updatedAt)}
                         </p>
+                        {complaint.status === "resolved" && complaint.resolvedAt && (
+                          <p className="mt-0.5 text-[11px] text-emerald-600 dark:text-emerald-400">
+                            Résolue le {formatDate(complaint.resolvedAt)}
+                          </p>
+                        )}
                       </div>
                       <div className="flex flex-wrap gap-2">
                         <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${statusCfg.className}`}>
@@ -205,6 +211,23 @@ export default async function OwnerComplaintsPage({
                         )}
                       </div>
                     </div>
+
+                    {complaint.property && (
+                      <p className="mt-3 flex flex-wrap items-center gap-1.5 text-[11px] text-zinc-500 dark:text-zinc-400">
+                        <span className="rounded-full bg-amber-100 px-2 py-0.5 font-bold uppercase tracking-wide text-amber-700 dark:bg-amber-950/50 dark:text-amber-300">
+                          Appartement
+                        </span>
+                        <span className="font-semibold text-zinc-700 dark:text-zinc-300">
+                          {formatTestPropertyCode(complaint.property.code)}
+                        </span>
+                        <span aria-hidden="true">·</span>
+                        <span>
+                          {complaint.property.label} —{" "}
+                          {complaint.property.address},{" "}
+                          {complaint.property.city}
+                        </span>
+                      </p>
+                    )}
 
                     <p className="mt-3 text-xs text-zinc-600 dark:text-zinc-400 line-clamp-3">
                       {complaint.description}

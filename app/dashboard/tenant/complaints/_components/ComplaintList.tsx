@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import type { SerializedComplaint } from "@/lib/complaints/types";
+import { formatTestPropertyCode } from "@/lib/test-properties/display";
+import type { SerializedTestProperty } from "@/lib/test-properties/types";
 import ComplaintForm from "./ComplaintForm";
 import DeleteComplaintButton from "./DeleteComplaintButton";
 
@@ -150,6 +152,23 @@ function ComplaintCard({ complaint, onEdit }: ComplaintCardProps) {
         </div>
       </div>
 
+      {/* Test apartment */}
+      {complaint.property && (
+        <p className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px] text-zinc-500 dark:text-zinc-400">
+          <span className="rounded-full bg-amber-100 px-2 py-0.5 font-bold uppercase tracking-wide text-amber-700 dark:bg-amber-950/50 dark:text-amber-300">
+            Appartement
+          </span>
+          <span className="font-semibold text-zinc-700 dark:text-zinc-300">
+            {formatTestPropertyCode(complaint.property.code)}
+          </span>
+          <span aria-hidden="true">·</span>
+          <span>
+            {complaint.property.label} — {complaint.property.address},{" "}
+            {complaint.property.city}
+          </span>
+        </p>
+      )}
+
       {/* Description toggle */}
       <button
         type="button"
@@ -220,6 +239,8 @@ type StatusFilter = "all" | "pending" | "in_progress" | "resolved" | "rejected";
 interface ComplaintListProps {
   ownerId: string;
   complaints: SerializedComplaint[];
+  /** Development-only test apartments the tenant may attach a complaint to. */
+  testProperties?: SerializedTestProperty[];
 }
 
 const FILTER_OPTIONS: { value: StatusFilter; label: string }[] = [
@@ -232,7 +253,7 @@ const FILTER_OPTIONS: { value: StatusFilter; label: string }[] = [
 
 // ─── Main list ────────────────────────────────────────────────────────────────
 
-export default function ComplaintList({ ownerId, complaints }: ComplaintListProps) {
+export default function ComplaintList({ ownerId, complaints, testProperties = [] }: ComplaintListProps) {
   const [filter, setFilter] = useState<StatusFilter>("all");
   const [editTarget, setEditTarget] = useState<SerializedComplaint | null>(null);
 
@@ -252,6 +273,7 @@ export default function ComplaintList({ ownerId, complaints }: ComplaintListProp
           <div className="w-full max-w-lg">
             <ComplaintForm
               ownerId={ownerId}
+              testProperties={testProperties}
               editTarget={editTarget}
               onClose={() => setEditTarget(null)}
             />

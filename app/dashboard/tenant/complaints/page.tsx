@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { getSession } from "@/lib/session";
 import { getMyComplaints } from "@/lib/complaints/queries";
+import { getOccupiedTestProperties } from "@/lib/test-properties/queries";
 import ComplaintForm from "./_components/ComplaintForm";
 import ComplaintList from "./_components/ComplaintList";
 import OfflineBanner from "./_components/OfflineBanner";
@@ -22,6 +23,8 @@ export default async function TenantComplaintsPage() {
   }
 
   const complaints = await getMyComplaints();
+  // Development-only: empty unless ENABLE_TEST_PROPERTIES=true locally.
+  const testProperties = await getOccupiedTestProperties(session.userId);
 
   // KPI counts
   const total = complaints.length;
@@ -118,7 +121,10 @@ export default async function TenantComplaintsPage() {
         <div className="grid gap-8 lg:grid-cols-[380px_1fr]">
           {/* New complaint form */}
           <section aria-label="Nouvelle réclamation">
-            <ComplaintForm ownerId={session.userId} />
+            <ComplaintForm
+              ownerId={session.userId}
+              testProperties={testProperties}
+            />
           </section>
 
           {/* Complaint list */}
@@ -129,7 +135,11 @@ export default async function TenantComplaintsPage() {
               </h2>
               <span className="text-xs text-zinc-400">{total} au total</span>
             </div>
-            <ComplaintList ownerId={session.userId} complaints={complaints} />
+            <ComplaintList
+              ownerId={session.userId}
+              complaints={complaints}
+              testProperties={testProperties}
+            />
           </section>
         </div>
       </main>

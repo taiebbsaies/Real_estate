@@ -4,6 +4,8 @@ import { useActionState, useCallback, useEffect, useRef, useState } from "react"
 import { useFormStatus } from "react-dom";
 import { createComplaint, updateComplaint } from "@/app/actions/complaints";
 import type { ComplaintActionState, SerializedComplaint } from "@/lib/complaints/types";
+import { formatTestPropertyCode } from "@/lib/test-properties/display";
+import type { SerializedTestProperty } from "@/lib/test-properties/types";
 import { COMPLAINT_CATEGORIES, COMPLAINT_PRIORITIES } from "@/lib/constants/complaint";
 import { createComplaintSchema } from "@/lib/validations/complaint";
 import { removeDraft, saveDraft } from "./OfflineBanner";
@@ -103,13 +105,15 @@ function FieldError({ errors, field }: { errors?: Record<string, string[]>; fiel
 interface ComplaintFormProps {
   /** Scopes local drafts to the authenticated tenant. */
   ownerId: string;
+  /** Development-only test apartments actively occupied by this tenant. */
+  testProperties?: SerializedTestProperty[];
   editTarget?: SerializedComplaint | null;
   onClose?: () => void;
 }
 
 // ─── Main form ────────────────────────────────────────────────────────────────
 
-export default function ComplaintForm({ ownerId, editTarget, onClose }: ComplaintFormProps) {
+export default function ComplaintForm({ ownerId, testProperties = [], editTarget, onClose }: ComplaintFormProps) {
   const isEditing = !!editTarget;
   const formRef = useRef<HTMLFormElement>(null);
   const clientKeyRef = useRef<string | null>(null);
@@ -137,6 +141,7 @@ export default function ComplaintForm({ ownerId, editTarget, onClose }: Complain
         description: String(formData.get("description") ?? ""),
         category: String(formData.get("category") ?? ""),
         priority: String(formData.get("priority") ?? ""),
+        propertyId: String(formData.get("propertyId") ?? ""),
       };
 
       // Validate locally before creating a draft, so an offline draft that can
@@ -159,6 +164,7 @@ export default function ComplaintForm({ ownerId, editTarget, onClose }: Complain
         description: parsed.data.description,
         category: parsed.data.category,
         priority: parsed.data.priority,
+        propertyId: parsed.data.propertyId,
       };
 
       if (typeof navigator !== "undefined" && !navigator.onLine) {
@@ -262,6 +268,36 @@ export default function ComplaintForm({ ownerId, editTarget, onClose }: Complain
         {/* Hidden id for edit mode */}
         {isEditing && (
           <input type="hidden" name="id" value={editTarget._id} />
+        )}
+
+        {/* Development-only test apartment selector */}
+        {testProperties.length > 0 && (
+          <div>
+            <label
+              htmlFor="complaint-property"
+              className="mb-1 block text-xs font-semibold text-zinc-700 dark:text-zinc-300"
+            >
+              Appartement concerné
+            </label>
+            <select
+              id="complaint-property"
+              name="propertyId"
+              defaultValue={editTarget?.propertyId ?? ""}
+              className="w-full rounded-xl border border-zinc-200 bg-white px-3.5 py-2.5 text-sm text-zinc-900 outline-none transition focus:border-zinc-950 focus:ring-2 focus:ring-zinc-950/10 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:focus:border-zinc-400"
+            >
+              <option value="">Aucun appartement (réclamation générale)</option>
+              {testProperties.map((property) => (
+                <option key={property._id} value={property._id}>
+                  {formatTestPropertyCode(property.code)} — {property.label}, {property.city}
+                </option>
+              ))}
+            </select>
+            <p className="mt-1 text-[11px] text-zinc-400">
+              Appartements fictifs de développement, limités à ceux que vous
+              occupez.
+            </p>
+            <FieldError errors={state?.errors} field="propertyId" />
+          </div>
         )}
 
         {/* Title */}

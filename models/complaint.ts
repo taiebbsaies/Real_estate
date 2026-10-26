@@ -17,6 +17,11 @@ export type {
 
 export interface IComplaint {
   tenantId: Types.ObjectId;
+  /**
+   * Optional development-only test apartment reference. Legacy complaints that
+   * do not target a specific apartment simply omit this field.
+   */
+  propertyId?: Types.ObjectId;
   title: string;
   description: string;
   category: ComplaintCategory;
@@ -24,6 +29,12 @@ export interface IComplaint {
   status: ComplaintStatus;
   technicianId?: Types.ObjectId;
   resolutionNotes?: string;
+  /**
+   * Timestamp of the transition to "resolved". Kept separate from updatedAt so
+   * reporting never has to infer a resolution date from unrelated edits.
+   * Legacy resolved complaints have no value and are excluded from averages.
+   */
+  resolvedAt?: Date;
   /**
    * Client-generated idempotency key. Used by the offline draft queue so a
    * retry after a lost response cannot create a duplicate complaint.
@@ -39,6 +50,13 @@ const ComplaintSchema = new Schema<IComplaint>(
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
+      index: true,
+    },
+
+    propertyId: {
+      type: Schema.Types.ObjectId,
+      ref: "TestProperty",
+      default: undefined,
       index: true,
     },
 
@@ -88,6 +106,11 @@ const ComplaintSchema = new Schema<IComplaint>(
       maxlength: 1000,
     },
 
+    resolvedAt: {
+      type: Date,
+      default: undefined,
+    },
+
     clientKey: {
       type: String,
       trim: true,
@@ -103,8 +126,14 @@ const ComplaintSchema = new Schema<IComplaint>(
 
 // Compound index for tenant's complaints sorted by date
 ComplaintSchema.index({ tenantId: 1, createdAt: -1 });
+// Staff views filtering by the development-only test apartment
+ComplaintSchema.index({ propertyId: 1, createdAt: -1 });
 // Index for staff views filtered by status
 ComplaintSchema.index({ status: 1, createdAt: -1 });
+// Statistics: period reports filter on creation date without a status filter.
+ComplaintSchema.index({ createdAt: -1 });
+// Statistics: average resolution time filters resolved complaints by resolvedAt.
+ComplaintSchema.index({ status: 1, resolvedAt: -1 });
 // Idempotency: one complaint per tenant and client-generated key
 ComplaintSchema.index(
   { tenantId: 1, clientKey: 1 },

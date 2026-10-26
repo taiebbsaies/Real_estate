@@ -8,6 +8,7 @@ import {
   COMPLAINT_STATUSES,
   type ComplaintStatus,
 } from "@/lib/constants/complaint";
+import { formatTestPropertyCode } from "@/lib/test-properties/display";
 
 export const dynamic = "force-dynamic";
 
@@ -199,6 +200,23 @@ export default async function TechnicianComplaintsPage({
                         )}
                       </div>
                     </div>
+
+                    {complaint.property && (
+                      <p className="mt-3 flex flex-wrap items-center gap-1.5 text-[11px] text-zinc-500 dark:text-zinc-400">
+                        <span className="rounded-full bg-amber-100 px-2 py-0.5 font-bold uppercase tracking-wide text-amber-700 dark:bg-amber-950/50 dark:text-amber-300">
+                          Appartement
+                        </span>
+                        <span className="font-semibold text-zinc-700 dark:text-zinc-300">
+                          {formatTestPropertyCode(complaint.property.code)}
+                        </span>
+                        <span aria-hidden="true">·</span>
+                        <span>
+                          {complaint.property.label} —{" "}
+                          {complaint.property.address},{" "}
+                          {complaint.property.city}
+                        </span>
+                      </p>
+                    )}
 
                     <p className="mt-3 text-xs text-zinc-600 dark:text-zinc-400 line-clamp-3">
                       {complaint.description}
