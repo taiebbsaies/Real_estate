@@ -6,6 +6,9 @@ export const metadata: Metadata = {
   title: "Budget",
 };
 
+// Ce layout joue le rôle d'App Shell du module budget (SideNav, avec BottomNav
+// et FAB dans (tabs)/layout.tsx) : il est précaché avec chaque page visitée par
+// le service worker et reste affiché instantanément pendant le chargement des données.
 export default function BudgetLayout({ children }: LayoutProps<"/budget">) {
   return (
     <div>
