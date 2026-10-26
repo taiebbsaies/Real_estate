@@ -219,6 +219,7 @@ async function MonthContent({ searchParams }: { searchParams: SearchParams }) {
       )}
 
       <BudgetForm
+        key={budget ? "edit" : "create"}
         month={month}
         initialLimit={budget ? formatTnd(budget.limit).replace(" TND", "") : ""}
         initialIncome={

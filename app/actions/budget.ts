@@ -11,6 +11,7 @@ import { getUserId } from "@/lib/budget/current-user";
 import { budgetCacheTag } from "@/lib/budget/queries";
 import {
   budgetSchema,
+  deleteBudgetSchema,
   deleteExpenseSchema,
   expenseSchema,
   updateExpenseSchema,
@@ -96,6 +97,49 @@ export async function upsertBudget(
     return {
       success: false,
       message: "Impossible d'enregistrer le budget. Veuillez réessayer.",
+    };
+  }
+}
+
+export async function deleteBudget(
+  _previous_state: BudgetActionState | null,
+  formData: FormData,
+): Promise<BudgetActionState> {
+  const parsed = deleteBudgetSchema.safeParse({
+    month: formData.get("month"),
+  });
+
+  if (!parsed.success) {
+    return {
+      success: false,
+      message: "Veuillez corriger les champs en surbrillance.",
+      errors: fieldErrors(parsed.error),
+    };
+  }
+
+  const { month } = parsed.data;
+
+  const userId = await getUserId();
+
+  try {
+    await connectDB();
+
+    // Les dépenses du mois sont conservées : elles restent visibles dans la liste et l'historique.
+    const result = await Budget.deleteOne({ userId, month });
+
+    if (result.deletedCount === 0) {
+      return { success: false, message: "Budget introuvable." };
+    }
+
+    updateTag(budgetCacheTag(userId));
+
+    return { success: true, message: "Budget supprimé." };
+  } catch (error: unknown) {
+    console.error("deleteBudget failed:", error);
+
+    return {
+      success: false,
+      message: "Impossible de supprimer le budget. Veuillez réessayer.",
     };
   }
 }

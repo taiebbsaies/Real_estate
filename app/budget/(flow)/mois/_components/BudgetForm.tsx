@@ -1,8 +1,9 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useFormStatus } from "react-dom";
-import { upsertBudget } from "@/app/actions/budget";
+import { deleteBudget, upsertBudget } from "@/app/actions/budget";
 import { millimesToTnd } from "@/lib/budget/calculations";
 import { useOnlineStatus } from "@/lib/hooks/useOnlineStatus";
 import Card from "../../../_components/ui/Card";
@@ -46,11 +47,21 @@ export default function BudgetForm({
   previousMonthLabel,
 }: BudgetFormProps) {
   const [state, formAction] = useActionState(upsertBudget, null);
+  const [deleteState, deleteAction] = useActionState(deleteBudget, null);
   const [limit, setLimit] = useState(initialLimit);
   const [income, setIncome] = useState(initialIncome);
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const router = useRouter();
   const isOnline = useOnlineStatus();
 
   const showReuseButton = !hasBudget && previousBudget !== null;
+
+  useEffect(() => {
+    if (deleteState?.success) {
+      dialogRef.current?.close();
+      router.refresh();
+    }
+  }, [deleteState, router]);
 
   function reusePreviousBudget() {
     if (!previousBudget) {
@@ -66,10 +77,11 @@ export default function BudgetForm({
   }
 
   return (
-    <Card className="flex flex-col gap-5">
-      <h2 className="text-base font-bold text-zinc-950 dark:text-zinc-50">
-        {hasBudget ? "Modifier le plafond" : "Plafond mensuel"}
-      </h2>
+    <div className="flex flex-col gap-4">
+      <Card className="flex flex-col gap-5">
+        <h2 className="text-base font-bold text-zinc-950 dark:text-zinc-50">
+          {hasBudget ? "Modifier le plafond" : "Plafond mensuel"}
+        </h2>
 
       <form action={formAction} className="flex flex-col gap-5">
         <input type="hidden" name="month" value={month} />
@@ -164,6 +176,63 @@ export default function BudgetForm({
           </Alert>
         )}
       </form>
-    </Card>
+      </Card>
+
+      {hasBudget && (
+        <section className="flex flex-col gap-3">
+          <Button
+            variant="danger"
+            className="w-full"
+            disabled={!isOnline}
+            onClick={() => dialogRef.current?.showModal()}
+          >
+            Supprimer le budget
+          </Button>
+
+          <dialog
+            ref={dialogRef}
+            aria-labelledby="delete-budget-title"
+            className="w-[calc(100%-2rem)] max-w-sm rounded-2xl border border-zinc-200 bg-white p-5 shadow-xl backdrop:bg-zinc-950/40 dark:border-zinc-800 dark:bg-[#111114]"
+          >
+            <h3
+              id="delete-budget-title"
+              className="text-base font-bold text-zinc-950 dark:text-zinc-50"
+            >
+              Supprimer ce budget ?
+            </h3>
+            <p className="mt-2 text-[13px] text-zinc-500 dark:text-zinc-400">
+              Les dépenses enregistrées ce mois-ci seront conservées.
+            </p>
+
+            {deleteState?.message && !deleteState.success && (
+              <Alert kind="error" role="alert" className="mt-2">
+                <p className="font-medium">{deleteState.message}</p>
+              </Alert>
+            )}
+
+            <div className="mt-4 flex gap-3">
+              <Button
+                variant="secondary"
+                className="h-11 flex-1"
+                onClick={() => dialogRef.current?.close()}
+              >
+                Annuler
+              </Button>
+              <form action={deleteAction} className="flex-1">
+                <input type="hidden" name="month" value={month} />
+                <Button
+                  type="submit"
+                  variant="destructive"
+                  className="w-full"
+                  disabled={!isOnline}
+                >
+                  Supprimer
+                </Button>
+              </form>
+            </div>
+          </dialog>
+        </section>
+      )}
+    </div>
   );
 }

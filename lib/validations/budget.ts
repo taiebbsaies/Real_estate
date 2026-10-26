@@ -75,6 +75,10 @@ export const deleteExpenseSchema = z.object({
   id: z.string().trim().min(1, "Identifiant de dépense manquant."),
 });
 
+export const deleteBudgetSchema = z.object({
+  month: monthField,
+});
+
 export type BudgetInput = z.infer<typeof budgetSchema>;
 export type ExpenseInput = z.infer<typeof expenseSchema>;
 export type UpdateExpenseInput = z.infer<typeof updateExpenseSchema>;
