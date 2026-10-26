@@ -135,6 +135,20 @@ export function WifiIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+export function WifiOffIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <path d="M12 20h.01" />
+      <path d="M8.5 16.5a5 5 0 0 1 7 0" />
+      <path d="M5 13a10 10 0 0 1 5.24-2.76" />
+      <path d="M19 13a10 10 0 0 1-2.22 1.68" />
+      <path d="M2 8.82a15 15 0 0 1 4.17-2.65" />
+      <path d="M22 8.82a15 15 0 0 0-11.28-2.64" />
+      <path d="m2 2 20 20" />
+    </Icon>
+  );
+}
+
 export function WrenchIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <Icon {...props}>

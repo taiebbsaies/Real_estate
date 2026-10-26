@@ -1,11 +1,14 @@
-const CACHE_NAME = "homecheck-cache-v1";
+const CACHE_NAME = "homecheck-cache-v2";
 const STATIC_ASSETS = [
   "/",
   "/login",
   "/signup",
+  "/offline",
   "/manifest.json",
-  "/icons/icon-192x192.svg",
-  "/icons/icon-512x512.svg",
+  "/icons/icon-192x192.png",
+  "/icons/icon-512x512.png",
+  "/icons/icon-192x192-maskable.png",
+  "/icons/icon-512x512-maskable.png",
 ];
 
 // Install Event - Pre-cache core shell
@@ -60,7 +63,7 @@ self.addEventListener("fetch", (event) => {
         })
         .catch(() => {
           return caches.match(event.request).then((cachedResponse) => {
-            return cachedResponse || caches.match("/");
+            return cachedResponse || caches.match("/offline");
           });
         })
     );

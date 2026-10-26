@@ -19,6 +19,7 @@ import {
   BUDGET_CATEGORY_LABELS,
   type BudgetCategory,
 } from "@/lib/constants/budget";
+import { useOnlineStatus } from "@/lib/hooks/useOnlineStatus";
 import { CategoryIcon } from "./icons";
 import Card from "./ui/Card";
 import Alert from "./ui/Alert";
@@ -53,11 +54,16 @@ function todayLocalIso(): string {
 
 const subscribeToNothing = () => () => {};
 
-function SubmitButton() {
+function SubmitButton({ disabled = false }: { disabled?: boolean }) {
   const { pending } = useFormStatus();
 
   return (
-    <Button type="submit" variant="primary" className="w-full" disabled={pending}>
+    <Button
+      type="submit"
+      variant="primary"
+      className="w-full"
+      disabled={pending || disabled}
+    >
       {pending ? "Enregistrement…" : "Enregistrer la dépense"}
     </Button>
   );
@@ -72,6 +78,7 @@ export default function ExpenseForm({ mode, expense }: ExpenseFormProps) {
   const [deleteState, deleteAction] = useActionState(deleteExpense, null);
   const [date, setDate] = useState<string | undefined>(expense?.date);
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const isOnline = useOnlineStatus();
 
   const today = useSyncExternalStore(
     subscribeToNothing,
@@ -189,7 +196,16 @@ export default function ExpenseForm({ mode, expense }: ExpenseFormProps) {
             />
           </Field>
 
-          <SubmitButton />
+          {!isOnline && (
+            <Alert kind="warning" role="status">
+              <p className="font-medium leading-snug">
+                Vous êtes hors ligne : la dépense ne peut pas être enregistrée
+                pour le moment.
+              </p>
+            </Alert>
+          )}
+
+          <SubmitButton disabled={!isOnline} />
 
           {state?.message && !state.success && (
             <Alert kind="error" role="alert">
@@ -204,6 +220,7 @@ export default function ExpenseForm({ mode, expense }: ExpenseFormProps) {
           <Button
             variant="danger"
             className="w-full"
+            disabled={!isOnline}
             onClick={() => dialogRef.current?.showModal()}
           >
             Supprimer
@@ -240,7 +257,12 @@ export default function ExpenseForm({ mode, expense }: ExpenseFormProps) {
               </Button>
               <form action={deleteAction} className="flex-1">
                 <input type="hidden" name="id" value={expense.id} />
-                <Button type="submit" variant="destructive" className="w-full">
+                <Button
+                  type="submit"
+                  variant="destructive"
+                  className="w-full"
+                  disabled={!isOnline}
+                >
                   Supprimer
                 </Button>
               </form>

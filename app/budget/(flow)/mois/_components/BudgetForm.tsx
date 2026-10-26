@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { upsertBudget } from "@/app/actions/budget";
 import { millimesToTnd } from "@/lib/budget/calculations";
+import { useOnlineStatus } from "@/lib/hooks/useOnlineStatus";
 import Card from "../../../_components/ui/Card";
 import Alert from "../../../_components/ui/Alert";
 import { Button } from "../../../_components/ui/Button";
@@ -21,11 +22,16 @@ type BudgetFormProps = {
   previousMonthLabel: string;
 };
 
-function SubmitButton() {
+function SubmitButton({ disabled = false }: { disabled?: boolean }) {
   const { pending } = useFormStatus();
 
   return (
-    <Button type="submit" variant="primary" className="w-full" disabled={pending}>
+    <Button
+      type="submit"
+      variant="primary"
+      className="w-full"
+      disabled={pending || disabled}
+    >
       {pending ? "Enregistrement…" : "Enregistrer"}
     </Button>
   );
@@ -42,6 +48,7 @@ export default function BudgetForm({
   const [state, formAction] = useActionState(upsertBudget, null);
   const [limit, setLimit] = useState(initialLimit);
   const [income, setIncome] = useState(initialIncome);
+  const isOnline = useOnlineStatus();
 
   const showReuseButton = !hasBudget && previousBudget !== null;
 
@@ -140,7 +147,16 @@ export default function BudgetForm({
           </button>
         )}
 
-        <SubmitButton />
+        {!isOnline && (
+          <Alert kind="warning" role="status">
+            <p className="font-medium leading-snug">
+              Vous êtes hors ligne : le budget ne peut pas être enregistré pour
+              le moment.
+            </p>
+          </Alert>
+        )}
+
+        <SubmitButton disabled={!isOnline} />
 
         {state?.message && (
           <Alert kind={state.success ? "success" : "error"} role="status">
