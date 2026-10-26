@@ -1,4 +1,7 @@
 {
+  "id": "/",
+  "lang": "fr",
+  "dir": "ltr",
   "name": "HomeCheck — Plateforme de matching, inspection et maintenance",
   "short_name": "HomeCheck",
   "description": "Application PWA intelligente dédiée à la gestion du cycle de vie d'un logement locatif.",

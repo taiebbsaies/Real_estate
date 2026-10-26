@@ -1,4 +1,4 @@
-const CACHE_NAME = "homecheck-cache-v2";
+const CACHE_NAME = "homecheck-cache-v3";
 const STATIC_ASSETS = [
   "/",
   "/login",
@@ -9,32 +9,50 @@ const STATIC_ASSETS = [
   "/icons/icon-512x512.png",
   "/icons/icon-192x192-maskable.png",
   "/icons/icon-512x512-maskable.png",
+  "/icons/apple-touch-icon.png",
 ];
 
-// Install Event - Pre-cache core shell
+// Install Event - Pre-cache core shell (tolerant : un échec unique n'empêche pas l'installation)
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(STATIC_ASSETS);
-    })
+    caches
+      .open(CACHE_NAME)
+      .then((cache) =>
+        Promise.all(
+          STATIC_ASSETS.map((asset) =>
+            cache.add(asset).catch((error) => {
+              console.warn("[SW] Precache failed for", asset, error);
+            })
+          )
+        )
+      )
+      .then(() => self.skipWaiting())
   );
-  self.skipWaiting();
 });
 
 // Activate Event - Clean old caches
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((name) => {
-          if (name !== CACHE_NAME) {
-            return caches.delete(name);
-          }
-        })
-      );
-    })
+    caches
+      .keys()
+      .then((cacheNames) => {
+        return Promise.all(
+          cacheNames.map((name) => {
+            if (name !== CACHE_NAME) {
+              return caches.delete(name);
+            }
+          })
+        );
+      })
+      .then(() => self.clients.claim())
   );
-  self.clients.claim();
+});
+
+// Allow a controlled page to trigger activation of a waiting worker
+self.addEventListener("message", (event) => {
+  if (event.data === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
 });
 
 // Fetch Event - Network first with cache fallback for HTML, Cache first for assets
@@ -82,13 +100,15 @@ self.addEventListener("fetch", (event) => {
         if (cachedResponse) {
           return cachedResponse;
         }
-        return fetch(event.request).then((response) => {
-          const responseClone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseClone);
-          });
-          return response;
-        });
+        return fetch(event.request)
+          .then((response) => {
+            const responseClone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, responseClone);
+            });
+            return response;
+          })
+          .catch(() => caches.match("/offline"));
       })
     );
   }
