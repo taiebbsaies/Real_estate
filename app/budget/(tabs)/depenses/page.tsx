@@ -144,7 +144,7 @@ async function ExpensesContent({ searchParams }: { searchParams: SearchParams })
           <Link
             href={buildHref(month, undefined)}
             aria-current={category === undefined ? "page" : undefined}
-            className={`flex h-9 items-center whitespace-nowrap rounded-full px-4 text-[13px] font-medium transition-colors ${
+            className={`flex h-11 items-center whitespace-nowrap rounded-full px-4 text-[13px] font-medium transition-colors ${
               category === undefined
                 ? "bg-zinc-950 text-white dark:bg-white dark:text-zinc-950"
                 : "border border-zinc-200 bg-white/60 text-zinc-700 hover:border-zinc-300 dark:border-zinc-800 dark:bg-[#151518]/60 dark:text-zinc-300 dark:hover:border-zinc-700"
@@ -157,7 +157,7 @@ async function ExpensesContent({ searchParams }: { searchParams: SearchParams })
               key={item}
               href={buildHref(month, item)}
               aria-current={category === item ? "page" : undefined}
-              className={`flex h-9 items-center whitespace-nowrap rounded-full px-4 text-[13px] font-medium transition-colors ${
+              className={`flex h-11 items-center whitespace-nowrap rounded-full px-4 text-[13px] font-medium transition-colors ${
                 category === item
                   ? "bg-zinc-950 text-white dark:bg-white dark:text-zinc-950"
                   : "border border-zinc-200 bg-white/60 text-zinc-700 hover:border-zinc-300 dark:border-zinc-800 dark:bg-[#151518]/60 dark:text-zinc-300 dark:hover:border-zinc-700"

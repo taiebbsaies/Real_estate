@@ -42,8 +42,6 @@ export async function signUp(
   if (!parsed.success) {
     const fieldErrors = parsed.error.flatten().fieldErrors;
 
-    console.info("[SIGNUP] Validation failed");
-
     return {
       success: false,
       message: "Please correct the highlighted fields.",
@@ -56,10 +54,7 @@ export async function signUp(
   }
 
   try {
-    console.info("[SIGNUP] Connecting to database");
     await connectDB();
-
-    console.info("[SIGNUP] Checking email availability");
 
     const existingUser = await User.findOne({
       email: parsed.data.email,
@@ -68,20 +63,14 @@ export async function signUp(
       .lean();
 
     if (existingUser) {
-      console.info("[SIGNUP] Email already registered");
-
       return {
         success: false,
         message: "An account with this email already exists.",
       };
     }
 
-    console.info("[SIGNUP] Hashing password");
-
     const passwordHash = await bcrypt.hash(parsed.data.password, 12);
     const chosenRole = (parsed.data.role as UserRole) || "TENANT";
-
-    console.info("[SIGNUP] Creating user with role:", chosenRole);
 
     const createdUser = await User.create({
       firstName: parsed.data.firstName,
@@ -104,8 +93,6 @@ export async function signUp(
       await TechnicianProfile.create({ userId: createdUser._id });
     }
 
-    console.info("[SIGNUP] Account and role profile created successfully");
-
     return {
       success: true,
       message: "Your account has been created successfully. You can now sign in.",
@@ -117,8 +104,6 @@ export async function signUp(
       "code" in error &&
       error.code === 11000
     ) {
-      console.info("[SIGNUP] Duplicate email rejected by database");
-
       return {
         success: false,
         message: "An account with this email already exists.",

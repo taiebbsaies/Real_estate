@@ -214,13 +214,6 @@ export default function Home() {
           >
             <UserBanner />
           </Suspense>
-
-          <Link
-            href="/db-check"
-            className="inline-flex h-11 items-center justify-center rounded-xl border border-zinc-300/80 bg-white/60 px-5 text-sm font-medium text-zinc-700 transition-colors hover:bg-white hover:text-zinc-900 dark:border-zinc-800 dark:bg-zinc-900/60 dark:text-zinc-300 dark:hover:bg-zinc-900 dark:hover:text-zinc-100"
-          >
-            État de la base (MongoDB)
-          </Link>
         </div>
 
         {/* Feature Grid with Swiss/Linear Cards */}
