@@ -31,11 +31,11 @@ import {
   AlertTriangleIcon,
   CategoryIcon,
   CheckCircleIcon,
-  ChevronLeftIcon,
   ChevronRightIcon,
   NotebookIcon,
   TrendingUpIcon,
 } from "../_components/icons";
+import MonthNav from "../_components/MonthNav";
 import Card from "../_components/ui/Card";
 import Alert from "../_components/ui/Alert";
 import EmptyState from "../_components/ui/EmptyState";
@@ -94,7 +94,7 @@ function ForecastCard({
 
   return (
     <Card className="flex flex-col gap-4">
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
         <div className="flex items-center gap-2">
           <TrendingUpIcon className="h-5 w-5 text-zinc-400" />
           <h2 className="text-base font-bold text-zinc-950 dark:text-zinc-50">
@@ -104,13 +104,15 @@ function ForecastCard({
         {hasData &&
           (onTrack ? (
             <span className="flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
-              <CheckCircleIcon className="h-3.5 w-3.5" />
-              Sur la bonne voie
+              <CheckCircleIcon className="h-3.5 w-3.5 shrink-0" />
+              <span>Sur la bonne voie</span>
             </span>
           ) : (
-            <span className="flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[11px] font-bold text-amber-600 dark:text-amber-400">
-              <AlertTriangleIcon className="h-3.5 w-3.5" />
-              Dépassement probable (≈ {formatTnd(forecast - limit)})
+            <span className="flex min-w-0 items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-left text-[11px] font-bold text-amber-600 dark:text-amber-400">
+              <AlertTriangleIcon className="h-3.5 w-3.5 shrink-0" />
+              <span>
+                Dépassement probable (≈ {formatTnd(forecast - limit)})
+              </span>
             </span>
           ))}
       </div>
@@ -239,35 +241,21 @@ async function HomeContent({ searchParams }: { searchParams: SearchParams }) {
         <h1 className="text-2xl font-extrabold tracking-tight text-zinc-950 dark:text-zinc-50">
           Budget
         </h1>
-        <div className="-ml-2 flex items-center gap-1">
-          <Link
-            href={`/budget?month=${previousMonth(month)}`}
-            aria-label="Mois précédent"
-            className="flex h-11 w-11 items-center justify-center text-zinc-500 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
-          >
-            <ChevronLeftIcon className="h-5 w-5" />
-          </Link>
-          <span className="text-base font-medium text-zinc-900 dark:text-zinc-100">
-            {monthLabel}
-          </span>
-          <Link
-            href={`/budget?month=${nextMonth(month)}`}
-            aria-label="Mois suivant"
-            className="flex h-11 w-11 items-center justify-center text-zinc-500 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
-          >
-            <ChevronRightIcon className="h-5 w-5" />
-          </Link>
-        </div>
+        <MonthNav
+          monthLabel={monthLabel}
+          previousHref={`/budget?month=${previousMonth(month)}`}
+          nextHref={`/budget?month=${nextMonth(month)}`}
+        />
       </header>
 
       {summary.budget ? (
-        <Card className="flex flex-col gap-5">
+        <Card className="flex flex-col gap-5 md:mx-auto md:w-full md:max-w-[720px] lg:max-w-none">
           <div className="flex flex-col items-center gap-1 py-2">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
               Reste à dépenser
             </span>
             <span
-              className={`tabular-nums text-[40px] font-extrabold leading-none tracking-tight ${
+              className={`max-w-full break-words tabular-nums text-4xl font-extrabold leading-none tracking-tight sm:text-[40px] ${
                 summary.remaining < 0
                   ? "text-red-600 dark:text-red-400"
                   : "text-zinc-950 dark:text-zinc-50"
@@ -336,7 +324,7 @@ async function HomeContent({ searchParams }: { searchParams: SearchParams }) {
           </ButtonLink>
         </Card>
       ) : (
-        <Card padded={false} className="p-6">
+        <Card padded={false} className="p-6 md:mx-auto md:w-full md:max-w-[720px] lg:max-w-none">
           <EmptyState
             icon={NotebookIcon}
             title={`Définissez votre budget pour ${monthLabel.toLowerCase()}`}
@@ -347,7 +335,7 @@ async function HomeContent({ searchParams }: { searchParams: SearchParams }) {
         </Card>
       )}
 
-      <div className="flex flex-col gap-4 lg:grid lg:grid-cols-2 lg:items-start lg:gap-6">
+      <div className="flex flex-col gap-4 md:mx-auto md:w-full md:max-w-[720px] lg:grid lg:max-w-none lg:grid-cols-2 lg:items-start lg:gap-6">
         <div className="flex flex-col gap-4 lg:gap-6">
           {isCurrentMonth && summary.budget && (
             <ForecastCard summary={summary} month={month} />
@@ -412,17 +400,17 @@ async function HomeContent({ searchParams }: { searchParams: SearchParams }) {
               <Link
                 key={expense.id}
                 href={`/budget/depenses/${expense.id}/modifier`}
-                className="group flex items-center justify-between"
+                className="group flex items-center justify-between gap-3"
               >
-                <div className="flex items-center gap-3">
+                <div className="flex min-w-0 flex-1 items-center gap-3">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white shadow-xs dark:bg-zinc-800">
                     <CategoryIcon
                       category={expense.category}
                       className="h-5 w-5 text-zinc-500 dark:text-zinc-400"
                     />
                   </div>
-                  <div className="flex flex-col">
-                    <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                  <div className="flex min-w-0 flex-col">
+                    <span className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
                       {expense.note?.trim() !== "" && expense.note
                         ? expense.note
                         : BUDGET_CATEGORY_LABELS[expense.category]}
@@ -432,7 +420,7 @@ async function HomeContent({ searchParams }: { searchParams: SearchParams }) {
                     </span>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex shrink-0 items-center gap-2">
                   <span className="tabular-nums text-sm font-medium text-zinc-900 dark:text-zinc-100">
                     {formatTnd(expense.amount)}
                   </span>
