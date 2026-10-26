@@ -23,13 +23,10 @@ import { useOnlineStatus } from "@/lib/hooks/useOnlineStatus";
 import { CategoryIcon } from "./icons";
 import Card from "./ui/Card";
 import Alert from "./ui/Alert";
+import AmountInput from "./AmountInput";
+import ConfirmDialog from "./ConfirmDialog";
 import { Button } from "./ui/Button";
-import Field, {
-  fieldClass,
-  fieldShellClass,
-  fieldErrorClass,
-  labelClass,
-} from "./ui/Field";
+import Field, { fieldClass, fieldErrorClass, labelClass } from "./ui/Field";
 
 export type ExpenseFormValues = {
   id: string;
@@ -110,31 +107,14 @@ export default function ExpenseForm({ mode, expense }: ExpenseFormProps) {
             <input type="hidden" name="id" value={expense.id} />
           )}
 
-          <Field
+          <AmountInput
             id="amount"
             label="Montant"
             hint="En dinars, par exemple 85 / 85,5 / 85,500."
             errors={state?.errors?.amount}
-          >
-            <div className={fieldShellClass(!!state?.errors?.amount)}>
-              <input
-                id="amount"
-                name="amount"
-                type="text"
-                inputMode="decimal"
-                autoComplete="off"
-                required
-                aria-invalid={!!state?.errors?.amount}
-                aria-describedby={state?.errors?.amount ? "amount-error" : undefined}
-                placeholder="Ex. 85,500"
-                defaultValue={expense?.amount ?? ""}
-                className="tabular-nums w-full bg-transparent text-lg font-semibold text-zinc-900 outline-none placeholder:font-normal placeholder:text-zinc-400 dark:text-zinc-100 dark:placeholder:text-zinc-600"
-              />
-              <span className="ml-2 shrink-0 text-[13px] font-medium text-zinc-500 dark:text-zinc-400">
-                TND
-              </span>
-            </div>
-          </Field>
+            placeholder="Ex. 85,500"
+            defaultValue={expense?.amount ?? ""}
+          />
 
           <Field id="date" label="Date" errors={state?.errors?.date}>
             <input
@@ -152,7 +132,7 @@ export default function ExpenseForm({ mode, expense }: ExpenseFormProps) {
 
           <fieldset className="flex flex-col gap-2">
             <legend className={labelClass}>Catégorie</legend>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
               {BUDGET_CATEGORIES.map((category) => (
                 <label key={category} className="cursor-pointer">
                   <input
@@ -163,7 +143,7 @@ export default function ExpenseForm({ mode, expense }: ExpenseFormProps) {
                     defaultChecked={expense?.category === category}
                     className="peer sr-only"
                   />
-                  <span className="flex min-h-[56px] flex-col items-center justify-center gap-1 rounded-xl border border-zinc-200 bg-white/60 px-1 py-2 text-center text-zinc-500 transition-colors peer-checked:border-zinc-950 peer-checked:bg-zinc-100 peer-checked:text-zinc-950 peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-zinc-950 dark:border-zinc-800 dark:bg-[#151518]/60 dark:text-zinc-400 dark:peer-checked:border-zinc-200 dark:peer-checked:bg-zinc-800 dark:peer-checked:text-zinc-100 dark:peer-focus-visible:outline-white">
+                  <span className="flex min-h-[56px] flex-col items-center justify-center gap-1 break-words rounded-xl border border-zinc-200 bg-white/60 px-1 py-2 text-center text-zinc-500 transition-colors peer-checked:border-zinc-950 peer-checked:bg-zinc-100 peer-checked:text-zinc-950 peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-zinc-950 dark:border-zinc-800 dark:bg-[#151518]/60 dark:text-zinc-400 dark:peer-checked:border-zinc-200 dark:peer-checked:bg-zinc-800 dark:peer-checked:text-zinc-100 dark:peer-focus-visible:outline-white">
                     <span aria-hidden="true" className="contents">
                       <CategoryIcon category={category} className="h-5 w-5" />
                     </span>
@@ -226,48 +206,18 @@ export default function ExpenseForm({ mode, expense }: ExpenseFormProps) {
             Supprimer
           </Button>
 
-          <dialog
-            ref={dialogRef}
-            aria-labelledby="delete-expense-title"
-            className="w-[calc(100%-2rem)] max-w-sm rounded-2xl border border-zinc-200 bg-white p-5 shadow-xl backdrop:bg-zinc-950/40 dark:border-zinc-800 dark:bg-[#111114]"
-          >
-            <h3
-              id="delete-expense-title"
-              className="text-base font-bold text-zinc-950 dark:text-zinc-50"
-            >
-              Supprimer cette dépense ?
-            </h3>
-            <p className="mt-2 text-[13px] text-zinc-500 dark:text-zinc-400">
-              Cette action est définitive.
-            </p>
-
-            {deleteState?.message && !deleteState.success && (
-              <Alert kind="error" role="alert" className="mt-2">
-                <p className="font-medium">{deleteState.message}</p>
-              </Alert>
-            )}
-
-            <div className="mt-4 flex gap-3">
-              <Button
-                variant="secondary"
-                className="h-11 flex-1"
-                onClick={() => dialogRef.current?.close()}
-              >
-                Annuler
-              </Button>
-              <form action={deleteAction} className="flex-1">
-                <input type="hidden" name="id" value={expense.id} />
-                <Button
-                  type="submit"
-                  variant="destructive"
-                  className="w-full"
-                  disabled={!isOnline}
-                >
-                  Supprimer
-                </Button>
-              </form>
-            </div>
-          </dialog>
+          <ConfirmDialog
+            dialogRef={dialogRef}
+            labelledBy="delete-expense-title"
+            title="Supprimer cette dépense ?"
+            description="Cette action est définitive."
+            confirmLabel="Supprimer"
+            disabled={!isOnline}
+            stateMessage={deleteState?.message}
+            stateSuccess={deleteState?.success}
+            hiddenInputs={{ id: expense.id }}
+            onConfirm={deleteAction}
+          />
         </section>
       )}
     </div>

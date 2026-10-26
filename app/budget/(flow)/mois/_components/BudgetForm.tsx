@@ -6,13 +6,12 @@ import { useFormStatus } from "react-dom";
 import { deleteBudget, upsertBudget } from "@/app/actions/budget";
 import { millimesToTnd } from "@/lib/budget/calculations";
 import { useOnlineStatus } from "@/lib/hooks/useOnlineStatus";
+import AmountInput from "../../../_components/AmountInput";
+import ConfirmDialog from "../../../_components/ConfirmDialog";
 import Card from "../../../_components/ui/Card";
 import Alert from "../../../_components/ui/Alert";
 import { Button } from "../../../_components/ui/Button";
-import Field, {
-  fieldShellClass,
-  fieldErrorClass,
-} from "../../../_components/ui/Field";
+import { fieldErrorClass } from "../../../_components/ui/Field";
 
 type BudgetFormProps = {
   month: string;
@@ -92,58 +91,27 @@ export default function BudgetForm({
           </p>
         ))}
 
-        <Field
+        <AmountInput
           id="limit"
           label="Plafond mensuel (TND)"
           hint="Le montant maximum que vous autorisez pour ce mois."
           errors={state?.errors?.limit}
-        >
-          <div className={fieldShellClass(!!state?.errors?.limit)}>
-            <input
-              id="limit"
-              name="limit"
-              type="text"
-              inputMode="decimal"
-              autoComplete="off"
-              required
-              aria-invalid={!!state?.errors?.limit}
-              aria-describedby={state?.errors?.limit ? "limit-error" : undefined}
-              placeholder="Ex. 1 100,000"
-              value={limit}
-              onChange={(event) => setLimit(event.target.value)}
-              className="tabular-nums w-full bg-transparent text-lg font-semibold text-zinc-900 outline-none placeholder:font-normal placeholder:text-zinc-400 dark:text-zinc-100 dark:placeholder:text-zinc-600"
-            />
-            <span className="ml-2 shrink-0 text-[13px] font-medium text-zinc-500 dark:text-zinc-400">
-              TND
-            </span>
-          </div>
-        </Field>
+          placeholder="Ex. 1 100,000"
+          value={limit}
+          onChange={(event) => setLimit(event.target.value)}
+        />
 
-        <Field
+        <AmountInput
           id="income"
           label="Revenu mensuel (optionnel)"
           hint="Le revenu sert uniquement de repère, il n'est jamais requis."
           errors={state?.errors?.income}
-        >
-          <div className={fieldShellClass(!!state?.errors?.income)}>
-            <input
-              id="income"
-              name="income"
-              type="text"
-              inputMode="decimal"
-              autoComplete="off"
-              aria-invalid={!!state?.errors?.income}
-              aria-describedby={state?.errors?.income ? "income-error" : undefined}
-              placeholder="Ex. 1 800,000"
-              value={income}
-              onChange={(event) => setIncome(event.target.value)}
-              className="tabular-nums w-full bg-transparent text-base font-medium text-zinc-900 outline-none placeholder:font-normal placeholder:text-zinc-400 dark:text-zinc-100 dark:placeholder:text-zinc-600"
-            />
-            <span className="ml-2 shrink-0 text-[13px] font-medium text-zinc-500 dark:text-zinc-400">
-              TND
-            </span>
-          </div>
-        </Field>
+          placeholder="Ex. 1 800,000"
+          size="md"
+          required={false}
+          value={income}
+          onChange={(event) => setIncome(event.target.value)}
+        />
 
         {showReuseButton && (
           <button
@@ -189,48 +157,18 @@ export default function BudgetForm({
             Supprimer le budget
           </Button>
 
-          <dialog
-            ref={dialogRef}
-            aria-labelledby="delete-budget-title"
-            className="w-[calc(100%-2rem)] max-w-sm rounded-2xl border border-zinc-200 bg-white p-5 shadow-xl backdrop:bg-zinc-950/40 dark:border-zinc-800 dark:bg-[#111114]"
-          >
-            <h3
-              id="delete-budget-title"
-              className="text-base font-bold text-zinc-950 dark:text-zinc-50"
-            >
-              Supprimer ce budget ?
-            </h3>
-            <p className="mt-2 text-[13px] text-zinc-500 dark:text-zinc-400">
-              Les dépenses enregistrées ce mois-ci seront conservées.
-            </p>
-
-            {deleteState?.message && !deleteState.success && (
-              <Alert kind="error" role="alert" className="mt-2">
-                <p className="font-medium">{deleteState.message}</p>
-              </Alert>
-            )}
-
-            <div className="mt-4 flex gap-3">
-              <Button
-                variant="secondary"
-                className="h-11 flex-1"
-                onClick={() => dialogRef.current?.close()}
-              >
-                Annuler
-              </Button>
-              <form action={deleteAction} className="flex-1">
-                <input type="hidden" name="month" value={month} />
-                <Button
-                  type="submit"
-                  variant="destructive"
-                  className="w-full"
-                  disabled={!isOnline}
-                >
-                  Supprimer
-                </Button>
-              </form>
-            </div>
-          </dialog>
+          <ConfirmDialog
+            dialogRef={dialogRef}
+            labelledBy="delete-budget-title"
+            title="Supprimer ce budget ?"
+            description="Les dépenses enregistrées ce mois-ci seront conservées."
+            confirmLabel="Supprimer"
+            disabled={!isOnline}
+            stateMessage={deleteState?.message}
+            stateSuccess={deleteState?.success}
+            hiddenInputs={{ month }}
+            onConfirm={deleteAction}
+          />
         </section>
       )}
     </div>

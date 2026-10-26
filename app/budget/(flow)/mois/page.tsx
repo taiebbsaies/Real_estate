@@ -14,10 +14,9 @@ import { formatMonthLabel, formatTnd } from "@/lib/budget/format";
 import BudgetForm from "./_components/BudgetForm";
 import {
   ArrowLeftIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
   NotebookIcon,
 } from "../../_components/icons";
+import MonthNav from "../../_components/MonthNav";
 import Card from "../../_components/ui/Card";
 import Alert from "../../_components/ui/Alert";
 import EmptyState from "../../_components/ui/EmptyState";
@@ -126,25 +125,11 @@ async function MonthContent({ searchParams }: { searchParams: SearchParams }) {
             Budget du mois
           </h1>
         </div>
-        <div className="-ml-2 flex items-center gap-1">
-          <Link
-            href={`/budget/mois?month=${previousMonth(month)}`}
-            aria-label="Mois précédent"
-            className="flex h-11 w-11 items-center justify-center text-zinc-500 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
-          >
-            <ChevronLeftIcon className="h-5 w-5" />
-          </Link>
-          <span className="text-base font-medium text-zinc-900 dark:text-zinc-100">
-            {monthLabel}
-          </span>
-          <Link
-            href={`/budget/mois?month=${nextMonth(month)}`}
-            aria-label="Mois suivant"
-            className="flex h-11 w-11 items-center justify-center text-zinc-500 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
-          >
-            <ChevronRightIcon className="h-5 w-5" />
-          </Link>
-        </div>
+        <MonthNav
+          monthLabel={monthLabel}
+          previousHref={`/budget/mois?month=${previousMonth(month)}`}
+          nextHref={`/budget/mois?month=${nextMonth(month)}`}
+        />
       </header>
 
       {!budget && (
