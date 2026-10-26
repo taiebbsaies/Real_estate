@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { WifiOffIcon } from "@/app/budget/_components/icons";
-import { ButtonLink } from "@/app/budget/_components/ui/Button";
+import RetryButton from "./RetryButton";
 
 export const metadata: Metadata = {
   title: "Hors ligne",
@@ -16,10 +16,10 @@ export default function OfflinePage() {
         Vous êtes hors ligne
       </h1>
       <p className="max-w-[320px] text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">
-        Impossible de charger cette page. Vérifiez votre connexion internet,
+        Données indisponibles hors ligne. Vérifiez votre connexion internet,
         puis réessayez.
       </p>
-      <ButtonLink href="/">Réessayer</ButtonLink>
+      <RetryButton />
     </main>
   );
 }

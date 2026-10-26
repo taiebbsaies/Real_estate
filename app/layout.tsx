@@ -13,6 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 import RegisterServiceWorker from "./RegisterServiceWorker";
+import OfflineBanner from "./_components/OfflineBanner";
 
 export const metadata: Metadata = {
   title: {
@@ -44,6 +45,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
         <RegisterServiceWorker />
+        <OfflineBanner />
         {children}
       </body>
     </html>

@@ -1,4 +1,4 @@
-const CACHE_NAME = "homecheck-cache-v3";
+const CACHE_NAME = "homecheck-cache-v4";
 const STATIC_ASSETS = [
   "/",
   "/login",
@@ -18,17 +18,42 @@ self.addEventListener("install", (event) => {
     caches
       .open(CACHE_NAME)
       .then((cache) =>
-        Promise.all(
-          STATIC_ASSETS.map((asset) =>
-            cache.add(asset).catch((error) => {
+        Promise.all([
+          ...STATIC_ASSETS.map((asset) =>
+            cache.add(new Request(asset, { cache: "reload" })).catch((error) => {
               console.warn("[SW] Precache failed for", asset, error);
-            })
-          )
-        )
+            }),
+          ),
+          precacheOfflineAssets(cache),
+        ]),
       )
       .then(() => self.skipWaiting())
   );
 });
+
+// Précache les chunks /_next/static (CSS/JS hashés) référencés par /offline
+// pour que la page de fallback soit complète dès la première visite.
+async function precacheOfflineAssets(cache) {
+  try {
+    const response = await fetch("/offline", { cache: "reload" });
+    if (!response.ok) return;
+    const html = await response.text();
+    const assetUrls = [
+      ...new Set(
+        Array.from(html.matchAll(/\/_next\/static\/[^"'\\\s)]+/g), (match) => match[0]),
+      ),
+    ];
+    await Promise.all(
+      assetUrls.map((url) =>
+        cache.add(new Request(url, { cache: "reload" })).catch((error) => {
+          console.warn("[SW] Precache failed for", url, error);
+        }),
+      ),
+    );
+  } catch (error) {
+    console.warn("[SW] Unable to precache /offline assets", error);
+  }
+}
 
 // Activate Event - Clean old caches
 self.addEventListener("activate", (event) => {
@@ -55,7 +80,70 @@ self.addEventListener("message", (event) => {
   }
 });
 
-// Fetch Event - Network first with cache fallback for HTML, Cache first for assets
+function isCacheable(response) {
+  return response !== undefined && response.status === 200 && response.type === "basic";
+}
+
+// Navigations HTML : network-first, fallback cache, puis /offline en dernier recours
+async function networkFirstNavigation(request) {
+  try {
+    const response = await fetch(request);
+    if (isCacheable(response)) {
+      const cache = await caches.open(CACHE_NAME);
+      await cache.put(request, response.clone());
+    }
+    return response;
+  } catch {
+    return (await caches.match(request)) || caches.match("/offline");
+  }
+}
+
+// Appels API : network-first, fallback cache, puis erreur JSON contrôlée (jamais de crash)
+async function networkFirstApi(request) {
+  try {
+    const response = await fetch(request);
+    if (isCacheable(response)) {
+      const cache = await caches.open(CACHE_NAME);
+      await cache.put(request, response.clone());
+    }
+    return response;
+  } catch {
+    const cachedResponse = await caches.match(request);
+    if (cachedResponse) {
+      return cachedResponse;
+    }
+    return new Response(
+      JSON.stringify({
+        error: "OFFLINE",
+        message: "Données indisponibles hors ligne.",
+      }),
+      {
+        status: 503,
+        headers: { "Content-Type": "application/json" },
+      },
+    );
+  }
+}
+
+// Assets statiques immuables (chunks hashés, polices, icônes, images) : cache-first
+async function cacheFirst(request) {
+  const cachedResponse = await caches.match(request);
+  if (cachedResponse) {
+    return cachedResponse;
+  }
+  try {
+    const response = await fetch(request);
+    if (isCacheable(response)) {
+      const cache = await caches.open(CACHE_NAME);
+      await cache.put(request, response.clone());
+    }
+    return response;
+  } catch {
+    return Response.error();
+  }
+}
+
+// Fetch Event
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") {
     return;
@@ -63,53 +151,35 @@ self.addEventListener("fetch", (event) => {
 
   const url = new URL(event.request.url);
 
-  // Skip chrome-extension, internal API actions, next server actions
+  // Skip cross-origin requests
   if (url.origin !== self.location.origin) {
     return;
   }
 
-  // Network-first strategy for navigation/pages
+  // Navigations (requêtes HTML)
   if (event.request.mode === "navigate") {
-    event.respondWith(
-      fetch(event.request)
-        .then((response) => {
-          const responseClone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseClone);
-          });
-          return response;
-        })
-        .catch(() => {
-          return caches.match(event.request).then((cachedResponse) => {
-            return cachedResponse || caches.match("/offline");
-          });
-        })
-    );
+    event.respondWith(networkFirstNavigation(event.request));
     return;
   }
 
-  // Cache-first strategy for static assets (images, icons, fonts)
-  if (
-    url.pathname.startsWith("/icons/") ||
-    url.pathname.endsWith(".svg") ||
-    url.pathname.endsWith(".png") ||
-    url.pathname.endsWith(".jpg")
-  ) {
-    event.respondWith(
-      caches.match(event.request).then((cachedResponse) => {
-        if (cachedResponse) {
-          return cachedResponse;
-        }
-        return fetch(event.request)
-          .then((response) => {
-            const responseClone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, responseClone);
-            });
-            return response;
-          })
-          .catch(() => caches.match("/offline"));
-      })
-    );
+  // Appels API
+  if (url.pathname.startsWith("/api/")) {
+    event.respondWith(networkFirstApi(event.request));
+    return;
   }
+
+  // Assets statiques et médias
+  if (
+    url.pathname.startsWith("/_next/static/") ||
+    url.pathname.startsWith("/_next/image") ||
+    url.pathname.startsWith("/icons/") ||
+    /\.(svg|png|jpe?g|gif|webp|avif|ico|woff2?)$/i.test(url.pathname)
+  ) {
+    event.respondWith(cacheFirst(event.request));
+    return;
+  }
+
+  // Le reste (payloads RSC des navigations client, etc.) n'est pas intercepté :
+  // en cas d'échec réseau, le router Next.js retombe sur une navigation complète,
+  // prise en charge par la stratégie navigate ci-dessus (cache puis /offline).
 });

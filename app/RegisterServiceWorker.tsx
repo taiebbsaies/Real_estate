@@ -2,9 +2,16 @@
 
 import { useEffect } from "react";
 
+// Le service worker n'est enregistré qu'en production : en dev, le HMR et les
+// chunks non hashés rendent le cache du SW contre-productif. Pour tester le
+// mode hors ligne en local : `npm run build && npm start` (voir README).
 export default function RegisterServiceWorker() {
   useEffect(() => {
-    if (typeof window !== "undefined" && "serviceWorker" in navigator) {
+    if (
+      process.env.NODE_ENV === "production" &&
+      typeof window !== "undefined" &&
+      "serviceWorker" in navigator
+    ) {
       window.addEventListener("load", () => {
         navigator.serviceWorker
           .register("/sw.js")
