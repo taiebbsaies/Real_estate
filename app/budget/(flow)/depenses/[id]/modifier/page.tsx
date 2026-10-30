@@ -10,7 +10,7 @@ import ScreenHeader from "@/app/budget/_components/ScreenHeader";
 import ExpenseForm from "@/app/budget/_components/ExpenseForm";
 
 export const metadata: Metadata = {
-  title: "Modifier la dépense — HomeCheck",
+  title: "Modifier la dépense",
 };
 
 type Params = Promise<{ id: string }>;
@@ -18,8 +18,8 @@ type Params = Promise<{ id: string }>;
 function EditSkeleton() {
   return (
     <div className="flex flex-col gap-4 px-4 pt-6" aria-hidden="true">
-      <div className="h-8 w-56 animate-pulse rounded bg-[var(--budget-skeleton)]" />
-      <div className="h-96 animate-pulse rounded-[16px] bg-[var(--budget-skeleton)]" />
+      <div className="h-8 w-56 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
+      <div className="h-96 animate-pulse rounded-2xl bg-zinc-200 dark:bg-zinc-800" />
     </div>
   );
 }

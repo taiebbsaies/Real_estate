@@ -3,13 +3,6 @@ import Link from "next/link";
 import { getSession } from "@/lib/session";
 import { signOut } from "@/app/actions/auth";
 
-const roleLabels: Record<string, string> = {
-  TENANT: "Locataire",
-  OWNER: "Propriétaire",
-  TECHNICIAN: "Technicien",
-  ADMIN: "Administrateur",
-};
-
 async function UserNav() {
   const session = await getSession();
 
@@ -21,27 +14,50 @@ async function UserNav() {
       ADMIN: "/dashboard/admin",
     };
     const dashboardUrl = roleDashboardMap[session.activeRole] || "/dashboard/tenant";
+    const initial = session.firstName.charAt(0).toUpperCase();
 
     return (
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-1.5 sm:gap-2">
         <Link
           href={dashboardUrl}
-          className="rounded-full bg-blue-600 px-3.5 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-blue-700"
+          className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
         >
-          Tableau de bord
+          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="3" width="7" height="9" rx="1" />
+            <rect x="14" y="3" width="7" height="5" rx="1" />
+            <rect x="14" y="12" width="7" height="9" rx="1" />
+            <rect x="3" y="16" width="7" height="5" rx="1" />
+          </svg>
+          <span className="hidden md:inline">Tableau de bord</span>
+        </Link>
+        <Link
+          href="/budget"
+          className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+        >
+          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 2v20" />
+            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+          </svg>
+          <span className="hidden md:inline">Budget</span>
         </Link>
         <Link
           href="/profile"
-          className="text-xs font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+          className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-zinc-900 text-xs font-bold text-white transition-opacity hover:opacity-80 dark:bg-zinc-100 dark:text-zinc-900"
+          title="Mon profil"
         >
-          Profil
+          {initial}
         </Link>
         <form action={signOut}>
           <button
             type="submit"
-            className="rounded-full border border-zinc-300 px-3 py-1.5 text-xs font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            title="Déconnexion"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-full text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
           >
-            Déconnexion
+            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+              <polyline points="16 17 21 12 16 7" />
+              <line x1="21" y1="12" x2="9" y2="12" />
+            </svg>
           </button>
         </form>
       </div>
@@ -66,35 +82,6 @@ async function UserNav() {
   );
 }
 
-async function UserBanner() {
-  const session = await getSession();
-
-  if (session) {
-    return (
-      <div className="flex items-center gap-3 rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 font-semibold text-blue-600 dark:bg-blue-950 dark:text-blue-400">
-          {session.firstName.charAt(0)}
-        </div>
-        <div>
-          <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">
-            Connecté en tant que {roleLabels[session.activeRole] ?? session.activeRole}
-          </p>
-          <p className="text-xs text-zinc-500">{session.email}</p>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <Link
-      href="/signup"
-      className="inline-flex h-12 items-center justify-center rounded-full bg-zinc-900 px-8 text-sm font-medium text-white transition-colors hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
-    >
-      Get started — it&apos;s free
-    </Link>
-  );
-}
-
 export default function Home() {
   return (
     <div className="relative min-h-full flex-1 flex-col linear-grid bg-[var(--background)] text-[var(--foreground)]">
@@ -110,10 +97,6 @@ export default function Home() {
                 HomeCheck
               </span>
             </Link>
-            <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-0.5 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              PWA Online
-            </span>
           </div>
 
           <nav className="flex items-center gap-3 text-sm font-medium">
@@ -203,24 +186,6 @@ export default function Home() {
               </Link>
             </div>
           </div>
-        </div>
-
-        {/* Action Buttons & Session state */}
-        <div className="mt-8 flex flex-wrap items-center gap-4">
-          <Suspense
-            fallback={
-              <div className="h-11 w-44 animate-pulse rounded-xl bg-zinc-200 dark:bg-zinc-800" />
-            }
-          >
-            <UserBanner />
-          </Suspense>
-
-          <Link
-            href="/db-check"
-            className="inline-flex h-11 items-center justify-center rounded-xl border border-zinc-300/80 bg-white/60 px-5 text-sm font-medium text-zinc-700 transition-colors hover:bg-white hover:text-zinc-900 dark:border-zinc-800 dark:bg-zinc-900/60 dark:text-zinc-300 dark:hover:bg-zinc-900 dark:hover:text-zinc-100"
-          >
-            État de la base (MongoDB)
-          </Link>
         </div>
 
         {/* Feature Grid with Swiss/Linear Cards */}

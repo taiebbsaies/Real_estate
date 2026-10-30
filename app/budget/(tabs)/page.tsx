@@ -31,14 +31,18 @@ import {
   AlertTriangleIcon,
   CategoryIcon,
   CheckCircleIcon,
-  ChevronLeftIcon,
   ChevronRightIcon,
   NotebookIcon,
   TrendingUpIcon,
 } from "../_components/icons";
+import MonthNav from "../_components/MonthNav";
+import Card from "../_components/ui/Card";
+import Alert from "../_components/ui/Alert";
+import EmptyState from "../_components/ui/EmptyState";
+import { ButtonLink } from "../_components/ui/Button";
 
 export const metadata: Metadata = {
-  title: "Budget — HomeCheck",
+  title: "Budget",
 };
 
 const MONTH_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/;
@@ -48,22 +52,22 @@ type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 function HomeSkeleton() {
   return (
     <div className="flex flex-col gap-4 px-4 pt-6" aria-hidden="true">
-      <div className="h-8 w-40 animate-pulse rounded bg-[var(--budget-skeleton)]" />
-      <div className="h-72 animate-pulse rounded-[16px] bg-[var(--budget-skeleton)]" />
-      <div className="h-28 animate-pulse rounded-[16px] bg-[var(--budget-skeleton)]" />
-      <div className="h-48 animate-pulse rounded-[16px] bg-[var(--budget-skeleton)]" />
+      <div className="h-8 w-40 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
+      <div className="h-72 animate-pulse rounded-2xl bg-zinc-200 dark:bg-zinc-800" />
+      <div className="h-28 animate-pulse rounded-2xl bg-zinc-200 dark:bg-zinc-800" />
+      <div className="h-48 animate-pulse rounded-2xl bg-zinc-200 dark:bg-zinc-800" />
     </div>
   );
 }
 
 function alertBarColor(level: MonthSummary["alertLevel"]): string {
   if (level === "exceeded") {
-    return "var(--budget-primary)";
+    return "bg-red-500 dark:bg-red-400";
   }
   if (level === "warning") {
-    return "var(--budget-warning)";
+    return "bg-amber-500 dark:bg-amber-400";
   }
-  return "var(--budget-secondary)";
+  return "bg-emerald-500 dark:bg-emerald-400";
 }
 
 function ForecastCard({
@@ -89,24 +93,26 @@ function ForecastCard({
     : 0;
 
   return (
-    <section className="flex flex-col gap-4 rounded-[16px] border border-[var(--budget-border)] bg-[var(--budget-surface)] p-5">
-      <div className="flex items-center justify-between gap-2">
+    <Card className="flex flex-col gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
         <div className="flex items-center gap-2">
-          <TrendingUpIcon className="h-5 w-5 text-[var(--budget-muted)]" />
-          <h2 className="budget-heading text-[18px] font-medium text-[var(--budget-secondary)]">
+          <TrendingUpIcon className="h-5 w-5 text-zinc-400" />
+          <h2 className="text-base font-bold text-zinc-950 dark:text-zinc-50">
             Prévision de fin de mois
           </h2>
         </div>
         {hasData &&
           (onTrack ? (
-            <span className="flex items-center gap-1 rounded-full border border-[var(--budget-secondary)]/10 bg-[var(--budget-secondary-soft)] px-2 py-[3px] text-[11px] font-medium text-[var(--budget-secondary)]">
-              <CheckCircleIcon className="h-3.5 w-3.5" />
-              Sur la bonne voie
+            <span className="flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+              <CheckCircleIcon className="h-3.5 w-3.5 shrink-0" />
+              <span>Sur la bonne voie</span>
             </span>
           ) : (
-            <span className="flex items-center gap-1 rounded-full border border-[var(--budget-warning)]/20 bg-[var(--budget-warning-soft)] px-2 py-[3px] text-[11px] font-medium text-[var(--budget-warning)]">
-              <AlertTriangleIcon className="h-3.5 w-3.5" />
-              Dépassement probable (≈ {formatTnd(forecast - limit)})
+            <span className="flex min-w-0 items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-left text-[11px] font-bold text-amber-600 dark:text-amber-400">
+              <AlertTriangleIcon className="h-3.5 w-3.5 shrink-0" />
+              <span>
+                Dépassement probable (≈ {formatTnd(forecast - limit)})
+              </span>
             </span>
           ))}
       </div>
@@ -114,41 +120,40 @@ function ForecastCard({
       {hasData ? (
         <>
           <div className="flex flex-col gap-1">
-            <span className="budget-tabular text-[15px] font-medium">
+            <span className="tabular-nums text-[15px] font-medium text-zinc-900 dark:text-zinc-100">
               ≈ {formatTnd(forecast)} projetés
             </span>
-            <span className="text-[13px] text-[var(--budget-muted)]">
+            <span className="text-[13px] text-zinc-500 dark:text-zinc-400">
               {onTrack
                 ? `Marge estimée de ${formatTnd(limit - forecast)} sur le plafond.`
                 : `Soit ≈ ${formatTnd(forecast - limit)} au-dessus du plafond.`}
             </span>
           </div>
           <div
-            className="h-2 overflow-hidden rounded-full bg-[var(--budget-border)]"
+            className="h-2 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800"
             role="img"
             aria-label={`Prévision à ${forecastWidth} % du plafond`}
           >
             <div
-              className="h-full rounded-full"
-              style={{
-                width: `${forecastWidth}%`,
-                backgroundColor: onTrack
-                  ? "var(--budget-secondary)"
-                  : "var(--budget-warning)",
-              }}
+              className={`h-full rounded-full ${
+                onTrack
+                  ? "bg-emerald-500 dark:bg-emerald-400"
+                  : "bg-amber-500 dark:bg-amber-400"
+              }`}
+              style={{ width: `${forecastWidth}%` }}
             />
           </div>
         </>
       ) : (
-        <p className="text-[13px] text-[var(--budget-muted)]">
+        <p className="text-[13px] text-zinc-500 dark:text-zinc-400">
           Pas encore assez de données pour estimer la fin du mois.
         </p>
       )}
 
-      <p className="text-[12px] italic text-[var(--budget-muted)]">
+      <p className="text-xs italic text-zinc-500 dark:text-zinc-400">
         Le loyer est exclu du calcul du rythme.
       </p>
-    </section>
+    </Card>
   );
 }
 
@@ -185,22 +190,21 @@ function AlertBanner({
   const isError = !isPastMonth && summary.alertLevel === "exceeded";
   const isPastExceeded = isPastMonth && summary.remaining < 0;
   const isWarning = !isPastMonth && summary.alertLevel === "warning";
-
-  const styles = isError || isPastExceeded
-    ? "border-[var(--budget-primary)]/20 bg-[var(--budget-primary-soft)] text-[var(--budget-primary)]"
+  const kind = isError || isPastExceeded
+    ? "error"
     : isWarning
-      ? "border-[var(--budget-warning)]/20 bg-[var(--budget-warning-soft)] text-[var(--budget-warning)]"
-      : "border-[var(--budget-secondary)]/10 bg-[var(--budget-secondary-soft)] text-[var(--budget-secondary)]";
+      ? "warning"
+      : "success";
 
   return (
-    <div className={`flex items-start gap-2 rounded-xl border p-3 ${styles}`}>
+    <Alert kind={kind} className="flex items-start gap-2">
       {isError || isPastExceeded || isWarning ? (
         <AlertTriangleIcon className="mt-[1px] h-4 w-4 shrink-0" />
       ) : (
         <CheckCircleIcon className="mt-[1px] h-4 w-4 shrink-0" />
       )}
-      <p className="text-[13px] font-medium leading-snug">{text}</p>
-    </div>
+      <p className="font-medium leading-snug">{text}</p>
+    </Alert>
   );
 }
 
@@ -234,59 +238,47 @@ async function HomeContent({ searchParams }: { searchParams: SearchParams }) {
   return (
     <div className="flex flex-col gap-4 px-4 pt-6 md:pt-10">
       <header className="flex flex-col gap-1">
-        <h1 className="budget-heading text-[28px] font-semibold tracking-tight text-[var(--budget-secondary)]">
+        <h1 className="text-2xl font-extrabold tracking-tight text-zinc-950 dark:text-zinc-50">
           Budget
         </h1>
-        <div className="-ml-2 flex items-center gap-1">
-          <Link
-            href={`/budget?month=${previousMonth(month)}`}
-            aria-label="Mois précédent"
-            className="flex h-11 w-11 items-center justify-center text-[var(--budget-muted)] transition-colors hover:text-[var(--budget-text)]"
-          >
-            <ChevronLeftIcon className="h-5 w-5" />
-          </Link>
-          <span className="text-[16px] font-medium">{monthLabel}</span>
-          <Link
-            href={`/budget?month=${nextMonth(month)}`}
-            aria-label="Mois suivant"
-            className="flex h-11 w-11 items-center justify-center text-[var(--budget-muted)] transition-colors hover:text-[var(--budget-text)]"
-          >
-            <ChevronRightIcon className="h-5 w-5" />
-          </Link>
-        </div>
+        <MonthNav
+          monthLabel={monthLabel}
+          previousHref={`/budget?month=${previousMonth(month)}`}
+          nextHref={`/budget?month=${nextMonth(month)}`}
+        />
       </header>
 
       {summary.budget ? (
-        <section className="flex flex-col gap-5 rounded-[16px] border border-[var(--budget-border)] bg-[var(--budget-surface)] p-5">
+        <Card className="flex flex-col gap-5 md:mx-auto md:w-full md:max-w-[720px] lg:max-w-none">
           <div className="flex flex-col items-center gap-1 py-2">
-            <span className="text-[13px] font-medium text-[var(--budget-muted)]">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
               Reste à dépenser
             </span>
             <span
-              className={`budget-tabular budget-heading text-[40px] font-semibold leading-none tracking-tight ${
+              className={`max-w-full break-words tabular-nums text-4xl font-extrabold leading-none tracking-tight sm:text-[40px] ${
                 summary.remaining < 0
-                  ? "text-[var(--budget-primary)]"
-                  : "text-[var(--budget-secondary)]"
+                  ? "text-red-600 dark:text-red-400"
+                  : "text-zinc-950 dark:text-zinc-50"
               }`}
             >
               {formatTnd(summary.remaining).replace(" TND", "")}
             </span>
-            <span className="mt-1 text-[13px] font-medium uppercase tracking-widest text-[var(--budget-muted)]">
+            <span className="mt-1 text-[11px] font-semibold uppercase tracking-widest text-zinc-400">
               TND
             </span>
           </div>
 
           <div className="flex items-center justify-between px-4 text-center">
             <div className="flex flex-col gap-1">
-              <span className="text-[12px] text-[var(--budget-muted)]">Plafond</span>
-              <span className="budget-tabular text-[14px] font-semibold">
+              <span className="text-xs text-zinc-500 dark:text-zinc-400">Plafond</span>
+              <span className="tabular-nums text-sm font-semibold text-zinc-900 dark:text-zinc-100">
                 {formatTnd(summary.budget.limit)}
               </span>
             </div>
-            <div className="h-8 w-px bg-[var(--budget-border-strong)]" />
+            <div className="h-8 w-px bg-zinc-200 dark:bg-zinc-800" />
             <div className="flex flex-col gap-1">
-              <span className="text-[12px] text-[var(--budget-muted)]">Dépensé</span>
-              <span className="budget-tabular text-[14px] font-semibold">
+              <span className="text-xs text-zinc-500 dark:text-zinc-400">Dépensé</span>
+              <span className="tabular-nums text-sm font-semibold text-zinc-900 dark:text-zinc-100">
                 {formatTnd(summary.spent)}
               </span>
             </div>
@@ -294,7 +286,7 @@ async function HomeContent({ searchParams }: { searchParams: SearchParams }) {
 
           <div className="flex flex-col gap-2">
             <div
-              className="h-[14px] overflow-hidden rounded-full bg-[var(--budget-border)]"
+              className="h-3.5 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800"
               role="progressbar"
               aria-label="Part du plafond utilisée"
               aria-valuenow={Math.round(summary.percentUsed)}
@@ -302,18 +294,15 @@ async function HomeContent({ searchParams }: { searchParams: SearchParams }) {
               aria-valuemax={100}
             >
               <div
-                className="h-full rounded-full"
-                style={{
-                  width: `${percentWidth}%`,
-                  backgroundColor: alertBarColor(summary.alertLevel),
-                }}
+                className={`h-full rounded-full ${alertBarColor(summary.alertLevel)}`}
+                style={{ width: `${percentWidth}%` }}
               />
             </div>
             <div className="flex items-center justify-between px-1">
-              <span className="text-[12px] text-[var(--budget-muted)]">
+              <span className="text-xs text-zinc-500 dark:text-zinc-400">
                 {summary.percentUsed.toLocaleString("fr-FR")} % utilisés
               </span>
-              <span className="budget-tabular text-[12px] font-medium text-[var(--budget-secondary)]">
+              <span className="tabular-nums text-xs font-medium text-zinc-900 dark:text-zinc-100">
                 {formatTnd(summary.budget.limit)}
               </span>
             </div>
@@ -326,78 +315,71 @@ async function HomeContent({ searchParams }: { searchParams: SearchParams }) {
             daysLeft={daysLeft}
           />
 
-          <Link
+          <ButtonLink
             href={`/budget/mois?month=${month}`}
-            className="flex h-11 items-center justify-center rounded-xl border border-[var(--budget-border-strong)] text-[14px] font-medium transition-colors hover:bg-[var(--budget-bg)]"
+            variant="secondary"
+            className="w-full"
           >
             Modifier le budget
-          </Link>
-        </section>
+          </ButtonLink>
+        </Card>
       ) : (
-        <section className="flex flex-col items-center gap-4 rounded-[16px] border border-[var(--budget-border)] bg-[var(--budget-surface)] p-5 text-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[var(--budget-secondary-soft)]">
-            <NotebookIcon className="h-7 w-7 text-[var(--budget-secondary)]" />
-          </div>
-          <h2 className="budget-heading text-[20px] font-semibold text-[var(--budget-secondary)]">
-            Définissez votre budget pour {monthLabel.toLowerCase()}
-          </h2>
-          <p className="max-w-[280px] text-[14px] leading-relaxed text-[var(--budget-muted)]">
-            Fixez un plafond mensuel pour suivre vos dépenses de logement.
-          </p>
-          <Link
-            href={`/budget/mois?month=${month}`}
-            className="flex h-11 items-center rounded-xl bg-[var(--budget-primary)] px-5 text-[14px] font-semibold text-white transition-colors hover:bg-[var(--budget-primary-dark)]"
-          >
-            Créer le budget
-          </Link>
-        </section>
+        <Card padded={false} className="p-6 md:mx-auto md:w-full md:max-w-[720px] lg:max-w-none">
+          <EmptyState
+            icon={NotebookIcon}
+            title={`Définissez votre budget pour ${monthLabel.toLowerCase()}`}
+            description="Fixez un plafond mensuel pour suivre vos dépenses de logement."
+            actionHref={`/budget/mois?month=${month}`}
+            actionLabel="Créer le budget"
+          />
+        </Card>
       )}
 
-      <div className="flex flex-col gap-4 lg:grid lg:grid-cols-2 lg:items-start lg:gap-6">
+      <div className="flex flex-col gap-4 md:mx-auto md:w-full md:max-w-[720px] lg:grid lg:max-w-none lg:grid-cols-2 lg:items-start lg:gap-6">
         <div className="flex flex-col gap-4 lg:gap-6">
           {isCurrentMonth && summary.budget && (
             <ForecastCard summary={summary} month={month} />
           )}
 
-      <section className="flex flex-col gap-5 rounded-[16px] border border-[var(--budget-border)] bg-[var(--budget-surface)] p-5">
-        <h2 className="budget-heading text-[18px] font-medium text-[var(--budget-secondary)]">
+      <Card className="flex flex-col gap-5">
+        <h2 className="text-base font-bold text-zinc-950 dark:text-zinc-50">
           Répartition par catégorie
         </h2>
         {categories.length === 0 ? (
-          <p className="text-[13px] text-[var(--budget-muted)]">
+          <p className="text-[13px] text-zinc-500 dark:text-zinc-400">
             Aucune dépense ce mois-ci.
           </p>
         ) : (
           <div className="flex flex-col gap-4">
             {categories.map(([category, total]) => (
-              <div key={category} className="flex flex-col gap-[6px]">
+              <div key={category} className="flex flex-col gap-1.5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <CategoryIcon
                       category={category}
-                      className="h-5 w-5 text-[var(--budget-muted)]"
+                      className="h-5 w-5 text-zinc-500 dark:text-zinc-400"
                     />
-                    <span className="text-[14px] font-medium">
+                    <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                       {BUDGET_CATEGORY_LABELS[category]}
                     </span>
                   </div>
-                  <span className="budget-tabular text-[14px] font-medium">
+                  <span className="tabular-nums text-sm font-medium text-zinc-900 dark:text-zinc-100">
                     {formatTnd(total)}
                   </span>
                 </div>
                 <div className="flex items-center gap-3">
                   <div
-                    className="h-[6px] flex-1 overflow-hidden rounded-full bg-[var(--budget-border)]"
+                    className="h-1.5 flex-1 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800"
                     aria-hidden="true"
                   >
                     <div
-                      className="h-full rounded-full bg-[var(--budget-text)]"
+                      className="h-full rounded-full bg-zinc-900 dark:bg-zinc-100"
                       style={{
                         width: `${summary.sharesByCategory[category] ?? 0}%`,
                       }}
                     />
                   </div>
-                  <span className="budget-tabular w-12 text-right text-[11px] text-[var(--budget-muted)]">
+                  <span className="tabular-nums w-12 text-right text-[11px] text-zinc-500 dark:text-zinc-400">
                     {(summary.sharesByCategory[category] ?? 0).toLocaleString("fr-FR")} %
                   </span>
                 </div>
@@ -405,12 +387,12 @@ async function HomeContent({ searchParams }: { searchParams: SearchParams }) {
             ))}
           </div>
         )}
-      </section>
+      </Card>
         </div>
 
         {recentExpenses.length > 0 && (
-        <section className="flex flex-col gap-4 rounded-[16px] border border-[var(--budget-border)] bg-[var(--budget-surface)] p-5">
-          <h2 className="budget-heading text-[18px] font-medium text-[var(--budget-secondary)]">
+        <Card className="flex flex-col gap-4">
+          <h2 className="text-base font-bold text-zinc-950 dark:text-zinc-50">
             Dernières dépenses
           </h2>
           <div className="flex flex-col gap-4">
@@ -418,42 +400,42 @@ async function HomeContent({ searchParams }: { searchParams: SearchParams }) {
               <Link
                 key={expense.id}
                 href={`/budget/depenses/${expense.id}/modifier`}
-                className="group flex items-center justify-between"
+                className="group flex items-center justify-between gap-3"
               >
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white">
+                <div className="flex min-w-0 flex-1 items-center gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white shadow-xs dark:bg-zinc-800">
                     <CategoryIcon
                       category={expense.category}
-                      className="h-5 w-5 text-[var(--budget-muted)]"
+                      className="h-5 w-5 text-zinc-500 dark:text-zinc-400"
                     />
                   </div>
-                  <div className="flex flex-col">
-                    <span className="text-[14px] font-medium">
+                  <div className="flex min-w-0 flex-col">
+                    <span className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
                       {expense.note?.trim() !== "" && expense.note
                         ? expense.note
                         : BUDGET_CATEGORY_LABELS[expense.category]}
                     </span>
-                    <span className="text-[12px] text-[var(--budget-muted)]">
+                    <span className="text-xs text-zinc-500 dark:text-zinc-400">
                       {formatShortDayLabel(expense.date.slice(0, 10))}
                     </span>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="budget-tabular text-[14px] font-medium">
+                <div className="flex shrink-0 items-center gap-2">
+                  <span className="tabular-nums text-sm font-medium text-zinc-900 dark:text-zinc-100">
                     {formatTnd(expense.amount)}
                   </span>
-                  <ChevronRightIcon className="h-4 w-4 text-[var(--budget-muted)] transition-colors group-hover:text-[var(--budget-text)]" />
+                  <ChevronRightIcon className="h-4 w-4 text-zinc-400 transition-colors group-hover:text-zinc-700 dark:group-hover:text-zinc-300" />
                 </div>
               </Link>
             ))}
           </div>
           <Link
             href={`/budget/depenses?month=${month}`}
-            className="flex h-11 items-center justify-center border-t border-[var(--budget-border)] pt-2 text-[14px] font-medium text-[var(--budget-primary)] transition-colors hover:text-[var(--budget-primary-dark)]"
+            className="flex h-11 items-center justify-center border-t border-zinc-200 pt-2 text-sm font-semibold text-emerald-600 transition-colors hover:text-emerald-700 dark:border-zinc-800 dark:text-emerald-400 dark:hover:text-emerald-300"
           >
             Voir tout
           </Link>
-        </section>
+        </Card>
         )}
       </div>
     </div>

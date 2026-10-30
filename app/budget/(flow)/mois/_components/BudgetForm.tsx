@@ -1,9 +1,17 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useFormStatus } from "react-dom";
-import { upsertBudget } from "@/app/actions/budget";
+import { deleteBudget, upsertBudget } from "@/app/actions/budget";
 import { millimesToTnd } from "@/lib/budget/calculations";
+import { useOnlineStatus } from "@/lib/hooks/useOnlineStatus";
+import AmountInput from "../../../_components/AmountInput";
+import ConfirmDialog from "../../../_components/ConfirmDialog";
+import Card from "../../../_components/ui/Card";
+import Alert from "../../../_components/ui/Alert";
+import { Button } from "../../../_components/ui/Button";
+import { fieldErrorClass } from "../../../_components/ui/Field";
 
 type BudgetFormProps = {
   month: string;
@@ -14,17 +22,18 @@ type BudgetFormProps = {
   previousMonthLabel: string;
 };
 
-function SubmitButton() {
+function SubmitButton({ disabled = false }: { disabled?: boolean }) {
   const { pending } = useFormStatus();
 
   return (
-    <button
+    <Button
       type="submit"
-      disabled={pending}
-      className="h-12 w-full rounded-xl bg-[var(--budget-primary)] text-[15px] font-semibold text-white transition-colors hover:bg-[var(--budget-primary-dark)] disabled:opacity-50"
+      variant="primary"
+      className="w-full"
+      disabled={pending || disabled}
     >
       {pending ? "Enregistrement…" : "Enregistrer"}
-    </button>
+    </Button>
   );
 }
 
@@ -37,10 +46,21 @@ export default function BudgetForm({
   previousMonthLabel,
 }: BudgetFormProps) {
   const [state, formAction] = useActionState(upsertBudget, null);
+  const [deleteState, deleteAction] = useActionState(deleteBudget, null);
   const [limit, setLimit] = useState(initialLimit);
   const [income, setIncome] = useState(initialIncome);
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const router = useRouter();
+  const isOnline = useOnlineStatus();
 
   const showReuseButton = !hasBudget && previousBudget !== null;
+
+  useEffect(() => {
+    if (deleteState?.success) {
+      dialogRef.current?.close();
+      router.refresh();
+    }
+  }, [deleteState, router]);
 
   function reusePreviousBudget() {
     if (!previousBudget) {
@@ -56,110 +76,101 @@ export default function BudgetForm({
   }
 
   return (
-    <section className="flex flex-col gap-5 rounded-[16px] border border-[var(--budget-border)] bg-[var(--budget-surface)] p-5">
-      <h2 className="budget-heading text-[18px] font-medium text-[var(--budget-secondary)]">
-        {hasBudget ? "Modifier le plafond" : "Plafond mensuel"}
-      </h2>
+    <div className="flex flex-col gap-4">
+      <Card className="flex flex-col gap-5">
+        <h2 className="text-base font-bold text-zinc-950 dark:text-zinc-50">
+          {hasBudget ? "Modifier le plafond" : "Plafond mensuel"}
+        </h2>
 
       <form action={formAction} className="flex flex-col gap-5">
         <input type="hidden" name="month" value={month} />
 
         {state?.errors?.month?.map((error) => (
-          <p key={error} className="text-[13px] font-medium text-[var(--budget-primary)]">
+          <p key={error} className={fieldErrorClass}>
             {error}
           </p>
         ))}
 
-        <div className="flex flex-col gap-2">
-          <label htmlFor="limit" className="text-[13px] font-medium text-[var(--budget-muted)]">
-            Plafond mensuel (TND)
-          </label>
-          <div className="flex h-12 items-center rounded-xl border border-[var(--budget-border-strong)] bg-[var(--budget-input-bg)] px-4 transition-colors focus-within:border-[var(--budget-primary)]">
-            <input
-              id="limit"
-              name="limit"
-              type="text"
-              inputMode="decimal"
-              autoComplete="off"
-              required
-              placeholder="Ex. 1 100,000"
-              value={limit}
-              onChange={(event) => setLimit(event.target.value)}
-              className="budget-tabular w-full bg-transparent text-[18px] font-semibold outline-none placeholder:font-normal placeholder:text-[var(--budget-muted)]/60"
-            />
-            <span className="ml-2 shrink-0 text-[13px] font-medium text-[var(--budget-muted)]">
-              TND
-            </span>
-          </div>
-          <p className="text-[12px] text-[var(--budget-muted)]">
-            Le montant maximum que vous autorisez pour ce mois.
-          </p>
-          {state?.errors?.limit?.map((error) => (
-            <p key={error} className="text-[12px] font-medium text-[var(--budget-primary)]">
-              {error}
-            </p>
-          ))}
-        </div>
+        <AmountInput
+          id="limit"
+          label="Plafond mensuel (TND)"
+          hint="Le montant maximum que vous autorisez pour ce mois."
+          errors={state?.errors?.limit}
+          placeholder="Ex. 1 100,000"
+          value={limit}
+          onChange={(event) => setLimit(event.target.value)}
+        />
 
-        <div className="flex flex-col gap-2">
-          <label htmlFor="income" className="text-[13px] font-medium text-[var(--budget-muted)]">
-            Revenu mensuel (optionnel)
-          </label>
-          <div className="flex h-12 items-center rounded-xl border border-[var(--budget-border-strong)] bg-[var(--budget-input-bg)] px-4 transition-colors focus-within:border-[var(--budget-primary)]">
-            <input
-              id="income"
-              name="income"
-              type="text"
-              inputMode="decimal"
-              autoComplete="off"
-              placeholder="Ex. 1 800,000"
-              value={income}
-              onChange={(event) => setIncome(event.target.value)}
-              className="budget-tabular w-full bg-transparent text-[16px] font-medium outline-none placeholder:font-normal placeholder:text-[var(--budget-muted)]/60"
-            />
-            <span className="ml-2 shrink-0 text-[13px] font-medium text-[var(--budget-muted)]">
-              TND
-            </span>
-          </div>
-          <p className="text-[12px] text-[var(--budget-muted)]">
-            Le revenu sert uniquement de repère, il n&apos;est jamais requis.
-          </p>
-          {state?.errors?.income?.map((error) => (
-            <p key={error} className="text-[12px] font-medium text-[var(--budget-primary)]">
-              {error}
-            </p>
-          ))}
-        </div>
+        <AmountInput
+          id="income"
+          label="Revenu mensuel (optionnel)"
+          hint="Le revenu sert uniquement de repère, il n'est jamais requis."
+          errors={state?.errors?.income}
+          placeholder="Ex. 1 800,000"
+          size="md"
+          required={false}
+          value={income}
+          onChange={(event) => setIncome(event.target.value)}
+        />
 
         {showReuseButton && (
           <button
             type="button"
             onClick={reusePreviousBudget}
-            className="h-11 rounded-xl border border-[var(--budget-border-strong)] px-4 text-left text-[13px] font-medium text-[var(--budget-text)] transition-colors hover:bg-[var(--budget-bg)]"
+            className="h-11 w-full rounded-xl border border-zinc-200 bg-white/60 px-4 text-left text-[13px] font-medium text-zinc-800 transition-colors hover:border-zinc-300 dark:border-zinc-800 dark:bg-[#151518]/60 dark:text-zinc-300 dark:hover:border-zinc-700"
           >
             Reprendre le budget de {previousMonthLabel} (
-            <span className="budget-tabular">
+            <span className="tabular-nums">
               {previousBudget ? millimesToTnd(previousBudget.limit) : ""} TND
             </span>
             )
           </button>
         )}
 
-        <SubmitButton />
+        {!isOnline && (
+          <Alert kind="warning" role="status">
+            <p className="font-medium leading-snug">
+              Vous êtes hors ligne : le budget ne peut pas être enregistré pour
+              le moment.
+            </p>
+          </Alert>
+        )}
+
+        <SubmitButton disabled={!isOnline} />
 
         {state?.message && (
-          <p
-            role="status"
-            className={`text-[13px] font-medium ${
-              state.success
-                ? "text-[var(--budget-secondary)]"
-                : "text-[var(--budget-primary)]"
-            }`}
-          >
-            {state.message}
-          </p>
+          <Alert kind={state.success ? "success" : "error"} role="status">
+            <p className="font-medium">{state.message}</p>
+          </Alert>
         )}
       </form>
-    </section>
+      </Card>
+
+      {hasBudget && (
+        <section className="flex flex-col gap-3">
+          <Button
+            variant="danger"
+            className="w-full"
+            disabled={!isOnline}
+            onClick={() => dialogRef.current?.showModal()}
+          >
+            Supprimer le budget
+          </Button>
+
+          <ConfirmDialog
+            dialogRef={dialogRef}
+            labelledBy="delete-budget-title"
+            title="Supprimer ce budget ?"
+            description="Les dépenses enregistrées ce mois-ci seront conservées."
+            confirmLabel="Supprimer"
+            disabled={!isOnline}
+            stateMessage={deleteState?.message}
+            stateSuccess={deleteState?.success}
+            hiddenInputs={{ month }}
+            onConfirm={deleteAction}
+          />
+        </section>
+      )}
+    </div>
   );
 }

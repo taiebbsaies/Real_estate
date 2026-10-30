@@ -43,6 +43,12 @@ export default async function TenantDashboardPage() {
               Mes réclamations
             </Link>
             <Link
+              href="/budget"
+              className="text-xs font-medium text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100"
+            >
+              Mon budget
+            </Link>
+            <Link
               href="/profile"
               className="text-xs font-medium text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100"
             >

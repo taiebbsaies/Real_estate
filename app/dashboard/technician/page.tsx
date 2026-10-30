@@ -31,12 +31,18 @@ export default async function TechnicianDashboardPage() {
               Espace Technicien
             </span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <Link
               href="/dashboard/technician/complaints"
               className="text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
             >
               Réclamations
+            </Link>
+            <Link
+              href="/budget"
+              className="text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+            >
+              Mon budget
             </Link>
             <Link
               href="/profile"

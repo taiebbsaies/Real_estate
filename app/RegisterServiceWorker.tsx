@@ -2,47 +2,27 @@
 
 import { useEffect } from "react";
 
+// Le service worker n'est enregistré qu'en production : en dev, le HMR et les
+// chunks non hashés rendent le cache du SW contre-productif. Pour tester le
+// mode hors ligne en local : `npm run build && npm start` (voir README).
 export default function RegisterServiceWorker() {
   useEffect(() => {
-    if (!("serviceWorker" in navigator)) return;
-
-    const register = async () => {
-      try {
-        const registration = await navigator.serviceWorker.register("/sw.js", {
-          scope: "/",
-        });
-
-        if (registration.waiting) {
-          registration.waiting.postMessage({ type: "SKIP_WAITING" });
-        }
-
-        registration.addEventListener("updatefound", () => {
-          const installing = registration.installing;
-          installing?.addEventListener("statechange", () => {
-            if (
-              installing.state === "installed" &&
-              navigator.serviceWorker.controller
-            ) {
-              installing.postMessage({ type: "SKIP_WAITING" });
-            }
+    if (
+      process.env.NODE_ENV === "production" &&
+      typeof window !== "undefined" &&
+      "serviceWorker" in navigator
+    ) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker
+          .register("/sw.js")
+          .then((registration) => {
+            console.info("HomeCheck PWA ServiceWorker registered with scope:", registration.scope);
+          })
+          .catch((error) => {
+            console.error("HomeCheck PWA ServiceWorker registration failed:", error);
           });
-        });
-      } catch (error) {
-        console.error("HomeCheck PWA ServiceWorker registration failed:", error);
-      }
-    };
-
-    if (document.readyState === "complete") {
-      void register();
-      return;
+      });
     }
-
-    const onLoad = () => {
-      void register();
-    };
-    window.addEventListener("load", onLoad, { once: true });
-
-    return () => window.removeEventListener("load", onLoad);
   }, []);
 
   return null;

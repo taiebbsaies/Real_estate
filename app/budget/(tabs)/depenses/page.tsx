@@ -21,13 +21,15 @@ import {
 import { formatDayLabel, formatMonthLabel, formatTnd } from "@/lib/budget/format";
 import {
   CategoryIcon,
-  ChevronLeftIcon,
   ChevronRightIcon,
   ReceiptIcon,
 } from "../../_components/icons";
+import MonthNav from "../../_components/MonthNav";
+import Card from "../../_components/ui/Card";
+import EmptyState from "../../_components/ui/EmptyState";
 
 export const metadata: Metadata = {
-  title: "Dépenses — HomeCheck",
+  title: "Dépenses",
 };
 
 const MONTH_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/;
@@ -43,11 +45,11 @@ type ExpenseGroup = {
 function ListSkeleton() {
   return (
     <div className="flex flex-col gap-5 px-4 pt-6" aria-hidden="true">
-      <div className="h-8 w-40 animate-pulse rounded bg-[var(--budget-skeleton)]" />
-      <div className="h-9 w-64 animate-pulse rounded-full bg-[var(--budget-skeleton)]" />
-      <div className="h-20 animate-pulse rounded-[16px] bg-[var(--budget-skeleton)]" />
-      <div className="h-20 animate-pulse rounded-[16px] bg-[var(--budget-skeleton)]" />
-      <div className="h-20 animate-pulse rounded-[16px] bg-[var(--budget-skeleton)] w-[90%]" />
+      <div className="h-8 w-40 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
+      <div className="h-9 w-64 animate-pulse rounded-full bg-zinc-200 dark:bg-zinc-800" />
+      <div className="h-20 animate-pulse rounded-2xl bg-zinc-200 dark:bg-zinc-800" />
+      <div className="h-20 animate-pulse rounded-2xl bg-zinc-200 dark:bg-zinc-800" />
+      <div className="h-20 animate-pulse rounded-2xl bg-zinc-200 dark:bg-zinc-800 w-[90%]" />
     </div>
   );
 }
@@ -62,12 +64,12 @@ function buildHref(month: string, category: BudgetCategory | undefined): string 
 
 function alertBarColor(level: "normal" | "warning" | "exceeded"): string {
   if (level === "exceeded") {
-    return "var(--budget-primary)";
+    return "bg-red-500 dark:bg-red-400";
   }
   if (level === "warning") {
-    return "var(--budget-warning)";
+    return "bg-amber-500 dark:bg-amber-400";
   }
-  return "var(--budget-secondary)";
+  return "bg-emerald-500 dark:bg-emerald-400";
 }
 
 async function ExpensesContent({ searchParams }: { searchParams: SearchParams }) {
@@ -109,26 +111,14 @@ async function ExpensesContent({ searchParams }: { searchParams: SearchParams })
   return (
     <div className="flex flex-col gap-5 px-4 pt-6 md:pt-10">
       <header className="flex flex-col gap-1">
-        <h1 className="budget-heading text-[28px] font-semibold tracking-tight text-[var(--budget-secondary)]">
+        <h1 className="text-2xl font-extrabold tracking-tight text-zinc-950 dark:text-zinc-50">
           Dépenses
         </h1>
-        <div className="-ml-2 flex items-center gap-1">
-          <Link
-            href={buildHref(previousMonth(month), category)}
-            aria-label="Mois précédent"
-            className="flex h-11 w-11 items-center justify-center text-[var(--budget-muted)] transition-colors hover:text-[var(--budget-text)]"
-          >
-            <ChevronLeftIcon className="h-5 w-5" />
-          </Link>
-          <span className="text-[16px] font-medium">{monthLabel}</span>
-          <Link
-            href={buildHref(nextMonth(month), category)}
-            aria-label="Mois suivant"
-            className="flex h-11 w-11 items-center justify-center text-[var(--budget-muted)] transition-colors hover:text-[var(--budget-text)]"
-          >
-            <ChevronRightIcon className="h-5 w-5" />
-          </Link>
-        </div>
+        <MonthNav
+          monthLabel={monthLabel}
+          previousHref={buildHref(previousMonth(month), category)}
+          nextHref={buildHref(nextMonth(month), category)}
+        />
       </header>
 
       <div className="flex w-full flex-col gap-5 md:mx-auto md:max-w-[720px]">
@@ -139,11 +129,11 @@ async function ExpensesContent({ searchParams }: { searchParams: SearchParams })
           <div className="flex w-max gap-2 md:w-full md:flex-wrap">
           <Link
             href={buildHref(month, undefined)}
-            aria-current={category === undefined ? "true" : undefined}
-            className={`flex h-9 items-center whitespace-nowrap rounded-full px-4 text-[13px] font-medium transition-colors ${
+            aria-current={category === undefined ? "page" : undefined}
+            className={`flex h-11 items-center whitespace-nowrap rounded-full px-4 text-[13px] font-medium transition-colors ${
               category === undefined
-                ? "bg-[var(--budget-primary)] text-white"
-                : "border border-[var(--budget-border)] bg-[var(--budget-surface)] text-[var(--budget-text)] hover:border-[var(--budget-border-strong)]"
+                ? "bg-zinc-950 text-white dark:bg-white dark:text-zinc-950"
+                : "border border-zinc-200 bg-white/60 text-zinc-700 hover:border-zinc-300 dark:border-zinc-800 dark:bg-[#151518]/60 dark:text-zinc-300 dark:hover:border-zinc-700"
             }`}
           >
             Toutes
@@ -152,11 +142,11 @@ async function ExpensesContent({ searchParams }: { searchParams: SearchParams })
             <Link
               key={item}
               href={buildHref(month, item)}
-              aria-current={category === item ? "true" : undefined}
-              className={`flex h-9 items-center whitespace-nowrap rounded-full px-4 text-[13px] font-medium transition-colors ${
+              aria-current={category === item ? "page" : undefined}
+              className={`flex h-11 items-center whitespace-nowrap rounded-full px-4 text-[13px] font-medium transition-colors ${
                 category === item
-                  ? "bg-[var(--budget-primary)] text-white"
-                  : "border border-[var(--budget-border)] bg-[var(--budget-surface)] text-[var(--budget-text)] hover:border-[var(--budget-border-strong)]"
+                  ? "bg-zinc-950 text-white dark:bg-white dark:text-zinc-950"
+                  : "border border-zinc-200 bg-white/60 text-zinc-700 hover:border-zinc-300 dark:border-zinc-800 dark:bg-[#151518]/60 dark:text-zinc-300 dark:hover:border-zinc-700"
               }`}
             >
               {BUDGET_CATEGORY_LABELS[item]}
@@ -166,29 +156,23 @@ async function ExpensesContent({ searchParams }: { searchParams: SearchParams })
       </nav>
 
       {expenses.length === 0 ? (
-        <section className="flex flex-col items-center gap-4 rounded-[16px] border border-[var(--budget-border)] bg-[var(--budget-surface)] p-6 text-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full border border-[var(--budget-border)] bg-[var(--budget-bg)]">
-            <ReceiptIcon className="h-6 w-6 text-[var(--budget-muted)]" />
-          </div>
-          <p className="text-[14px] text-[var(--budget-muted)]">
-            Aucune dépense enregistrée en {monthLabel.toLowerCase()}.
-          </p>
-          <Link
-            href="/budget/depenses/nouvelle"
-            className="flex h-11 items-center rounded-xl bg-[var(--budget-primary)] px-5 text-[14px] font-semibold text-white transition-colors hover:bg-[var(--budget-primary-dark)]"
-          >
-            Ajouter une dépense
-          </Link>
-        </section>
+        <Card padded={false} className="p-6">
+          <EmptyState
+            icon={ReceiptIcon}
+            title={`Aucune dépense enregistrée en ${monthLabel.toLowerCase()}.`}
+            actionHref="/budget/depenses/nouvelle"
+            actionLabel="Ajouter une dépense"
+          />
+        </Card>
       ) : (
         <div className="flex flex-col gap-5">
           {groups.map((group) => (
             <section key={group.day} className="flex flex-col gap-3">
               <div className="flex items-center justify-between">
-                <h2 className="text-[13px] font-semibold uppercase tracking-wide text-[var(--budget-muted)]">
+                <h2 className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
                   {formatDayLabel(group.day)}
                 </h2>
-                <span className="budget-tabular text-[12px] text-[var(--budget-muted)]">
+                <span className="tabular-nums text-xs text-zinc-500 dark:text-zinc-400">
                   {formatTnd(group.total)}
                 </span>
               </div>
@@ -197,31 +181,31 @@ async function ExpensesContent({ searchParams }: { searchParams: SearchParams })
                   <Link
                     key={expense.id}
                     href={`/budget/depenses/${expense.id}/modifier`}
-                    className="group flex items-center justify-between rounded-[16px] border border-[var(--budget-border)] bg-[var(--budget-surface)] p-4"
+                    className="group flex items-center justify-between gap-3 rounded-2xl border border-zinc-200/90 bg-white/90 p-4 shadow-xs backdrop-blur-md transition-colors hover:border-zinc-300 dark:border-zinc-800/90 dark:bg-[#111114]/90 dark:hover:border-zinc-700"
                   >
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white">
+                    <div className="flex min-w-0 flex-1 items-center gap-3">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white shadow-xs dark:bg-zinc-800">
                         <CategoryIcon
                           category={expense.category}
-                          className="h-5 w-5 text-[var(--budget-muted)]"
+                          className="h-5 w-5 text-zinc-500 dark:text-zinc-400"
                         />
                       </div>
-                      <div className="flex flex-col">
-                        <span className="text-[14px] font-medium text-[var(--budget-text)]">
+                      <div className="flex min-w-0 flex-col">
+                        <span className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
                           {expense.note?.trim() !== "" && expense.note
                             ? expense.note
                             : BUDGET_CATEGORY_LABELS[expense.category]}
                         </span>
-                        <span className="text-[12px] text-[var(--budget-muted)]">
+                        <span className="text-xs text-zinc-500 dark:text-zinc-400">
                           {BUDGET_CATEGORY_LABELS[expense.category]}
                         </span>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="budget-tabular text-[14px] font-medium">
+                    <div className="flex shrink-0 items-center gap-2">
+                      <span className="tabular-nums text-sm font-medium text-zinc-900 dark:text-zinc-100">
                         {formatTnd(expense.amount)}
                       </span>
-                      <ChevronRightIcon className="h-4 w-4 text-[var(--budget-muted)] transition-colors group-hover:text-[var(--budget-text)]" />
+                      <ChevronRightIcon className="h-4 w-4 text-zinc-400 transition-colors group-hover:text-zinc-700 dark:group-hover:text-zinc-300" />
                     </div>
                   </Link>
                 ))}
@@ -232,31 +216,28 @@ async function ExpensesContent({ searchParams }: { searchParams: SearchParams })
       )}
 
       {summary.budget && expenses.length > 0 && (
-        <section className="flex flex-col gap-2 rounded-[16px] border border-[var(--budget-border)] bg-[var(--budget-surface)] p-4">
+        <Card padded={false} className="flex-col gap-2 p-4">
           <div className="flex items-center justify-between">
-            <span className="text-[14px] font-medium">Total de {monthLabel.toLowerCase()}</span>
-            <span className="budget-tabular text-[14px] font-semibold">
+            <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">Total de {monthLabel.toLowerCase()}</span>
+            <span className="tabular-nums text-sm font-semibold text-zinc-900 dark:text-zinc-100">
               {formatTnd(summary.spent)}{" "}
-              <span className="font-normal text-[var(--budget-muted)]">
+              <span className="font-normal text-zinc-500 dark:text-zinc-400">
                 / {formatTnd(summary.budget.limit)}
               </span>
             </span>
           </div>
-          <div className="h-2 overflow-hidden rounded-full bg-[var(--budget-border)]">
+          <div className="h-2 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
             <div
-              className="h-full rounded-full"
-              style={{
-                width: `${percentWidth}%`,
-                backgroundColor: alertBarColor(summary.alertLevel),
-              }}
+              className={`h-full rounded-full ${alertBarColor(summary.alertLevel)}`}
+              style={{ width: `${percentWidth}%` }}
             />
           </div>
           <div className="flex justify-end">
-            <span className="budget-tabular text-[12px] font-medium text-[var(--budget-secondary)]">
+            <span className="tabular-nums text-xs font-medium text-zinc-900 dark:text-zinc-100">
               {summary.percentUsed.toLocaleString("fr-FR")} % du plafond
             </span>
           </div>
-        </section>
+        </Card>
       )}
       </div>
     </div>

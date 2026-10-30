@@ -12,18 +12,20 @@ import {
   ChevronRightIcon,
   HistoryIcon,
 } from "../../_components/icons";
+import Card from "../../_components/ui/Card";
+import EmptyState from "../../_components/ui/EmptyState";
 
 export const metadata: Metadata = {
-  title: "Historique — HomeCheck",
+  title: "Historique",
 };
 
 function HistorySkeleton() {
   return (
     <div className="flex flex-col gap-4 px-4 pt-6" aria-hidden="true">
-      <div className="h-8 w-36 animate-pulse rounded bg-[var(--budget-skeleton)]" />
-      <div className="h-36 animate-pulse rounded-[16px] bg-[var(--budget-skeleton)]" />
-      <div className="h-24 animate-pulse rounded-[16px] bg-[var(--budget-skeleton)]" />
-      <div className="h-24 animate-pulse rounded-[16px] bg-[var(--budget-skeleton)]" />
+      <div className="h-8 w-36 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
+      <div className="h-36 animate-pulse rounded-2xl bg-zinc-200 dark:bg-zinc-800" />
+      <div className="h-24 animate-pulse rounded-2xl bg-zinc-200 dark:bg-zinc-800" />
+      <div className="h-24 animate-pulse rounded-2xl bg-zinc-200 dark:bg-zinc-800" />
     </div>
   );
 }
@@ -40,14 +42,14 @@ function formatMonthShortLabel(month: string): string {
 
 function progressColor(entry: HistoryEntry): string {
   return entry.status === "depasse"
-    ? "var(--budget-primary)"
-    : "var(--budget-secondary)";
+    ? "bg-red-500 dark:bg-red-400"
+    : "bg-emerald-500/60 dark:bg-emerald-400/60";
 }
 
 function HistoryBadge({ entry, isCurrent }: { entry: HistoryEntry; isCurrent: boolean }) {
   if (isCurrent) {
     return (
-      <span className="rounded-full border border-[var(--budget-border-strong)] px-2 py-[3px] text-[11px] font-medium text-[var(--budget-muted)]">
+      <span className="rounded-full border border-zinc-300 px-2 py-0.5 text-[11px] font-medium text-zinc-600 dark:border-zinc-700 dark:text-zinc-400">
         En cours
       </span>
     );
@@ -58,15 +60,18 @@ function HistoryBadge({ entry, isCurrent }: { entry: HistoryEntry; isCurrent: bo
     const overshootPercent = Math.round(entry.percentUsed - 100);
 
     return (
-      <span className="flex items-center gap-1 rounded-full border border-[var(--budget-primary)]/20 bg-[var(--budget-primary-soft)] px-2 py-[3px] text-[11px] font-medium text-[var(--budget-primary)]">
-        <AlertTriangleIcon className="h-3.5 w-3.5" />
-        Dépassé de {formatTnd(overshoot).replace(" TND", "")} TND (+{overshootPercent} %)
+      <span className="flex min-w-0 items-center gap-1 rounded-full bg-red-500/10 px-2 py-0.5 text-left text-[11px] font-bold text-red-600 dark:text-red-400">
+        <AlertTriangleIcon className="h-3.5 w-3.5 shrink-0" />
+        <span>
+          Dépassé de {formatTnd(overshoot).replace(" TND", "")} TND
+          (+{overshootPercent} %)
+        </span>
       </span>
     );
   }
 
   return (
-    <span className="flex items-center gap-1 rounded-full border border-[var(--budget-secondary)]/10 bg-[var(--budget-secondary-soft)] px-2 py-[3px] text-[11px] font-medium text-[var(--budget-secondary)]">
+    <span className="flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
       <CheckCircleIcon className="h-3.5 w-3.5" />
       Respecté
     </span>
@@ -93,45 +98,39 @@ async function HistoryContent() {
   return (
     <div className="flex flex-col gap-4 px-4 pt-6 md:pt-10">
       <header>
-        <h1 className="budget-heading text-[28px] font-semibold tracking-tight text-[var(--budget-secondary)]">
+        <h1 className="text-2xl font-extrabold tracking-tight text-zinc-950 dark:text-zinc-50">
           Historique
         </h1>
       </header>
 
       {entries.length === 0 ? (
-        <section className="flex flex-col items-center gap-4 rounded-[16px] border border-[var(--budget-border)] bg-[var(--budget-surface)] p-6 text-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full border border-[var(--budget-border)] bg-[var(--budget-bg)]">
-            <HistoryIcon className="h-6 w-6 text-[var(--budget-muted)]" />
-          </div>
-          <p className="text-[14px] text-[var(--budget-muted)]">
-            Votre historique apparaîtra après votre premier budget.
-          </p>
-          <Link
-            href="/budget/mois"
-            className="flex h-11 items-center rounded-xl bg-[var(--budget-primary)] px-5 text-[14px] font-semibold text-white transition-colors hover:bg-[var(--budget-primary-dark)]"
-          >
-            Créer un budget
-          </Link>
-        </section>
+        <Card padded={false} className="p-6">
+          <EmptyState
+            icon={HistoryIcon}
+            title="Votre historique apparaîtra après votre premier budget."
+            actionHref="/budget/mois"
+            actionLabel="Créer un budget"
+          />
+        </Card>
       ) : (
         <div className="flex flex-col gap-4 lg:grid lg:grid-cols-2 lg:items-start lg:gap-6">
           {completeEntries.length > 0 && (
-            <section className="flex flex-col gap-4 rounded-[16px] border border-[var(--budget-border)] bg-[var(--budget-surface)] p-5">
-              <h2 className="budget-heading text-[18px] font-medium text-[var(--budget-secondary)]">
+            <Card className="flex flex-col gap-4">
+              <h2 className="text-base font-bold text-zinc-950 dark:text-zinc-50">
                 Vue d&apos;ensemble
               </h2>
               <div className="flex items-end justify-between gap-3">
                 <div className="flex flex-col gap-1">
-                  <span className="text-[12px] text-[var(--budget-muted)]">
+                  <span className="text-xs text-zinc-500 dark:text-zinc-400">
                     Moyenne mensuelle
                   </span>
-                  <span className="budget-tabular budget-heading text-[24px] font-semibold leading-none text-[var(--budget-secondary)]">
+                  <span className="tabular-nums text-2xl font-extrabold leading-none tracking-tight text-zinc-950 dark:text-zinc-50">
                     {formatTnd(average).replace(" TND", "")}
-                    <span className="ml-1 font-sans text-[13px] font-medium text-[var(--budget-muted)]">
+                    <span className="ml-1 text-[13px] font-medium text-zinc-500 dark:text-zinc-400">
                       TND
                     </span>
                   </span>
-                  <span className="text-[12px] text-[var(--budget-muted)]">
+                  <span className="text-xs text-zinc-500 dark:text-zinc-400">
                     sur {completeEntries.length} mois
                     {completeEntries.length > 1 ? " complets" : " complet"}
                   </span>
@@ -143,23 +142,19 @@ async function HistoryContent() {
                   {chronologicalBars.map((entry) => (
                     <div key={entry.month} className="flex flex-col items-center gap-1">
                       <div
-                        className={`w-5 rounded-t ${
-                          entry.status === "depasse"
-                            ? "bg-[var(--budget-primary)]"
-                            : "bg-[var(--budget-secondary)]/60"
-                        }`}
+                        className={`w-5 rounded-t ${progressColor(entry)}`}
                         style={{
                           height: `${Math.max(12, Math.round((entry.spent / maxSpent) * 100))}%`,
                         }}
                       />
-                      <span className="text-[9px] text-[var(--budget-muted)]">
+                      <span className="text-[11px] text-zinc-500 dark:text-zinc-400">
                         {formatMonthShortLabel(entry.month)}
                       </span>
                     </div>
                   ))}
                 </div>
               </div>
-            </section>
+            </Card>
           )}
 
           <div className="flex flex-col gap-4">
@@ -173,31 +168,31 @@ async function HistoryContent() {
                 <Link
                   key={entry.month}
                   href={`/budget/depenses?month=${entry.month}`}
-                  className="group flex flex-col gap-3 rounded-[16px] border border-[var(--budget-border)] bg-[var(--budget-surface)] p-5"
+                  className="group flex flex-col gap-3 rounded-2xl border border-zinc-200/90 bg-white/90 p-5 shadow-xs backdrop-blur-md transition-colors hover:border-zinc-300 dark:border-zinc-800/90 dark:bg-[#111114]/90 dark:hover:border-zinc-700"
                 >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="budget-heading text-[16px] font-medium">
+                  <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
+                    <span className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
                       {formatMonthLabel(entry.month)}
                     </span>
                     <div className="flex items-center gap-1">
                       <HistoryBadge entry={entry} isCurrent={isCurrent(entry)} />
-                      <ChevronRightIcon className="h-4 w-4 text-[var(--budget-muted)] transition-colors group-hover:text-[var(--budget-text)]" />
+                      <ChevronRightIcon className="h-4 w-4 shrink-0 text-zinc-400 transition-colors group-hover:text-zinc-700 dark:group-hover:text-zinc-300" />
                     </div>
                   </div>
-                  <div className="flex items-baseline justify-between">
-                    <span className="budget-tabular text-[15px] font-medium">
+                  <div className="flex flex-wrap items-baseline justify-between gap-x-2">
+                    <span className="tabular-nums text-[15px] font-medium text-zinc-900 dark:text-zinc-100">
                       {formatTnd(entry.spent)}
-                      <span className="text-[12px] font-normal text-[var(--budget-muted)]">
+                      <span className="text-xs font-normal text-zinc-500 dark:text-zinc-400">
                         {" "}
                         / {formatTnd(entry.limit)}
                       </span>
                     </span>
-                    <span className="budget-tabular text-[12px] font-medium text-[var(--budget-secondary)]">
+                    <span className="tabular-nums text-xs font-medium text-zinc-900 dark:text-zinc-100">
                       {entry.percentUsed.toLocaleString("fr-FR")} %
                     </span>
                   </div>
                   <div
-                    className="h-2 overflow-hidden rounded-full bg-[var(--budget-border)]"
+                    className="h-2 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800"
                     role="progressbar"
                     aria-label={`Part du plafond utilisée en ${formatMonthLabel(entry.month)}`}
                     aria-valuenow={Math.round(entry.percentUsed)}
@@ -205,11 +200,8 @@ async function HistoryContent() {
                     aria-valuemax={100}
                   >
                     <div
-                      className="h-full rounded-full"
-                      style={{
-                        width: `${percentWidth}%`,
-                        backgroundColor: progressColor(entry),
-                      }}
+                      className={`h-full rounded-full ${progressColor(entry)}`}
+                      style={{ width: `${percentWidth}%` }}
                     />
                   </div>
                 </Link>

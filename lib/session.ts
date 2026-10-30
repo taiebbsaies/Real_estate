@@ -18,7 +18,14 @@ export type SessionPayload = {
 };
 
 function getJwtSecret(): Uint8Array {
-  const secret = process.env.JWT_SECRET || "homecheck-super-secret-jwt-key-min-32-chars-length!";
+  const secret = process.env.JWT_SECRET;
+
+  if (!secret) {
+    throw new Error(
+      "La variable d'environnement JWT_SECRET est manquante. Définissez-la dans .env.local (voir .env.example).",
+    );
+  }
+
   return new TextEncoder().encode(secret);
 }
 

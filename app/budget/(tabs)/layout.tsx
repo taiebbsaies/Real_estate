@@ -5,12 +5,25 @@ import { PlusIcon } from "../_components/icons";
 export default function TabsLayout({ children }: LayoutProps<"/budget">) {
   return (
     <>
+      <Link
+        href="/"
+        className="flex items-center gap-2 px-4 pt-5 md:hidden"
+        aria-label="Retour à l'accueil HomeCheck"
+      >
+        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-zinc-950 text-xs font-bold text-white shadow-xs dark:bg-white dark:text-zinc-950">
+          H
+        </div>
+        <span className="text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+          HomeCheck
+        </span>
+      </Link>
+
       <div className="flex flex-1 flex-col pb-28 md:pb-12">{children}</div>
 
       <Link
         href="/budget/depenses/nouvelle"
         aria-label="Ajouter une dépense"
-        className="fixed bottom-[88px] right-[max(1rem,calc(50vw-240px+1rem))] z-40 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--budget-primary)] text-white shadow-[0_2px_8px_rgba(31,36,33,0.08)] transition-colors hover:bg-[var(--budget-primary-dark)] md:hidden"
+        className="fixed bottom-[88px] right-[max(1rem,calc(50vw-240px+1rem))] z-40 flex h-14 w-14 items-center justify-center rounded-full bg-zinc-950 text-white shadow-lg transition-all hover:bg-zinc-800 active:scale-[0.98] dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200 md:hidden"
       >
         <PlusIcon className="h-6 w-6" />
       </Link>

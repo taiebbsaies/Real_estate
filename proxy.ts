@@ -3,10 +3,19 @@ import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
 import type { SessionPayload } from "@/lib/session";
 
+import type { SessionPayload } from "@/lib/session";
+
 const SESSION_COOKIE_NAME = "homecheck_session";
 
 function getJwtSecret(): Uint8Array {
-  const secret = process.env.JWT_SECRET || "homecheck-super-secret-jwt-key-min-32-chars-length!";
+  const secret = process.env.JWT_SECRET;
+
+  if (!secret) {
+    throw new Error(
+      "La variable d'environnement JWT_SECRET est manquante. Définissez-la dans .env.local (voir .env.example).",
+    );
+  }
+
   return new TextEncoder().encode(secret);
 }
 
@@ -18,7 +27,7 @@ const roleRoutePrefixes: Record<string, string[]> = {
   "/dashboard/admin": ["ADMIN"],
 };
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const token = request.cookies.get(SESSION_COOKIE_NAME)?.value;
 
@@ -41,7 +50,8 @@ export async function middleware(request: NextRequest) {
   // Protected paths check
   const isProtectedPath =
     pathname.startsWith("/dashboard") ||
-    pathname.startsWith("/profile");
+    pathname.startsWith("/profile") ||
+    pathname.startsWith("/budget");
 
   if (isProtectedPath) {
     if (!session) {
@@ -69,6 +79,7 @@ export const config = {
   matcher: [
     "/dashboard/:path*",
     "/profile/:path*",
+    "/budget/:path*",
     "/login",
     "/signup",
   ],

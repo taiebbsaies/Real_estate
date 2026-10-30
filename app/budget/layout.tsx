@@ -1,27 +1,16 @@
 import type { Metadata } from "next";
-import { Fraunces, Public_Sans } from "next/font/google";
 import SideNav from "./_components/SideNav";
-import "./budget.css";
-
-const fraunces = Fraunces({
-  subsets: ["latin"],
-  variable: "--font-fraunces",
-});
-
-const publicSans = Public_Sans({
-  subsets: ["latin"],
-  variable: "--font-public-sans",
-});
 
 export const metadata: Metadata = {
-  title: "Budget — HomeCheck",
+  title: "Budget",
 };
 
+// Ce layout joue le rôle d'App Shell du module budget (SideNav, avec BottomNav
+// et FAB dans (tabs)/layout.tsx) : il est précaché avec chaque page visitée par
+// le service worker et reste affiché instantanément pendant le chargement des données.
 export default function BudgetLayout({ children }: LayoutProps<"/budget">) {
   return (
-    <div
-      className={`${fraunces.variable} ${publicSans.variable} budget-module`}
-    >
+    <div>
       <SideNav />
       <div className="md:pl-[260px]">
         <div className="mx-auto flex min-h-dvh w-full max-w-[480px] flex-col md:max-w-[1100px] md:px-6 lg:px-10">
