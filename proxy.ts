@@ -3,8 +3,6 @@ import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
 import type { SessionPayload } from "@/lib/session";
 
-import type { SessionPayload } from "@/lib/session";
-
 const SESSION_COOKIE_NAME = "homecheck_session";
 
 function getJwtSecret(): Uint8Array {
