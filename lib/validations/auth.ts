@@ -24,7 +24,19 @@ export const signUpSchema = z
     password: z
       .string()
       .min(8, "Password must contain at least 8 characters")
-      .max(72, "Password must not exceed 72 characters"),
+      .max(72, "Password must not exceed 72 characters")
+      .refine((val) => /[A-Z]/.test(val), {
+        message: "Password must contain at least one uppercase letter",
+      })
+      .refine((val) => /[a-z]/.test(val), {
+        message: "Password must contain at least one lowercase letter",
+      })
+      .refine((val) => /[0-9]/.test(val), {
+        message: "Password must contain at least one number",
+      })
+      .refine((val) => /[^A-Za-z0-9]/.test(val), {
+        message: "Password must contain at least one special character",
+      }),
 
     confirmPassword: z.string(),
     role: z

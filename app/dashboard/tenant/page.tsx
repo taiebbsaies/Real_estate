@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getSession } from "@/lib/session";
 import { redirect } from "next/navigation";
 import { getMyComplaints } from "@/lib/complaints/queries";
+import ThemeToggle from "@/app/_components/ThemeToggle";
 
 export const dynamic = "force-dynamic";
 
@@ -54,6 +55,7 @@ export default async function TenantDashboardPage() {
             >
               Paramètres
             </Link>
+            <ThemeToggle />
           </div>
         </div>
       </header>
