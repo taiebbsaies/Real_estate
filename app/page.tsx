@@ -212,56 +212,163 @@ export default function Home() {
 
           <div className="grid gap-6 sm:grid-cols-3">
             {/* Locataire Card */}
-            <div className="linear-card rounded-2xl border border-[#DCFCE7] bg-white p-6 shadow-sm shadow-[#166534]/5 dark:border-emerald-500/15 dark:bg-[#0c1410]/80 dark:backdrop-blur-md">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#DCFCE7] text-[#166534] font-bold text-sm dark:bg-emerald-500/15 dark:text-emerald-400 dark:shadow-[0_0_15px_-3px_rgba(34,197,94,0.3)]">
-                01
+            <div className="linear-card group relative flex flex-col justify-between rounded-2xl border border-[#DCFCE7] bg-white p-6 shadow-sm shadow-[#166534]/5 dark:border-emerald-500/15 dark:bg-[#0c1410]/80 dark:backdrop-blur-md">
+              <div>
+                <div className="flex items-center justify-between">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#DCFCE7] text-sm font-bold text-[#166534] dark:bg-emerald-500/15 dark:text-emerald-400 dark:shadow-[0_0_15px_-3px_rgba(34,197,94,0.3)]">
+                    01
+                  </div>
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-[#DCFCE7] px-2.5 py-0.5 text-[11px] font-bold text-[#166534] dark:bg-emerald-950/70 dark:text-emerald-300 dark:border dark:border-emerald-500/30">
+                    <span className="h-1.5 w-1.5 rounded-full bg-[#22C55E] animate-pulse" />
+                    96% Match ✨
+                  </span>
+                </div>
+
+                <h3 className="mt-4 text-lg font-bold text-[#1F2937] dark:text-zinc-50">
+                  Matching Intelligent Locataire
+                </h3>
+                <p className="mt-1.5 text-xs text-[#6B7280] dark:text-zinc-400 leading-relaxed">
+                  Algorithme prédictif multicritères reliant candidats qualifiés et biens idéaux avec transparence totale.
+                </p>
+
+                {/* Mini UI Widget */}
+                <div className="mt-4 rounded-xl border border-[#DCFCE7] bg-[#F0FDF4]/60 p-3.5 dark:border-emerald-500/15 dark:bg-[#070c09]/80">
+                  <div className="flex items-center justify-between text-xs font-semibold text-[#1F2937] dark:text-zinc-200">
+                    <span>S+2 Marsa Plage</span>
+                    <span className="text-[#166534] dark:text-emerald-400 font-bold">1 650 DT</span>
+                  </div>
+
+                  {/* Progress match bar */}
+                  <div className="mt-2 h-1.5 w-full rounded-full bg-zinc-200 dark:bg-zinc-800 overflow-hidden">
+                    <div className="h-full w-[96%] rounded-full bg-gradient-to-r from-[#166534] to-[#22C55E] dark:from-emerald-500 dark:to-emerald-300" />
+                  </div>
+
+                  <div className="mt-2.5 space-y-1 text-[11px] text-[#6B7280] dark:text-zinc-400">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[#22C55E] font-bold">✓</span>
+                      <span>Budget respecté (-8% sous le plafond)</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[#22C55E] font-bold">✓</span>
+                      <span>Superficie 94m² &amp; balcon vérifiés</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[#22C55E] font-bold">✓</span>
+                      <span>Dossier certifié &amp; solvable</span>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <h3 className="mt-4 text-base font-semibold text-[#1F2937] dark:text-zinc-50">
-                Matching Intelligent Locataire
-              </h3>
-              <p className="mt-2 text-sm text-[#6B7280] dark:text-zinc-400 leading-relaxed">
-                Score de compatibilité basé sur le budget, superficie, géolocalisation et préférences avec explications détaillées.
-              </p>
-              <div className="mt-4 flex items-center gap-2 text-xs font-semibold text-[#22C55E]">
+
+              <div className="mt-5 flex items-center justify-between pt-4 border-t border-[#DCFCE7]/70 dark:border-emerald-500/10 text-xs font-semibold text-[#22C55E]">
                 <span>Score moyen 91%</span>
-                <span className="text-[#6B7280] dark:text-zinc-600">•</span>
-                <span>Filtres multicritères</span>
+                <span className="text-zinc-400 group-hover:translate-x-1 transition-transform">Explorer le matching →</span>
               </div>
             </div>
 
             {/* Propriétaire Card */}
-            <div className="linear-card rounded-2xl border border-[#DCFCE7] bg-white p-6 shadow-sm shadow-[#166534]/5 dark:border-emerald-500/15 dark:bg-[#0c1410]/80 dark:backdrop-blur-md">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#DCFCE7] text-[#166534] font-bold text-sm dark:bg-emerald-500/15 dark:text-emerald-400 dark:shadow-[0_0_15px_-3px_rgba(34,197,94,0.3)]">
-                02
+            <div className="linear-card group relative flex flex-col justify-between rounded-2xl border border-[#DCFCE7] bg-white p-6 shadow-sm shadow-[#166534]/5 dark:border-emerald-500/15 dark:bg-[#0c1410]/80 dark:backdrop-blur-md">
+              <div>
+                <div className="flex items-center justify-between">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#DCFCE7] text-sm font-bold text-[#166534] dark:bg-emerald-500/15 dark:text-emerald-400 dark:shadow-[0_0_15px_-3px_rgba(34,197,94,0.3)]">
+                    02
+                  </div>
+                  <span className="inline-flex items-center gap-1 rounded-full bg-[#DCFCE7] px-2.5 py-0.5 text-[11px] font-bold text-[#166534] dark:bg-emerald-950/70 dark:text-emerald-300 dark:border dark:border-emerald-500/30">
+                    📄 Certifié Conforme
+                  </span>
+                </div>
+
+                <h3 className="mt-4 text-lg font-bold text-[#1F2937] dark:text-zinc-50">
+                  États des Lieux &amp; Inventaires IA
+                </h3>
+                <p className="mt-1.5 text-xs text-[#6B7280] dark:text-zinc-400 leading-relaxed">
+                  Checklist numérique pièce par pièce, photos horodatées infalsifiables et rapport PDF signé en direct.
+                </p>
+
+                {/* Mini UI Widget */}
+                <div className="mt-4 rounded-xl border border-[#DCFCE7] bg-[#F0FDF4]/60 p-3.5 dark:border-emerald-500/15 dark:bg-[#070c09]/80">
+                  <div className="flex items-center justify-between text-xs font-semibold text-[#1F2937] dark:text-zinc-200">
+                    <span>État des lieux d&apos;entrée</span>
+                    <span className="text-[10px] text-zinc-400 font-mono">#EDL-2026</span>
+                  </div>
+
+                  <div className="mt-2.5 space-y-1.5">
+                    <div className="flex items-center justify-between rounded-lg bg-white px-2.5 py-1.5 text-[11px] shadow-2xs dark:bg-[#0c1410] border border-[#DCFCE7]/60 dark:border-emerald-500/10">
+                      <span className="font-medium text-[#1F2937] dark:text-zinc-300">🛋️ Salon &amp; Séjour</span>
+                      <span className="rounded-full bg-[#DCFCE7] px-1.5 py-0.5 text-[10px] font-bold text-[#166534] dark:bg-emerald-950 dark:text-emerald-300">Très bon état</span>
+                    </div>
+                    <div className="flex items-center justify-between rounded-lg bg-white px-2.5 py-1.5 text-[11px] shadow-2xs dark:bg-[#0c1410] border border-[#DCFCE7]/60 dark:border-emerald-500/10">
+                      <span className="font-medium text-[#1F2937] dark:text-zinc-300">🍳 Cuisine équipée</span>
+                      <span className="rounded-full bg-[#DCFCE7] px-1.5 py-0.5 text-[10px] font-bold text-[#166534] dark:bg-emerald-950 dark:text-emerald-300">Conforme (4 photos)</span>
+                    </div>
+                    <div className="flex items-center justify-between rounded-lg bg-white px-2.5 py-1.5 text-[11px] shadow-2xs dark:bg-[#0c1410] border border-[#DCFCE7]/60 dark:border-emerald-500/10">
+                      <span className="font-medium text-[#1F2937] dark:text-zinc-300">🚿 Salle d&apos;eau</span>
+                      <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-800 dark:bg-amber-950/60 dark:text-amber-300">1 observation</span>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <h3 className="mt-4 text-base font-semibold text-[#1F2937] dark:text-zinc-50">
-                Gestion des Logements &amp; États des Lieux
-              </h3>
-              <p className="mt-2 text-sm text-[#6B7280] dark:text-zinc-400 leading-relaxed">
-                Inventaire numérique structuré par pièces (Salon, Cuisine, SDB) et historique des incidents horodaté.
-              </p>
-              <div className="mt-4 flex items-center gap-2 text-xs font-semibold text-[#22C55E]">
-                <span>Rapport PDF exportable</span>
-                <span className="text-[#6B7280] dark:text-zinc-600">•</span>
-                <span>Identité du logement</span>
+
+              <div className="mt-5 flex items-center justify-between pt-4 border-t border-[#DCFCE7]/70 dark:border-emerald-500/10 text-xs font-semibold text-[#22C55E]">
+                <span>Export PDF instantané</span>
+                <span className="text-zinc-400 group-hover:translate-x-1 transition-transform">Gérer mes biens →</span>
               </div>
             </div>
 
             {/* Technicien Card */}
-            <div className="linear-card rounded-2xl border border-[#DCFCE7] bg-white p-6 shadow-sm shadow-[#166534]/5 dark:border-emerald-500/15 dark:bg-[#0c1410]/80 dark:backdrop-blur-md">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#DCFCE7] text-[#166534] font-bold text-sm dark:bg-emerald-500/15 dark:text-emerald-400 dark:shadow-[0_0_15px_-3px_rgba(34,197,94,0.3)]">
-                03
+            <div className="linear-card group relative flex flex-col justify-between rounded-2xl border border-[#DCFCE7] bg-white p-6 shadow-sm shadow-[#166534]/5 dark:border-emerald-500/15 dark:bg-[#0c1410]/80 dark:backdrop-blur-md">
+              <div>
+                <div className="flex items-center justify-between">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#DCFCE7] text-sm font-bold text-[#166534] dark:bg-emerald-500/15 dark:text-emerald-400 dark:shadow-[0_0_15px_-3px_rgba(34,197,94,0.3)]">
+                    03
+                  </div>
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-[#DCFCE7] px-2.5 py-0.5 text-[11px] font-bold text-[#166534] dark:bg-emerald-950/70 dark:text-emerald-300 dark:border dark:border-emerald-500/30">
+                    <span className="h-2 w-2 rounded-full bg-[#22C55E] animate-ping" />
+                    14 En ligne
+                  </span>
+                </div>
+
+                <h3 className="mt-4 text-lg font-bold text-[#1F2937] dark:text-zinc-50">
+                  Réseau de Techniciens &amp; SOS
+                </h3>
+                <p className="mt-1.5 text-xs text-[#6B7280] dark:text-zinc-400 leading-relaxed">
+                  Attribution automatique des tickets par spécialité (plomberie, électricité, serrurerie) avec devis et suivi photo.
+                </p>
+
+                {/* Mini UI Widget */}
+                <div className="mt-4 rounded-xl border border-[#DCFCE7] bg-[#F0FDF4]/60 p-3.5 dark:border-emerald-500/15 dark:bg-[#070c09]/80">
+                  <div className="flex items-center justify-between text-xs font-semibold text-[#1F2937] dark:text-zinc-200">
+                    <span className="inline-flex items-center gap-1 text-[#166534] dark:text-emerald-400 font-bold">
+                      🔧 Fuite d&apos;eau signalée
+                    </span>
+                    <span className="text-[10px] text-zinc-400">⏱️ Réponse: 14 min</span>
+                  </div>
+
+                  <div className="mt-2.5 flex items-center justify-between rounded-lg bg-white p-2 text-xs shadow-2xs dark:bg-[#0c1410] border border-[#DCFCE7]/60 dark:border-emerald-500/10">
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#166534] text-[10px] font-bold text-white dark:bg-emerald-500 dark:text-zinc-950">
+                        SB
+                      </div>
+                      <div>
+                        <p className="text-[11px] font-bold text-[#1F2937] dark:text-zinc-200">Sami Benali</p>
+                        <p className="text-[10px] text-[#6B7280] dark:text-zinc-400">Plombier agréé • ⭐ 4.9</p>
+                      </div>
+                    </div>
+                    <span className="rounded-md bg-[#DCFCE7] px-2 py-0.5 text-[10px] font-bold text-[#166534] dark:bg-emerald-950 dark:text-emerald-300">
+                      Assigné
+                    </span>
+                  </div>
+
+                  <div className="mt-2 flex items-center justify-between text-[10px] text-[#6B7280] dark:text-zinc-400 px-1">
+                    <span>Devis estimé : 65 DT</span>
+                    <span className="text-[#22C55E] font-medium">✓ Photo requise</span>
+                  </div>
+                </div>
               </div>
-              <h3 className="mt-4 text-base font-semibold text-[#1F2937] dark:text-zinc-50">
-                Réseau de Techniciens &amp; Maintenance
-              </h3>
-              <p className="mt-2 text-sm text-[#6B7280] dark:text-zinc-400 leading-relaxed">
-                Assignation ciblée des interventions par compétences (Plomberie, Électricité, etc.), devis et photos avant/après.
-              </p>
-              <div className="mt-4 flex items-center gap-2 text-xs font-semibold text-[#22C55E]">
-                <span>Suivi d&apos;intervention</span>
-                <span className="text-[#6B7280] dark:text-zinc-600">•</span>
-                <span>Diagnostics &amp; Coûts</span>
+
+              <div className="mt-5 flex items-center justify-between pt-4 border-t border-[#DCFCE7]/70 dark:border-emerald-500/10 text-xs font-semibold text-[#22C55E]">
+                <span>Diagnostics &amp; SLA garantis</span>
+                <span className="text-zinc-400 group-hover:translate-x-1 transition-transform">Voir les interventions →</span>
               </div>
             </div>
           </div>

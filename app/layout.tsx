@@ -14,6 +14,7 @@ const geistMono = Geist_Mono({
 
 import RegisterServiceWorker from "./RegisterServiceWorker";
 import OfflineBanner from "./_components/OfflineBanner";
+import BottomNav from "./_components/BottomNav";
 
 export const metadata: Metadata = {
   title: {
@@ -61,10 +62,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body className="min-h-full flex flex-col" suppressHydrationWarning>
+      <body className="min-h-full flex flex-col pb-16 md:pb-0" suppressHydrationWarning>
         <RegisterServiceWorker />
         <OfflineBanner />
         {children}
+        <BottomNav />
       </body>
     </html>
   );
