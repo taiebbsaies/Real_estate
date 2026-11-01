@@ -219,9 +219,18 @@ export function toExpenseDraft(
   const uncertain = new Set(output.missingFields.map((f) => MISSING_TO_UI[f]));
   let dateIso = output.dateIso ?? todayIso;
 
-  // Date explicite invalide (« 2026-02-31 », « 32/13 ») : le regex du schéma laisse passer
-  // les jours hors calendrier → Date NaN → repli sur aujourd'hui + date incertaine (pas d'erreur bloquante)
-  if (Number.isNaN(new Date(`${dateIso}T00:00:00.000Z`).getTime())) {
+  // Date explicite invalide (« 2026-02-31 », « 2026-13-32 ») : V8 « rolle over » ces dates
+  // au lieu de renvoyer NaN → validation aller-retour des composants, puis repli sur
+  // aujourd'hui + date incertaine (pas d'erreur bloquante)
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateIso);
+  const [year, month, day] = match ? match.slice(1).map(Number) : [0, 0, 0];
+  const roundTrip = new Date(Date.UTC(year, month - 1, day));
+  if (
+    !match ||
+    roundTrip.getUTCFullYear() !== year ||
+    roundTrip.getUTCMonth() !== month - 1 ||
+    roundTrip.getUTCDate() !== day
+  ) {
     dateIso = todayIso;
     uncertain.add("date");
   }

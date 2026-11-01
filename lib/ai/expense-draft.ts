@@ -79,6 +79,23 @@ const MISSING_TO_UI = {
   category: "category",
 } as const;
 
+function isRealCalendarDate(iso: string): boolean {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+
+  if (!match) {
+    return false;
+  }
+
+  const [year, month, day] = match.slice(1).map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+
+  return (
+    date.getUTCFullYear() === year &&
+    date.getUTCMonth() === month - 1 &&
+    date.getUTCDate() === day
+  );
+}
+
 export function toExpenseDraft(
   output: AiExpenseDraft,
   now: Date = new Date(),
@@ -104,7 +121,7 @@ export function toExpenseDraft(
   );
   let dateIso = output.dateIso ?? todayIso;
 
-  if (Number.isNaN(new Date(`${dateIso}T00:00:00.000Z`).getTime())) {
+  if (!isRealCalendarDate(dateIso)) {
     dateIso = todayIso;
     uncertain.add("date");
   }
