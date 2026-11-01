@@ -62,3 +62,27 @@ Puis dans Chrome :
 5. Décocher Offline : le rechargement retrouve les données fraîches (network-first).
 
 Après un test, nettoyer : DevTools > Application > Storage > **Clear site data** (sinon l'ancien SW reste actif sur `localhost:3000`).
+
+## IA — Saisie de dépense en langage naturel
+
+Sur `/budget/depenses/nouvelle`, un champ « Décrivez votre dépense » (ex. *« j'ai payé 85 dinars d'électricité hier »*) pré-remplit le formulaire via une extraction IA (Vercel AI SDK). L'utilisateur vérifie, corrige puis valide : **rien n'est enregistré sans validation explicite**.
+
+Configuration (`.env.local`, voir `.env.example`) :
+
+```bash
+AI_PROVIDER="google"                        # fournisseur (openai | google | anthropic)
+AI_MODEL="gemini-2.5-flash"                 # modèle à utiliser
+GOOGLE_GENERATIVE_AI_API_KEY="..."          # clé du fournisseur choisi
+```
+
+- La clé n'est lue que côté serveur (`lib/ai/model.ts`, module `server-only`).
+- Changer de modèle = éditer `AI_MODEL`. Changer de fournisseur = installer son paquet (`@ai-sdk/openai`, `@ai-sdk/google`, `@ai-sdk/anthropic`) + adapter `lib/ai/model.ts` : le code métier ne dépend que du type `LanguageModel` du SDK.
+- L'extraction est limitée à 10 requêtes/min/utilisateur (`lib/rate-limit.ts`) ; la phrase saisie n'est jamais journalisée.
+
+Tests (Vitest, fonctions pures : prompt, post-traitement du brouillon, rate limit) :
+
+```bash
+npm test
+```
+
+Architecture détaillée : voir `docs/plan-saisie-depense-ia.md`.
