@@ -11,6 +11,7 @@ import {
   createComplaintSchema,
   updateComplaintSchema,
   updateStatusSchema,
+  updateClassificationSchema,
   deleteComplaintSchema,
 } from "@/lib/validations/complaint";
 import {
@@ -19,6 +20,9 @@ import {
 } from "@/lib/constants/complaint";
 import type { ComplaintActionState } from "@/lib/complaints/types";
 import { getResolutionTimestampUpdate } from "@/lib/complaints/resolution";
+import { createComplaintWithClassification } from "@/lib/complaints/create";
+import { canCorrectComplaintClassification } from "@/lib/complaints/classification-access";
+import { requestComplaintClassification } from "@/lib/ai/complaint-classification";
 import { isTestPropertiesEnabled } from "@/lib/test-properties/config";
 import {
   getTestPropertyOwnerId,
@@ -74,15 +78,6 @@ function notFound(): ComplaintActionState {
   return { success: false, message: "Réclamation introuvable." };
 }
 
-function isDuplicateKeyError(error: unknown): boolean {
-  return (
-    typeof error === "object" &&
-    error !== null &&
-    "code" in error &&
-    error.code === 11000
-  );
-}
-
 function optionalFormValue(value: FormDataEntryValue | null): string | undefined {
   if (typeof value !== "string") return undefined;
   const trimmed = value.trim();
@@ -93,7 +88,10 @@ function optionalFormValue(value: FormDataEntryValue | null): string | undefined
 
 /**
  * Create a new complaint — TENANT only.
- * tenantId is always derived from the verified session, never from client input.
+ *
+ * The browser only sends the apartment, title and description. Category and
+ * priority are generated on the server by the AI classifier (or safe fallbacks)
+ * and can never be supplied or overridden by the tenant.
  * An optional clientKey makes offline retries idempotent.
  */
 export async function createComplaint(
@@ -109,8 +107,6 @@ export async function createComplaint(
   const parsed = createComplaintSchema.safeParse({
     title: formData.get("title"),
     description: formData.get("description"),
-    category: formData.get("category"),
-    priority: formData.get("priority"),
     propertyId: optionalFormValue(formData.get("propertyId")),
     clientKey: optionalFormValue(formData.get("clientKey")),
   });
@@ -123,7 +119,7 @@ export async function createComplaint(
     };
   }
 
-  const { propertyId, ...fields } = parsed.data;
+  const { propertyId, clientKey, title, description } = parsed.data;
 
   try {
     await connectDB();
@@ -153,20 +149,29 @@ export async function createComplaint(
       }
     }
 
-    await Complaint.create({
-      tenantId: session.userId,
-      ...fields,
-      ...(propertyId ? { propertyId } : {}),
-      status: "pending",
-    });
+    // The shared workflow checks the client key before calling the provider, so
+    // an offline retry never triggers a second AI classification.
+    const result = await createComplaintWithClassification(
+      {
+        tenantId: session.userId,
+        title,
+        description,
+        propertyId,
+        clientKey,
+      },
+      {
+        findExisting: async ({ tenantId, clientKey: key }) =>
+          Boolean(await Complaint.exists({ tenantId, clientKey: key })),
+        create: (record) => Complaint.create(record),
+        classify: ({ title: classifiedTitle, description: classifiedDescription }) =>
+          requestComplaintClassification({
+            title: classifiedTitle,
+            description: classifiedDescription,
+          }),
+      },
+    );
 
-    revalidateComplaintPages();
-
-    return { success: true, message: "Réclamation soumise avec succès." };
-  } catch (error: unknown) {
-    // A retried offline draft may already have reached the database even if
-    // the client never received the response. Treat it as a success.
-    if (isDuplicateKeyError(error) && parsed.data.clientKey) {
+    if (result.status === "duplicate") {
       revalidateComplaintPages();
       return {
         success: true,
@@ -174,6 +179,28 @@ export async function createComplaint(
       };
     }
 
+    if (result.status === "failed") {
+      console.error("[createComplaint] error:", result.error);
+      return {
+        success: false,
+        message: "Impossible de soumettre la réclamation. Veuillez réessayer.",
+      };
+    }
+
+    if (result.classificationFailure) {
+      console.warn(
+        `[createComplaint] Automatic classification failed (${result.classificationFailure}); complaint saved with fallback values.`,
+      );
+    }
+
+    revalidateComplaintPages();
+
+    return {
+      success: true,
+      message:
+        "Réclamation soumise avec succès. Votre demande est en cours d'analyse.",
+    };
+  } catch (error: unknown) {
     console.error("[createComplaint] error:", error);
     return {
       success: false,
@@ -201,8 +228,6 @@ export async function updateComplaint(
     id: formData.get("id"),
     title: formData.get("title"),
     description: formData.get("description"),
-    category: formData.get("category"),
-    priority: formData.get("priority"),
     propertyId: optionalFormValue(formData.get("propertyId")),
   });
 
@@ -246,6 +271,8 @@ export async function updateComplaint(
       }
     }
 
+    // Category and priority are deliberately absent: the tenant can change the
+    // text, but never the automatic classification or the staff correction.
     const setFields: Record<string, unknown> = { ...fields };
     if (propertyId) {
       setFields.propertyId = propertyId;
@@ -506,6 +533,103 @@ export async function updateComplaintStatus(
     return {
       success: false,
       message: "Impossible de mettre à jour le statut. Veuillez réessayer.",
+    };
+  }
+}
+
+// ─── UPDATE CLASSIFICATION (Owner / Technician / Admin) ───────────────────────
+
+/**
+ * Correct the automatic category/priority classification — staff only.
+ *
+ * The same visibility rules as status updates apply: technicians may only
+ * touch complaints they can see (unassigned or assigned to them), and owners
+ * may only touch complaints attached to their own apartments. Admins may
+ * correct any complaint. Tenants are always rejected.
+ */
+export async function updateComplaintClassification(
+  _prevState: ComplaintActionState | null,
+  formData: FormData,
+): Promise<ComplaintActionState> {
+  const session = await getSession();
+  if (!session) return unauthorized();
+  if (!canCorrectComplaintClassification(session.activeRole)) {
+    return forbidden();
+  }
+
+  const parsed = updateClassificationSchema.safeParse({
+    id: formData.get("id"),
+    category: formData.get("category"),
+    priority: formData.get("priority"),
+  });
+
+  if (!parsed.success) {
+    return {
+      success: false,
+      message: "Veuillez sélectionner une catégorie et une priorité valides.",
+      errors: fieldErrors(parsed.error),
+    };
+  }
+
+  const { id, category, priority } = parsed.data;
+  if (!isValidObjectId(id)) return notFound();
+
+  try {
+    await connectDB();
+
+    const existing = await Complaint.findById(id)
+      .select("propertyId technicianId")
+      .lean();
+
+    if (!existing) return notFound();
+
+    if (
+      session.activeRole === "TECHNICIAN" &&
+      existing.technicianId &&
+      existing.technicianId.toString() !== session.userId
+    ) {
+      return forbidden();
+    }
+
+    if (session.activeRole === "OWNER" && existing.propertyId) {
+      const ownerId = await getTestPropertyOwnerId(
+        existing.propertyId.toString(),
+      );
+      if (!ownerId || ownerId !== session.userId) {
+        return forbidden();
+      }
+    }
+
+    const result = await Complaint.updateOne(
+      { _id: id },
+      {
+        $set: {
+          category,
+          priority,
+          classificationStatus: "completed",
+          classificationSource: "staff",
+          classifiedAt: new Date(),
+        },
+        // A staff decision supersedes the AI rationale, which may disagree
+        // with the corrected values.
+        $unset: { aiExplanation: "", recommendedAction: "" },
+      },
+    );
+
+    if (result.matchedCount === 0) return notFound();
+
+    revalidateComplaintPages();
+
+    return {
+      success: true,
+      message: "Classification mise à jour. Elle est désormais validée.",
+    };
+  } catch (error: unknown) {
+    console.error("[updateComplaintClassification] error:", error);
+    return {
+      success: false,
+      message:
+        "Impossible de mettre à jour la classification. Veuillez réessayer.",
     };
   }
 }

@@ -1,5 +1,7 @@
 import type {
   ComplaintCategory,
+  ComplaintClassificationSource,
+  ComplaintClassificationStatus,
   ComplaintPriority,
   ComplaintStatus,
 } from "@/lib/constants/complaint";
@@ -24,6 +26,14 @@ export type SerializedComplaint = {
   description: string;
   category: ComplaintCategory;
   priority: ComplaintPriority;
+  /** "needs_review" when the automatic classification could not be trusted. */
+  classificationStatus: ComplaintClassificationStatus;
+  classificationSource?: ComplaintClassificationSource;
+  /** French justification of the priority, when the AI succeeded. */
+  aiExplanation?: string;
+  /** Concrete intervention recommended by the AI, when it succeeded. */
+  recommendedAction?: string;
+  classifiedAt?: string;
   status: ComplaintStatus;
   technicianId?: string;
   resolutionNotes?: string;

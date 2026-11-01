@@ -1,33 +1,22 @@
 "use client";
 
-import { useActionState, useCallback, useEffect, useRef, useState } from "react";
+import {
+  useActionState,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { useFormStatus } from "react-dom";
 import { createComplaint, updateComplaint } from "@/app/actions/complaints";
-import type { ComplaintActionState, SerializedComplaint } from "@/lib/complaints/types";
+import type {
+  ComplaintActionState,
+  SerializedComplaint,
+} from "@/lib/complaints/types";
 import { formatTestPropertyCode } from "@/lib/test-properties/display";
 import type { SerializedTestProperty } from "@/lib/test-properties/types";
-import { COMPLAINT_CATEGORIES, COMPLAINT_PRIORITIES } from "@/lib/constants/complaint";
 import { createComplaintSchema } from "@/lib/validations/complaint";
 import { removeDraft, saveDraft } from "./OfflineBanner";
-
-// ─── Category / Priority labels ───────────────────────────────────────────────
-
-const CATEGORY_LABELS: Record<string, string> = {
-  plumbing: "Plomberie",
-  electricity: "Électricité",
-  heating: "Chauffage",
-  structural: "Dommages structurels",
-  noise: "Nuisances sonores",
-  common_areas: "Parties communes",
-  other: "Autre",
-};
-
-const PRIORITY_LABELS: Record<string, string> = {
-  low: "Basse",
-  medium: "Moyenne",
-  high: "Haute",
-  urgent: "Urgente",
-};
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -139,13 +128,12 @@ export default function ComplaintForm({ ownerId, testProperties = [], editTarget
       const raw = {
         title: String(formData.get("title") ?? ""),
         description: String(formData.get("description") ?? ""),
-        category: String(formData.get("category") ?? ""),
-        priority: String(formData.get("priority") ?? ""),
         propertyId: String(formData.get("propertyId") ?? ""),
       };
 
       // Validate locally before creating a draft, so an offline draft that can
-      // never be accepted by the server is not queued.
+      // never be accepted by the server is not queued. Category and priority
+      // are intentionally absent: the server computes them.
       const parsed = createComplaintSchema.safeParse(raw);
       if (!parsed.success) {
         return {
@@ -162,8 +150,6 @@ export default function ComplaintForm({ ownerId, testProperties = [], editTarget
         clientKey,
         title: parsed.data.title,
         description: parsed.data.description,
-        category: parsed.data.category,
-        priority: parsed.data.priority,
         propertyId: parsed.data.propertyId,
       };
 
@@ -179,6 +165,9 @@ export default function ComplaintForm({ ownerId, testProperties = [], editTarget
       }
 
       formData.set("clientKey", clientKey);
+      // Never forward browser-supplied classification values.
+      formData.delete("category");
+      formData.delete("priority");
 
       try {
         const result = await createComplaint(previousState, formData);
@@ -344,59 +333,13 @@ export default function ComplaintForm({ ownerId, testProperties = [], editTarget
           <FieldError errors={state?.errors} field="description" />
         </div>
 
-        {/* Category + Priority — side by side on larger screens */}
-        <div className="grid gap-4 sm:grid-cols-2">
-          {/* Category */}
-          <div>
-            <label
-              htmlFor="complaint-category"
-              className="mb-1 block text-xs font-semibold text-zinc-700 dark:text-zinc-300"
-            >
-              Catégorie <span className="text-red-500" aria-hidden="true">*</span>
-            </label>
-            <select
-              id="complaint-category"
-              name="category"
-              required
-              defaultValue={editTarget?.category ?? ""}
-              className="w-full rounded-xl border border-zinc-200 bg-white px-3.5 py-2.5 text-sm text-zinc-900 outline-none transition focus:border-zinc-950 focus:ring-2 focus:ring-zinc-950/10 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:focus:border-zinc-400"
-            >
-              <option value="" disabled>
-                Choisir…
-              </option>
-              {COMPLAINT_CATEGORIES.map((cat) => (
-                <option key={cat} value={cat}>
-                  {CATEGORY_LABELS[cat]}
-                </option>
-              ))}
-            </select>
-            <FieldError errors={state?.errors} field="category" />
-          </div>
-
-          {/* Priority */}
-          <div>
-            <label
-              htmlFor="complaint-priority"
-              className="mb-1 block text-xs font-semibold text-zinc-700 dark:text-zinc-300"
-            >
-              Priorité <span className="text-red-500" aria-hidden="true">*</span>
-            </label>
-            <select
-              id="complaint-priority"
-              name="priority"
-              required
-              defaultValue={editTarget?.priority ?? "medium"}
-              className="w-full rounded-xl border border-zinc-200 bg-white px-3.5 py-2.5 text-sm text-zinc-900 outline-none transition focus:border-zinc-950 focus:ring-2 focus:ring-zinc-950/10 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:focus:border-zinc-400"
-            >
-              {COMPLAINT_PRIORITIES.map((p) => (
-                <option key={p} value={p}>
-                  {PRIORITY_LABELS[p]}
-                </option>
-              ))}
-            </select>
-            <FieldError errors={state?.errors} field="priority" />
-          </div>
-        </div>
+        {/* Automatic classification note */}
+        <p className="rounded-xl border border-blue-200/80 bg-blue-50/60 px-4 py-3 text-xs leading-relaxed text-blue-900/80 dark:border-blue-900/60 dark:bg-blue-950/20 dark:text-blue-200/80">
+          <span aria-hidden="true" className="mr-1.5">✨</span>
+          La catégorie et la priorité sont déterminées automatiquement par
+          HomeCheck à partir de votre description. L&apos;équipe peut les
+          vérifier et les ajuster si nécessaire.
+        </p>
 
         {/* Actions */}
         <div className={`flex gap-3 pt-1 ${isEditing ? "flex-row-reverse" : ""}`}>

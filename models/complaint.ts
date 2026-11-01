@@ -2,15 +2,21 @@ import "server-only";
 import mongoose, { Schema, type Model, type Types } from "mongoose";
 import {
   COMPLAINT_CATEGORIES,
+  COMPLAINT_CLASSIFICATION_SOURCES,
+  COMPLAINT_CLASSIFICATION_STATUSES,
   COMPLAINT_PRIORITIES,
   COMPLAINT_STATUSES,
   type ComplaintCategory,
+  type ComplaintClassificationSource,
+  type ComplaintClassificationStatus,
   type ComplaintPriority,
   type ComplaintStatus,
 } from "@/lib/constants/complaint";
 
 export type {
   ComplaintCategory,
+  ComplaintClassificationSource,
+  ComplaintClassificationStatus,
   ComplaintPriority,
   ComplaintStatus,
 } from "@/lib/constants/complaint";
@@ -26,6 +32,18 @@ export interface IComplaint {
   description: string;
   category: ComplaintCategory;
   priority: ComplaintPriority;
+  /**
+   * Whether the automatic classification completed successfully. Complaints
+   * created before automatic classification have no value and are treated as
+   * completed by the serializers (they were classified manually).
+   */
+  classificationStatus?: ComplaintClassificationStatus;
+  classificationSource?: ComplaintClassificationSource;
+  /** French justification of the priority, written by the AI provider. */
+  aiExplanation?: string;
+  /** Concrete intervention recommended by the AI provider. */
+  recommendedAction?: string;
+  classifiedAt?: Date;
   status: ComplaintStatus;
   technicianId?: Types.ObjectId;
   resolutionNotes?: string;
@@ -87,6 +105,36 @@ const ComplaintSchema = new Schema<IComplaint>(
       default: "medium",
     },
 
+    classificationStatus: {
+      type: String,
+      enum: COMPLAINT_CLASSIFICATION_STATUSES,
+      default: "needs_review",
+      index: true,
+    },
+
+    classificationSource: {
+      type: String,
+      enum: COMPLAINT_CLASSIFICATION_SOURCES,
+      default: undefined,
+    },
+
+    aiExplanation: {
+      type: String,
+      trim: true,
+      maxlength: 600,
+    },
+
+    recommendedAction: {
+      type: String,
+      trim: true,
+      maxlength: 600,
+    },
+
+    classifiedAt: {
+      type: Date,
+      default: undefined,
+    },
+
     status: {
       type: String,
       enum: COMPLAINT_STATUSES,
@@ -130,6 +178,8 @@ ComplaintSchema.index({ tenantId: 1, createdAt: -1 });
 ComplaintSchema.index({ propertyId: 1, createdAt: -1 });
 // Index for staff views filtered by status
 ComplaintSchema.index({ status: 1, createdAt: -1 });
+// Staff review queue: complaints whose automatic classification needs a human.
+ComplaintSchema.index({ classificationStatus: 1, createdAt: -1 });
 // Statistics: period reports filter on creation date without a status filter.
 ComplaintSchema.index({ createdAt: -1 });
 // Statistics: average resolution time filters resolved complaints by resolvedAt.

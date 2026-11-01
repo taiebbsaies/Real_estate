@@ -22,9 +22,24 @@ export const COMPLAINT_STATUSES = [
   "rejected",
 ] as const;
 
+export const COMPLAINT_CLASSIFICATION_STATUSES = [
+  "completed",
+  "needs_review",
+] as const;
+
+export const COMPLAINT_CLASSIFICATION_SOURCES = [
+  "ai",
+  "fallback",
+  "staff",
+] as const;
+
 export type ComplaintCategory = (typeof COMPLAINT_CATEGORIES)[number];
 export type ComplaintPriority = (typeof COMPLAINT_PRIORITIES)[number];
 export type ComplaintStatus = (typeof COMPLAINT_STATUSES)[number];
+export type ComplaintClassificationStatus =
+  (typeof COMPLAINT_CLASSIFICATION_STATUSES)[number];
+export type ComplaintClassificationSource =
+  (typeof COMPLAINT_CLASSIFICATION_SOURCES)[number];
 
 export const COMPLAINT_CATEGORY_LABELS: Record<ComplaintCategory, string> = {
   plumbing: "Plomberie",
@@ -35,6 +50,20 @@ export const COMPLAINT_CATEGORY_LABELS: Record<ComplaintCategory, string> = {
   common_areas: "Parties communes",
   other: "Autre",
 };
+
+export const COMPLAINT_PRIORITY_LABELS: Record<ComplaintPriority, string> = {
+  low: "Basse",
+  medium: "Moyenne",
+  high: "Haute",
+  urgent: "Urgente",
+};
+
+/**
+ * Safe values persisted when the automatic classifier is unavailable. Both are
+ * guaranteed to belong to the existing enums; no other value may be invented.
+ */
+export const COMPLAINT_FALLBACK_CATEGORY: ComplaintCategory = "other";
+export const COMPLAINT_FALLBACK_PRIORITY: ComplaintPriority = "medium";
 
 /**
  * Allowed status transitions for staff members.
