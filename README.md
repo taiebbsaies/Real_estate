@@ -71,7 +71,7 @@ Configuration (`.env.local`, voir `.env.example`) :
 
 ```bash
 AI_PROVIDER="google"                        # fournisseur (openai | google | anthropic)
-AI_MODEL="gemini-2.5-flash"                 # modèle à utiliser
+AI_MODEL="gemini-3.6-flash"                 # modèle à utiliser
 GOOGLE_GENERATIVE_AI_API_KEY="..."          # clé du fournisseur choisi
 ```
 

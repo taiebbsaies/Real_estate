@@ -72,8 +72,8 @@ npm install -D vitest
 ```bash
 # Fournisseur IA (utilisé par la variante multi-fournisseurs de lib/ai/model.ts ; "openai" | "google" | "anthropic")
 AI_PROVIDER="google"
-# Identifiant du modèle (défaut : "gemini-2.5-flash" ; ex. OpenAI : "gpt-5-mini")
-AI_MODEL="gemini-2.5-flash"
+# Identifiant du modèle (défaut : "gemini-3.6-flash" ; ex. OpenAI : "gpt-5-mini")
+AI_MODEL="gemini-3.6-flash"
 # Clé du fournisseur choisi (une seule requise ; jamais exposée au client)
 GOOGLE_GENERATIVE_AI_API_KEY=""
 # OPENAI_API_KEY=""
@@ -88,7 +88,7 @@ import type { LanguageModel } from "ai";
 import { google } from "@ai-sdk/google"; // provider choisi : Gemini (clé gratuite)
 
 export function getExpenseModel(): LanguageModel {
-  const model = process.env.AI_MODEL ?? "gemini-2.5-flash";
+  const model = process.env.AI_MODEL ?? "gemini-3.6-flash";
   return google(model); // lit GOOGLE_GENERATIVE_AI_API_KEY — jamais exposée au client
 }
 ```
@@ -101,7 +101,7 @@ export function getExpenseModel(): LanguageModel {
     case "openai":
       return openai(process.env.AI_MODEL ?? "gpt-5-mini");
     case "google":
-      return google(process.env.AI_MODEL ?? "gemini-2.5-flash");
+      return google(process.env.AI_MODEL ?? "gemini-3.6-flash");
     default:
       throw new Error(`Fournisseur IA inconnu : "${process.env.AI_PROVIDER}".`);
   }
@@ -515,12 +515,12 @@ Détail transverse : à chaque étape, `npm run lint` et build/typecheck doivent
 
 ## Résumé
 
-Server Action `parseExpenseText` + Vercel AI SDK v7 (`generateText` + `Output.object`, API canonique remplaçant `generateObject` déprécié depuis la v6 — équivalent exact du concept du cours) avec schéma Zod dérivé de `BUDGET_CATEGORIES`. Provider unique : **Gemini** (clé gratuite, `gemini-2.5-flash`), instancié dans `lib/ai/model.ts` (server-only), modèle via `AI_MODEL` — le code métier ne dépend que du type `LanguageModel`. `useObject` écarté : exige une route REST streamante, inutile pour un objet de 4 champs, incohérent avec l'architecture 100 % Server Actions du repo. Le modèle ne calcule jamais les dates : calendrier Tunis complet (aujourd'hui, demain, J-1..J-7 nommés) + dates explicites avec année en cours. Re-validation systématique dans `toExpenseDraft` (millimes, repli date invalide sur aujourd'hui, enum, mapping `missingFields` → `uncertainFields`) — aucune écriture sans validation explicite via le `createExpense` existant. UI : textarea au-dessus du formulaire, pré-remplissage via remount `key`, bannière « Brouillon IA », champs incertains surlignés, formulaire manuel et offline inchangés. Sécurité : longueur 300, rate-limit mémoire 10/min/user, anti-injection, zéro log de la phrase. Tests Vitest sur fonctions pures + corpus de 22 phrases FR/arabe. 6 commits livrables indépendamment.
+Server Action `parseExpenseText` + Vercel AI SDK v7 (`generateText` + `Output.object`, API canonique remplaçant `generateObject` déprécié depuis la v6 — équivalent exact du concept du cours) avec schéma Zod dérivé de `BUDGET_CATEGORIES`. Provider unique : **Gemini** (clé gratuite, `gemini-3.6-flash`), instancié dans `lib/ai/model.ts` (server-only), modèle via `AI_MODEL` — le code métier ne dépend que du type `LanguageModel`. `useObject` écarté : exige une route REST streamante, inutile pour un objet de 4 champs, incohérent avec l'architecture 100 % Server Actions du repo. Le modèle ne calcule jamais les dates : calendrier Tunis complet (aujourd'hui, demain, J-1..J-7 nommés) + dates explicites avec année en cours. Re-validation systématique dans `toExpenseDraft` (millimes, repli date invalide sur aujourd'hui, enum, mapping `missingFields` → `uncertainFields`) — aucune écriture sans validation explicite via le `createExpense` existant. UI : textarea au-dessus du formulaire, pré-remplissage via remount `key`, bannière « Brouillon IA », champs incertains surlignés, formulaire manuel et offline inchangés. Sécurité : longueur 300, rate-limit mémoire 10/min/user, anti-injection, zéro log de la phrase. Tests Vitest sur fonctions pures + corpus de 22 phrases FR/arabe. 6 commits livrables indépendamment.
 
 ## Décisions (ex-questions ouvertes)
 
 1. **SDK** : `generateText` + `Output.object` retenu — dans le rapport/présentation, le présenter comme le **successeur de `generateObject`** vu en cours. Si le prof exige littéralement `generateObject`, lui demander avant d'épingler `ai@^5`.
-2. **Provider** : **Gemini (clé gratuite)** — paquet unique `@ai-sdk/google`, modèle par défaut `gemini-2.5-flash` (`GOOGLE_GENERATIVE_AI_API_KEY`) ; l'abstraction `LanguageModel` reste identique. ✅ Aucune question restante.
+2. **Provider** : **Gemini (clé gratuite)** — paquet unique `@ai-sdk/google`, modèle par défaut `gemini-3.6-flash` (`GOOGLE_GENERATIVE_AI_API_KEY`) ; l'abstraction `LanguageModel` reste identique. ✅ Aucune question restante.
 3. **Emplacement de l'action** : fichier dédié `app/actions/budget-ai.ts` — confirmé.
 4. **Date future** : acceptée mais surlignée comme incertaine — confirmé.
 5. **Multi-dépenses** : extraire la 1ʳᵉ + avertissement (`multipleExpenses`) — confirmé.

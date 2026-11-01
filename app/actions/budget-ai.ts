@@ -1,6 +1,11 @@
 "use server";
 
-import { generateText, NoObjectGeneratedError, Output } from "ai";
+import {
+  APICallError,
+  generateText,
+  NoObjectGeneratedError,
+  Output,
+} from "ai";
 import { z, type ZodError } from "zod";
 import { getUserId } from "@/lib/budget/current-user";
 import type { BudgetCategory } from "@/lib/constants/budget";
@@ -116,6 +121,39 @@ export async function parseExpenseText(
       return {
         success: false,
         message: "Extraction impossible. Reformulez ou remplissez le formulaire.",
+      };
+    }
+
+    if (APICallError.isInstance(error)) {
+      console.error("parseExpenseText APICallError:", error.statusCode);
+
+      if (error.statusCode === 401 || error.statusCode === 403) {
+        return {
+          success: false,
+          message:
+            "La clé API Google semble invalide ou non autorisée. Vérifiez GOOGLE_GENERATIVE_AI_API_KEY dans .env.local.",
+        };
+      }
+
+      if (error.statusCode === 404) {
+        return {
+          success: false,
+          message:
+            "Le modèle IA configuré est indisponible. Vérifiez AI_MODEL dans .env.local.",
+        };
+      }
+
+      if (error.statusCode === 429) {
+        return {
+          success: false,
+          message: "Quota IA atteint. Réessayez dans quelques minutes.",
+        };
+      }
+
+      return {
+        success: false,
+        message:
+          "Le service IA est indisponible. Remplissez le formulaire ci-dessous.",
       };
     }
 
