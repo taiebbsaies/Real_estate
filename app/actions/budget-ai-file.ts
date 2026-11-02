@@ -18,6 +18,7 @@ import { buildReceiptInstructions } from "@/lib/ai/receipt-prompt";
 import { validateUpload } from "@/lib/ai/file-sniff";
 import { extractPdfText } from "@/lib/ai/pdf-text";
 import { chooseExtractionRoute } from "@/lib/ai/receipt-route";
+import { runOcr } from "@/lib/ai/ocr";
 import { checkRateLimit } from "@/lib/rate-limit";
 import type { ExpenseDraftActionState } from "@/app/actions/budget-ai";
 import Expense from "@/models/expense";
@@ -57,9 +58,21 @@ const ROUTE_ERRORS = {
     "PDF scanné illisible sans analyse visuelle (AI_VISION=false). Prenez-le en photo ou activez AI_VISION.",
 } as const;
 
+const OCR_ERRORS = {
+  too_large: "Image trop grande. Réessayez avec une photo plus petite.",
+  preprocess_failed:
+    "Image illisible. Réessayez avec une autre photo ou remplissez le formulaire.",
+  ocr_failed:
+    "La reconnaissance de texte a échoué. Réessayez ou remplissez le formulaire.",
+  timeout:
+    "La reconnaissance de texte prend trop de temps. Réessayez.",
+  no_text:
+    "Aucun texte lisible dans cette image. Réessayez avec une photo plus nette ou remplissez le formulaire.",
+} as const;
+
 const VISION_TIMEOUT_MS = 20_000;
 const TEXT_TIMEOUT_MS = 15_000;
-const OCR_ENABLED = false;
+const OCR_ENABLED = true;
 
 function isVisionEnabled(): boolean {
   return process.env.AI_VISION !== "false";
@@ -147,7 +160,25 @@ export async function parseExpenseFile(
   try {
     let output: AiReceiptDraft;
 
-    if (decision.route === "pdf-text" && pdfText !== null) {
+    if (decision.route === "ocr-text") {
+      const ocr = await runOcr(validation.bytes);
+
+      if (!ocr.ok) {
+        return { success: false, message: OCR_ERRORS[ocr.reason] };
+      }
+
+      const result = await generateText({
+        model: getExpenseModel(),
+        output: Output.object({
+          schema: aiReceiptDraftSchema,
+          name: "ExpenseReceiptDraft",
+        }),
+        instructions: buildReceiptInstructions(now),
+        prompt: ocr.text,
+        abortSignal: AbortSignal.timeout(TEXT_TIMEOUT_MS),
+      });
+      output = result.output;
+    } else if (decision.route === "pdf-text" && pdfText !== null) {
       const result = await generateText({
         model: getExpenseModel(),
         output: Output.object({

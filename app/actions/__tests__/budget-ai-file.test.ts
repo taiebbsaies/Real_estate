@@ -6,11 +6,13 @@ const {
   extractPdfTextMock,
   countDocumentsMock,
   checkRateLimitMock,
+  runOcrMock,
 } = vi.hoisted(() => ({
   generateTextMock: vi.fn(),
   extractPdfTextMock: vi.fn(),
   countDocumentsMock: vi.fn(),
   checkRateLimitMock: vi.fn(),
+  runOcrMock: vi.fn(),
 }));
 
 vi.mock("ai", () => {
@@ -50,6 +52,10 @@ vi.mock("@/models/expense", () => ({
 
 vi.mock("@/lib/ai/pdf-text", () => ({
   extractPdfText: extractPdfTextMock,
+}));
+
+vi.mock("@/lib/ai/ocr", () => ({
+  runOcr: runOcrMock,
 }));
 
 vi.mock("@/lib/rate-limit", () => ({
@@ -97,6 +103,10 @@ describe("parseExpenseFile", () => {
     checkRateLimitMock.mockReturnValue(true);
     countDocumentsMock.mockResolvedValue(0);
     extractPdfTextMock.mockResolvedValue({ ok: false, reason: "no_text" });
+    runOcrMock.mockResolvedValue({
+      ok: true,
+      text: "STEG Total a payer 85.500 DT",
+    });
     generateTextMock.mockResolvedValue({ output: receiptDraft() });
   });
 
@@ -252,7 +262,7 @@ describe("parseExpenseFile", () => {
     expect(state.message).toContain("Aucune dépense lisible");
   });
 
-  it("rejette une image quand la vision est désactivée (Phase 1, AI_VISION=false)", async () => {
+  it("passe par l'OCR local quand la vision est désactivée (Phase 2)", async () => {
     process.env.AI_VISION = "false";
 
     const state = await parseExpenseFile(
@@ -260,8 +270,26 @@ describe("parseExpenseFile", () => {
       fileForm(JPEG_BYTES, "recu.jpg", "image/jpeg"),
     );
 
+    expect(state.success).toBe(true);
+    expect(runOcrMock).toHaveBeenCalledTimes(1);
+
+    const call = generateTextMock.mock.calls[0][0];
+
+    expect(call.prompt).toContain("85.500");
+    expect(call.messages).toBeUndefined();
+  });
+
+  it("traduit un échec d'OCR en message clair", async () => {
+    process.env.AI_VISION = "false";
+    runOcrMock.mockResolvedValue({ ok: false, reason: "no_text" });
+
+    const state = await parseExpenseFile(
+      null,
+      fileForm(JPEG_BYTES, "recu.jpg", "image/jpeg"),
+    );
+
     expect(state.success).toBe(false);
-    expect(state.message).toContain("AI_VISION=false");
+    expect(state.message).toContain("Aucun texte lisible");
     expect(generateTextMock).not.toHaveBeenCalled();
   });
 

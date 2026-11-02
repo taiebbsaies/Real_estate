@@ -6,7 +6,7 @@ const nextConfig: NextConfig = {
       bodySizeLimit: "6mb",
     },
   },
-  serverExternalPackages: ["unpdf"],
+  serverExternalPackages: ["unpdf", "tesseract.js", "sharp"],
   turbopack: {
     rules: {
       "*.css": {
