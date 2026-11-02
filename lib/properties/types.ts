@@ -10,6 +10,8 @@ export type PropertyActionState = {
   success: boolean;
   message: string;
   errors?: Record<string, string[]>;
+  /** Last submitted form values, so a failed validation can restore the form. */
+  values?: Record<string, string | string[]>;
 };
 
 export type SerializedProperty = {
