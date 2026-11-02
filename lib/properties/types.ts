@@ -55,6 +55,11 @@ export type SerializedProperty = {
   updatedAt: string;
 };
 
+export type PublicProperty = Omit<
+  SerializedProperty,
+  "ownerId" | "moderationReason" | "deletedAt" | "moderationStatus"
+>;
+
 export type SerializedFavorite = {
   _id: string;
   userId: string;
