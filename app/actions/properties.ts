@@ -51,12 +51,31 @@ function optionalFormValue(value: FormDataEntryValue | null): string | undefined
 function buildFormValues(formData: FormData): Record<string, string | string[]> {
   const values: Record<string, string | string[]> = {};
 
-  formData.forEach((value, key) => {
-    if (key === "equipments") return;
+  const stringKeys: readonly string[] = [
+    "title",
+    "description",
+    "price",
+    "city",
+    "zone",
+    "address",
+    "latitude",
+    "longitude",
+    "surface",
+    "bedrooms",
+    "bathrooms",
+    "type",
+    "condition",
+    "availability",
+    "availableFrom",
+    "rules",
+  ];
+
+  for (const key of stringKeys) {
+    const value = formData.get(key);
     if (typeof value === "string") {
       values[key] = value;
     }
-  });
+  }
 
   values.equipments = formData
     .getAll("equipments")

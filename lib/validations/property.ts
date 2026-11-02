@@ -42,10 +42,13 @@ const idField = z
 const emptyToUndefined = (value: unknown) =>
   typeof value === "string" && value.trim() === "" ? undefined : value;
 
-const toNumber = (value: string | number): number =>
-  typeof value === "number"
-    ? value
-    : Number(String(value).trim().replace(/\s/g, "").replace(",", "."));
+const toNumber = (value: string | number): number => {
+  const cleaned =
+    typeof value === "number"
+      ? String(value)
+      : String(value).trim().replace(/\s/g, "").replace(",", ".");
+  return cleaned === "" ? Number.NaN : Number(cleaned);
+};
 
 const numberField = (
   min: number,
@@ -161,6 +164,7 @@ export const createPropertySchema = z.object({
   equipments: z
     .array(propertyEquipmentField)
     .max(11, "Le nombre maximal d'équipements est de 11.")
+    .transform((values) => [...new Set(values)])
     .default([]),
   rules: optionalTextField(2000, "Les règles de location ne doivent pas dépasser 2000 caractères."),
 });
@@ -181,7 +185,10 @@ export const moderatePropertySchema = z
   })
   .refine(
     (data) => data.status !== "rejected" || (data.reason ?? "").trim().length > 0,
-    { error: "Un motif est requis pour rejeter une annonce." },
+    {
+      error: "Un motif est requis pour rejeter une annonce.",
+      path: ["reason"],
+    },
   );
 
 /** Used by owners to delete their own listing. */
