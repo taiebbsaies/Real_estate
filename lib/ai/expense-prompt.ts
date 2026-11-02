@@ -22,6 +22,26 @@ function lastSevenDays(now: Date): string[] {
   });
 }
 
+export function calendarLines(now: Date): string[] {
+  const today = tunisDayIso(now);
+
+  return [
+    `Calendrier : aujourd'hui = ${today}, demain = ${isoMinusDays(now, -1)}.`,
+    ...lastSevenDays(now).map((line) => `${line},`),
+    "« il y a N jours » (N ≤ 7) → entrée J-N ci-dessus. « lundi dernier », « mardi dernier », etc.",
+    "→ l'entrée du calendrier portant ce jour de semaine. Ne calcule JAMAIS une date toi-même.",
+  ];
+}
+
+export function categoryLines(): string[] {
+  return [
+    "Catégorie (valeur exacte obligatoire) :",
+    ...Object.entries(BUDGET_CATEGORY_LABELS).map(
+      ([key, label]) => `- ${key} : ${label}`,
+    ),
+  ];
+}
+
 export function buildExpenseInstructions(now: Date = new Date()): string {
   const today = tunisDayIso(now);
   const year = today.slice(0, 4);
@@ -32,10 +52,7 @@ export function buildExpenseInstructions(now: Date = new Date()): string {
     "Tu ne fais qu'extraire : montant, date, catégorie, note.",
     "",
     `Année en cours : ${year}. Fuseau de référence : Tunis.`,
-    `Calendrier : aujourd'hui = ${today}, demain = ${isoMinusDays(now, -1)}.`,
-    ...lastSevenDays(now).map((line) => `${line},`),
-    "« il y a N jours » (N ≤ 7) → entrée J-N ci-dessus. « lundi dernier », « mardi dernier », etc.",
-    "→ l'entrée du calendrier portant ce jour de semaine. Ne calcule JAMAIS une date toi-même.",
+    ...calendarLines(now),
     "Date explicite dans la phrase (« le 15 octobre », « 15/10 ») → YYYY-MM-DD avec l'année en",
     `cours (${year}) si elle est omise ; si l'utilisateur écrit une année, la respecter.`,
     "Les dates futures sont autorisées (dépense planifiée).",
@@ -46,10 +63,7 @@ export function buildExpenseInstructions(now: Date = new Date()): string {
     "« 1 200 dinars » (espace = milliers) = 1200. Une autre devise (€, $) n'est PAS convertie :",
     "mets le montant tel quel et confidence=low avec category incertaine conservée.",
     "",
-    "Catégorie (valeur exacte obligatoire) :",
-    ...Object.entries(BUDGET_CATEGORY_LABELS).map(
-      ([key, label]) => `- ${key} : ${label}`,
-    ),
+    ...categoryLines(),
     "Mots-clés : STEG/électricité/gaz/eau/SONEDE → ENERGIE ; syndic/copropriété → CHARGES ;",
     "plomberie/artisan/réparation → REPARATIONS ; connexion/FAI/téléphone/internet → INTERNET.",
     "Si rien ne correspond clairement : DIVERS + category dans missingFields.",

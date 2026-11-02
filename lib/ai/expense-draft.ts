@@ -58,6 +58,27 @@ export const aiExpenseDraftSchema = z.object({
 
 export type AiExpenseDraft = z.infer<typeof aiExpenseDraftSchema>;
 
+export const aiReceiptDraftSchema = aiExpenseDraftSchema.extend({
+  merchant: z
+    .string()
+    .max(80)
+    .nullable()
+    .describe(
+      "Nom du fournisseur ou du commerçant tel qu'imprimé sur le justificatif " +
+        "(ex. « STEG », « Ooredoo », « Monoprix »). null si illisible ou absent. " +
+        "Ne recopie jamais le nom du client, un téléphone, un email ou une adresse.",
+    ),
+  amountBasis: z
+    .enum(["TTC", "HT", "SUBTOTAL", "UNKNOWN"])
+    .describe(
+      "Nature du montant retenu : TTC = total à payer (prioritaire), " +
+        "HT = total hors taxes, SUBTOTAL = sous-total intermédiaire, " +
+        "UNKNOWN = nature indéterminable.",
+    ),
+});
+
+export type AiReceiptDraft = z.infer<typeof aiReceiptDraftSchema>;
+
 export type UncertainField = "amount" | "date" | "category" | "note";
 
 export type ExpenseDraftResult = {
@@ -140,5 +161,31 @@ export function toExpenseDraft(
       uncertainFields: [...uncertain],
       multipleExpenses: output.multipleExpenses,
     },
+  };
+}
+
+export function toReceiptDraft(
+  output: AiReceiptDraft,
+  now: Date = new Date(),
+): ExpenseDraftOutcome {
+  const result = toExpenseDraft(output, now);
+
+  if (!result.ok) {
+    return result;
+  }
+
+  const note = result.draft.note || output.merchant || "";
+  const uncertainFields = [...result.draft.uncertainFields];
+
+  if (
+    (output.amountBasis === "HT" || output.amountBasis === "SUBTOTAL") &&
+    !uncertainFields.includes("amount")
+  ) {
+    uncertainFields.push("amount");
+  }
+
+  return {
+    ok: true,
+    draft: { ...result.draft, note, uncertainFields },
   };
 }
