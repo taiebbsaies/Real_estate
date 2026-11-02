@@ -11,15 +11,15 @@ const initialState: LoginState = {
 
 function fieldClass(hasError: boolean) {
   const base =
-    "block w-full rounded-xl border bg-white/70 px-3.5 py-2.5 text-sm text-zinc-900 shadow-xs backdrop-blur-xs transition-all placeholder:text-zinc-400 focus:outline-none focus:ring-2 dark:bg-[#151518]/80 dark:text-zinc-100 dark:placeholder:text-zinc-600";
+    "block w-full rounded-xl border bg-white/90 px-3.5 py-2.5 text-sm text-[#1F2937] shadow-xs backdrop-blur-xs transition-all placeholder:text-[#6B7280]/60 focus:outline-none focus:ring-2 dark:bg-[#151518]/80 dark:text-zinc-100 dark:placeholder:text-zinc-600";
   if (hasError) {
     return `${base} border-red-500/80 focus:border-red-500 focus:ring-red-500/20 dark:border-red-500/70`;
   }
-  return `${base} border-zinc-200 focus:border-zinc-950 focus:ring-zinc-950/10 dark:border-zinc-800 dark:focus:border-zinc-200 dark:focus:ring-white/10`;
+  return `${base} border-[#DCFCE7] focus:border-[#166534] focus:ring-[#166534]/20 dark:border-zinc-800 dark:focus:border-zinc-200 dark:focus:ring-white/10`;
 }
 
 const labelClass =
-  "mb-1.5 block text-xs font-semibold tracking-wide uppercase text-zinc-600 dark:text-zinc-400";
+  "mb-1.5 block text-xs font-semibold tracking-wide uppercase text-[#6B7280] dark:text-zinc-400";
 
 const roleLabels: Record<string, string> = {
   TENANT: "Locataire",
@@ -140,7 +140,7 @@ export default function LoginForm() {
       <button
         type="submit"
         disabled={pending}
-        className="flex h-11 w-full items-center justify-center rounded-xl bg-zinc-950 px-4 text-sm font-semibold text-white shadow-xs transition-all hover:bg-zinc-800 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200"
+        className="flex h-11 w-full items-center justify-center rounded-xl bg-[#166534] px-4 text-sm font-semibold text-white shadow-xs transition-all hover:bg-[#14532d] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200"
       >
         {pending ? "Connexion en cours…" : "Se connecter"}
       </button>

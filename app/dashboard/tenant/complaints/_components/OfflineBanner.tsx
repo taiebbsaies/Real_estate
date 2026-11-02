@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { createComplaint } from "@/app/actions/complaints";
-import type { ComplaintCategory, ComplaintPriority } from "@/lib/constants/complaint";
 
 const DRAFT_STORAGE_PREFIX = "homecheck_complaint_drafts:";
 const DRAFTS_CHANGED_EVENT = "homecheck:drafts-changed";
@@ -14,8 +13,6 @@ export type DraftComplaint = {
   clientKey: string;
   title: string;
   description: string;
-  category: ComplaintCategory;
-  priority: ComplaintPriority;
   /** Development-only test apartment, when one was selected. */
   propertyId?: string;
   savedAt: string; // ISO string
@@ -39,12 +36,12 @@ function notifyDraftsChanged() {
 function isDraftComplaint(value: unknown): value is DraftComplaint {
   if (typeof value !== "object" || value === null) return false;
   const draft = value as Record<string, unknown>;
+  // Older drafts may still contain category/priority in localStorage; those
+  // fields are intentionally ignored and removed on the next save.
   return (
     typeof draft.clientKey === "string" &&
     typeof draft.title === "string" &&
     typeof draft.description === "string" &&
-    typeof draft.category === "string" &&
-    typeof draft.priority === "string" &&
     (draft.propertyId === undefined || typeof draft.propertyId === "string") &&
     typeof draft.savedAt === "string"
   );
@@ -185,12 +182,11 @@ export default function OfflineBanner({ ownerId }: OfflineBannerProps) {
         const formData = new FormData();
         formData.set("title", draft.title);
         formData.set("description", draft.description);
-        formData.set("category", draft.category);
-        formData.set("priority", draft.priority);
         if (draft.propertyId) {
           formData.set("propertyId", draft.propertyId);
         }
-        // The same key is reused on every attempt: the server rejects duplicates.
+        // The same key is reused on every attempt: the server rejects duplicates
+        // and skips a second AI classification.
         formData.set("clientKey", draft.clientKey);
 
         const result = await createComplaint(null, formData);

@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { getSession } from "@/lib/session";
 import { getAllComplaints } from "@/lib/complaints/queries";
 import StatusUpdateForm from "@/app/dashboard/_components/StatusUpdateForm";
+import ComplaintClassificationPanel from "@/app/dashboard/_components/ComplaintClassificationPanel";
 import {
   COMPLAINT_STATUSES,
   type ComplaintStatus,
@@ -221,6 +222,8 @@ export default async function TechnicianComplaintsPage({
                     <p className="mt-3 text-xs text-zinc-600 dark:text-zinc-400 line-clamp-3">
                       {complaint.description}
                     </p>
+
+                    <ComplaintClassificationPanel complaint={complaint} />
 
                     {complaint.resolutionNotes && (
                       <div className="mt-3 rounded-xl border border-emerald-100 bg-emerald-50/60 p-3 text-xs text-emerald-800 dark:border-emerald-800/40 dark:bg-emerald-950/30 dark:text-emerald-300">

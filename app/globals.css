@@ -1,11 +1,47 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
-  --background: #fbfbfb;
-  --foreground: #09090b;
+  /* =========================================================
+     LIGHT & GREEN THEME SPECIFICATION
+     - Primary Green:    #166534 (Buttons, navbar, primary actions)
+     - Accent Green:     #22C55E (Icons, highlights, active states)
+     - Light Green:      #DCFCE7 (Cards, badges, soft backgrounds)
+     - Background Green: #F0FDF4 (Subtle page backgrounds)
+     - White:            #FFFFFF (Main background, cards, forms)
+     - Dark Text:        #1F2937 (Headings and important text)
+     - Secondary Text:   #6B7280 (Descriptions, labels, metadata)
+     ========================================================= */
+  --primary-green: #166534;
+  --accent-green: #22c55e;
+  --light-green: #dcfce7;
+  --bg-green: #f0fdf4;
+  --white: #ffffff;
+  --dark-text: #1f2937;
+  --secondary-text: #6b7280;
+
+  --background: #f0fdf4;
+  --foreground: #1f2937;
   --card: #ffffff;
-  --border: #e4e4e7;
-  --accent: #10b981;
+  --border: #dcfce7;
+  --accent: #22c55e;
+}
+
+html.dark {
+  /* =========================================================
+     DARK EMERALD THEME SPECIFICATION
+     - Obsidian & Deep Emerald Palette
+     - Subtle ambient glows and luminous emerald borders
+     ========================================================= */
+  --background: #060907;
+  --foreground: #f4f4f5;
+  --card: #0c1410;
+  --border: rgba(34, 197, 94, 0.15);
+  --accent: #22c55e;
+  --dark-text: #f4f4f5;
+  --secondary-text: #9ca3af;
+  --bg-green: #060907;
 }
 
 @theme inline {
@@ -15,47 +51,46 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #08080a;
-    --foreground: #f4f4f5;
-    --card: #111114;
-    --border: #232329;
-    --accent: #10b981;
-  }
-}
-
 body {
   background-color: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.25s ease, color 0.25s ease;
+  overflow-x: hidden;
 }
 
 /* Linear-style subtle grid texture */
 .linear-grid {
+  background-color: var(--background);
   background-size: 40px 40px;
   background-image: 
-    linear-gradient(to right, rgba(0, 0, 0, 0.04) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(0, 0, 0, 0.04) 1px, transparent 1px);
+    linear-gradient(to right, rgba(22, 101, 52, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(22, 101, 52, 0.05) 1px, transparent 1px);
 }
 
-@media (prefers-color-scheme: dark) {
-  .linear-grid {
-    background-image: 
-      linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-  }
+html.dark .linear-grid {
+  background-color: #060907;
+  background-image: 
+    linear-gradient(to right, rgba(34, 197, 94, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(34, 197, 94, 0.04) 1px, transparent 1px);
 }
 
 /* Glow highlight for cards */
 .linear-card {
   position: relative;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), 
+              border-color 0.25s ease, 
+              box-shadow 0.25s ease;
 }
 
 .linear-card:hover {
   transform: translateY(-2px);
 }
 
+html.dark .linear-card:hover {
+  border-color: rgba(34, 197, 94, 0.35);
+  box-shadow: 0 12px 35px -10px rgba(0, 0, 0, 0.85), 
+              0 0 25px -5px rgba(34, 197, 94, 0.2);
+}

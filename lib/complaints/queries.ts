@@ -21,6 +21,13 @@ function serializeComplaint(doc: IComplaint & { _id: unknown }): SerializedCompl
     description: doc.description,
     category: doc.category,
     priority: doc.priority,
+    // Legacy complaints were classified manually before automatic
+    // classification existed; they must not be flagged for review.
+    classificationStatus: doc.classificationStatus ?? "completed",
+    classificationSource: doc.classificationSource,
+    aiExplanation: doc.aiExplanation,
+    recommendedAction: doc.recommendedAction,
+    classifiedAt: doc.classifiedAt?.toISOString(),
     status: doc.status,
     technicianId: doc.technicianId?.toString(),
     resolutionNotes: doc.resolutionNotes,

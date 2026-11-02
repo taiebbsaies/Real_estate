@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { connectDB } from "@/lib/mongodb";
 import User from "@/models/user";
 import ProfileForm from "./ProfileForm";
+import ThemeToggle from "@/app/_components/ThemeToggle";
 
 export const dynamic = "force-dynamic";
 
@@ -43,12 +44,15 @@ export default async function ProfilePage() {
             </span>
           </div>
 
-          <Link
-            href={dashboardUrl}
-            className="rounded-full border border-zinc-300 px-4 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
-          >
-            ← Accéder à mon tableau de bord
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link
+              href={dashboardUrl}
+              className="rounded-full border border-zinc-300 px-4 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            >
+              ← Accéder à mon tableau de bord
+            </Link>
+            <ThemeToggle />
+          </div>
         </div>
       </header>
 
