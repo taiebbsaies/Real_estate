@@ -98,7 +98,7 @@ Parcours serveur (`app/actions/budget-ai-file.ts` → `parseExpenseFile`) :
 3. Chaîne de stratégies (`lib/ai/receipt-route.ts`) :
    - PDF avec couche texte (≥ 80 caractères utiles, `lib/ai/pdf-text.ts`, max 10 pages) → le texte part dans le **pipeline texte** (comme la saisie manuelle) ;
    - sinon, si `AI_VISION=true` (défaut) → le fichier est **envoyé au modèle** en vision (`{ type: "file" }` du Vercel AI SDK, sans nom de fichier) ;
-   - sinon le fichier est refusé avec un message clair (un OCR local de repli est prévu en phase 2). Un PDF scanné sans vision est également refusé.
+   - sinon → OCR local de repli (Phase 2, voir ci-dessous) ; un PDF scanné sans vision est refusé avec un message clair.
 4. Même re-validation serveur que le texte (`toReceiptDraft` : schéma Zod étendu `merchant`/`amountBasis`, montant TTC prioritaire, date de la facture et non la date du jour).
 5. Avertissement de **doublon possible** (même montant + même date déjà enregistrés) — simple lecture, aucune écriture.
 
@@ -107,7 +107,11 @@ Côté client (`ExpenseFileInput.tsx`) : les photos sont **compressées avant l'
 Configuration (`.env.example`) :
 
 ```bash
-AI_VISION="true"   # false = les images et PDF scannés sont refusés avec un message clair
+AI_VISION="true"   # false = OCR local (tesseract.js) au lieu de la vision du modèle
 ```
 
 Upload via Server Action : `serverActions.bodySizeLimit` relevé à 6 Mo dans `next.config.ts` (défaut Next : 1 Mo ; le multipart ajoute ~10–20 Ko autour des 5 Mo du fichier).
+
+### Phase 2 — OCR de repli (`AI_VISION=false`)
+
+Quand la vision est désactivée, les images passent par **tesseract.js** (`lib/ai/ocr.ts`, langues fra+eng+ara fournies localement) après un prétraitement **sharp** (niveaux de gris, redimensionnement). Le texte OCR suit exactement le même pipeline que la saisie texte. Les PDF scannés restent refusés (l'OCR ne lit pas les PDF) : prendre une photo ou activer `AI_VISION`.
