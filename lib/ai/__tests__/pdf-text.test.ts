@@ -109,10 +109,10 @@ describe("extractPdfText", () => {
     expect(result).toEqual({ ok: false, reason: "too_many_pages" });
   });
 
-  it("refuse des octets qui ne sont pas un PDF valide", async () => {
+  it("refuse des octets qui ne sont pas un PDF valide (raison exacte)", async () => {
     const garbage = Uint8Array.from([0x25, 0x50, 0x44, 0x46, 0x2d, 0xff, 0xff, 0xff, 0x00, 0x01]);
     const result = await extractPdfText(garbage);
 
-    expect(result.ok).toBe(false);
+    expect(result).toEqual({ ok: false, reason: "invalid" });
   });
 });

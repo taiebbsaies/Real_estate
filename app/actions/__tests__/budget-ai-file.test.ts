@@ -7,36 +7,40 @@ const {
   countDocumentsMock,
   checkRateLimitMock,
   runOcrMock,
-} = vi.hoisted(() => ({
-  generateTextMock: vi.fn(),
-  extractPdfTextMock: vi.fn(),
-  countDocumentsMock: vi.fn(),
-  checkRateLimitMock: vi.fn(),
-  runOcrMock: vi.fn(),
-}));
-
-vi.mock("ai", () => {
-  class APICallError extends Error {
+  APICallErrorMock,
+  NoObjectGeneratedErrorMock,
+} = vi.hoisted(() => {
+  class APICallErrorMock extends Error {
     statusCode?: number;
 
-    static isInstance(): boolean {
-      return false;
+    static isInstance(error: unknown): boolean {
+      return error instanceof APICallErrorMock;
     }
   }
 
-  class NoObjectGeneratedError extends Error {
-    static isInstance(): boolean {
-      return false;
+  class NoObjectGeneratedErrorMock extends Error {
+    static isInstance(error: unknown): boolean {
+      return error instanceof NoObjectGeneratedErrorMock;
     }
   }
 
   return {
-    generateText: generateTextMock,
-    Output: { object: (spec: unknown) => spec },
-    APICallError,
-    NoObjectGeneratedError,
+    generateTextMock: vi.fn(),
+    extractPdfTextMock: vi.fn(),
+    countDocumentsMock: vi.fn(),
+    checkRateLimitMock: vi.fn(),
+    runOcrMock: vi.fn(),
+    APICallErrorMock,
+    NoObjectGeneratedErrorMock,
   };
 });
+
+vi.mock("ai", () => ({
+  generateText: generateTextMock,
+  Output: { object: (spec: unknown) => spec },
+  APICallError: APICallErrorMock,
+  NoObjectGeneratedError: NoObjectGeneratedErrorMock,
+}));
 
 vi.mock("@/lib/ai/model", () => ({
   getExpenseModel: () => "mock-model",
@@ -84,6 +88,15 @@ function receiptDraft(
     amountBasis: "TTC",
     ...overrides,
   };
+}
+
+function apiCallError(
+  statusCode: number,
+): InstanceType<typeof APICallErrorMock> {
+  const error = new APICallErrorMock(`HTTP ${statusCode}`);
+  error.statusCode = statusCode;
+
+  return error;
 }
 
 function fileForm(bytes: Uint8Array, name: string, type: string): FormData {
@@ -229,6 +242,10 @@ describe("parseExpenseFile", () => {
       success: false,
       message: "Trop de scans. Réessayez dans une minute.",
     });
+    expect(checkRateLimitMock).toHaveBeenCalledWith(
+      "ai-expense-file:user-1",
+      { limit: 5, windowMs: 60_000 },
+    );
     expect(generateTextMock).not.toHaveBeenCalled();
   });
 
@@ -305,6 +322,54 @@ describe("parseExpenseFile", () => {
 
     expect(state.success).toBe(false);
     expect(state.message).toContain("trop de temps");
+  });
+
+  it("traduit un 401 du fournisseur en erreur de clé API", async () => {
+    generateTextMock.mockRejectedValueOnce(apiCallError(401));
+
+    const state = await parseExpenseFile(
+      null,
+      fileForm(JPEG_BYTES, "recu.jpg", "image/jpeg"),
+    );
+
+    expect(state.success).toBe(false);
+    expect(state.message).toContain("GOOGLE_GENERATIVE_AI_API_KEY");
+  });
+
+  it("traduit un 403 du fournisseur en clé non autorisée", async () => {
+    generateTextMock.mockRejectedValueOnce(apiCallError(403));
+
+    const state = await parseExpenseFile(
+      null,
+      fileForm(JPEG_BYTES, "recu.jpg", "image/jpeg"),
+    );
+
+    expect(state.success).toBe(false);
+    expect(state.message).toContain("non autorisée");
+  });
+
+  it("traduit un 404 du fournisseur en modèle indisponible", async () => {
+    generateTextMock.mockRejectedValueOnce(apiCallError(404));
+
+    const state = await parseExpenseFile(
+      null,
+      fileForm(JPEG_BYTES, "recu.jpg", "image/jpeg"),
+    );
+
+    expect(state.success).toBe(false);
+    expect(state.message).toContain("AI_MODEL");
+  });
+
+  it("traduit un 429 du fournisseur en quota atteint", async () => {
+    generateTextMock.mockRejectedValueOnce(apiCallError(429));
+
+    const state = await parseExpenseFile(
+      null,
+      fileForm(JPEG_BYTES, "recu.jpg", "image/jpeg"),
+    );
+
+    expect(state.success).toBe(false);
+    expect(state.message).toContain("Quota IA atteint");
   });
 
   it("propage un PDF trop long sans appeler le modèle", async () => {
