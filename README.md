@@ -86,3 +86,28 @@ npm test
 ```
 
 Architecture détaillée : voir `docs/plan-saisie-depense-ia.md`.
+
+## IA — Scan de justificatif
+
+Sur `/budget/depenses/nouvelle`, l'utilisateur peut **prendre une photo** de son reçu ou **choisir un fichier** (JPG, PNG, WebP, PDF — 5 Mo maximum). L'IA en extrait un brouillon (montant, date, catégorie, note) qui pré-remplit le même formulaire, avec surlignage des champs incertains. Comme pour la saisie texte : **rien n'est enregistré sans validation explicite**, et **le fichier n'est jamais stocké** (extrait puis jeté, aucun log du contenu).
+
+Parcours serveur (`app/actions/budget-ai-file.ts` → `parseExpenseFile`) :
+
+1. Authentification puis rate limit dédié (**5 scans/min**/utilisateur, plus strict que le texte).
+2. Validation du type **réel** par signature binaire (`lib/ai/file-sniff.ts` : magic bytes JPEG/PNG/WebP/PDF ; le nom et le MIME déclarés ne sont pas crus ; HEIC refusé avec un message clair).
+3. Chaîne de stratégies (`lib/ai/receipt-route.ts`) :
+   - PDF avec couche texte (≥ 80 caractères utiles, `lib/ai/pdf-text.ts`, max 10 pages) → le texte part dans le **pipeline texte** (comme la saisie manuelle) ;
+   - sinon, si `AI_VISION=true` (défaut) → le fichier est **envoyé au modèle** en vision (`{ type: "file" }` du Vercel AI SDK, sans nom de fichier) ;
+   - sinon le fichier est refusé avec un message clair (un OCR local de repli est prévu en phase 2). Un PDF scanné sans vision est également refusé.
+4. Même re-validation serveur que le texte (`toReceiptDraft` : schéma Zod étendu `merchant`/`amountBasis`, montant TTC prioritaire, date de la facture et non la date du jour).
+5. Avertissement de **doublon possible** (même montant + même date déjà enregistrés) — simple lecture, aucune écriture.
+
+Côté client (`ExpenseFileInput.tsx`) : les photos sont **compressées avant l'envoi** (redimensionnement à ~2000 px, réencodage JPEG qualité 0,8 via canvas), la taille est contrôlée avant l'appel, un **aperçu** permet de comparer le brouillon avec le justificatif, et le scan est désactivé hors ligne. Le service worker n'intercepte que les GET : aucun fichier ne passe par le cache.
+
+Configuration (`.env.example`) :
+
+```bash
+AI_VISION="true"   # false = les images et PDF scannés sont refusés avec un message clair
+```
+
+Upload via Server Action : `serverActions.bodySizeLimit` relevé à 6 Mo dans `next.config.ts` (défaut Next : 1 Mo ; le multipart ajoute ~10–20 Ko autour des 5 Mo du fichier).
