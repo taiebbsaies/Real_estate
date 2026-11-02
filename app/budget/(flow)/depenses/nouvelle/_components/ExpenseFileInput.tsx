@@ -141,6 +141,7 @@ export default function ExpenseFileInput({
           type="file"
           accept="image/jpeg,image/png,image/webp"
           capture="environment"
+          aria-label="Prendre une photo du justificatif"
           className="sr-only"
           disabled={pending || !isOnline}
           onChange={onInputChange}
@@ -149,6 +150,7 @@ export default function ExpenseFileInput({
           ref={fileInputRef}
           type="file"
           accept={GALLERY_ACCEPT}
+          aria-label="Choisir un fichier justificatif"
           className="sr-only"
           disabled={pending || !isOnline}
           onChange={onInputChange}
@@ -175,13 +177,22 @@ export default function ExpenseFileInput({
       </div>
 
       {pending && (
-        <p className="text-sm font-medium text-zinc-600 dark:text-zinc-300">
+        <p
+          role="status"
+          aria-live="polite"
+          className="text-sm font-medium text-zinc-600 dark:text-zinc-300"
+        >
           Analyse du justificatif…
         </p>
       )}
 
-      {preview && !pending && (
-        <div className="flex items-center gap-3 rounded-xl border border-zinc-200 bg-white/60 p-2 dark:border-zinc-800 dark:bg-[#151518]/60">
+      {preview && (
+        <div
+          aria-busy={pending}
+          className={`flex items-center gap-3 rounded-xl border border-zinc-200 bg-white/60 p-2 transition-opacity dark:border-zinc-800 dark:bg-[#151518]/60${
+            pending ? " opacity-60" : ""
+          }`}
+        >
           {preview.isImage ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
