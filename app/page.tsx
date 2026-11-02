@@ -15,6 +15,12 @@ async function UserNav() {
       ADMIN: "/dashboard/admin",
     };
     const dashboardUrl = roleDashboardMap[session.activeRole] || "/dashboard/tenant";
+    const propertiesUrl =
+      session.activeRole === "OWNER"
+        ? "/dashboard/owner/properties"
+        : session.activeRole === "TENANT" || session.activeRole === "ADMIN"
+          ? "/dashboard/tenant/properties"
+          : null;
     const initial = session.firstName.charAt(0).toUpperCase();
 
     return (
@@ -31,6 +37,14 @@ async function UserNav() {
           </svg>
           <span className="hidden md:inline">Tableau de bord</span>
         </Link>
+        {propertiesUrl && (
+          <Link
+            href={propertiesUrl}
+            className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium text-[#1F2937] transition-colors hover:bg-[#DCFCE7] hover:text-[#166534] dark:text-zinc-300 dark:hover:bg-emerald-950/50 dark:hover:text-emerald-300"
+          >
+            <span>Logements</span>
+          </Link>
+        )}
         <Link
           href="/budget"
           className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium text-[#1F2937] transition-colors hover:bg-[#DCFCE7] hover:text-[#166534] dark:text-zinc-300 dark:hover:bg-emerald-950/50 dark:hover:text-emerald-300"
@@ -84,6 +98,35 @@ async function UserNav() {
       </Link>
       <ThemeToggle />
     </div>
+  );
+}
+
+async function HomePropertiesCta() {
+  const session = await getSession();
+  if (!session) return null;
+
+  const propertiesCta =
+    session.activeRole === "OWNER"
+      ? {
+          href: "/dashboard/owner/properties",
+          label: "Gérer mes logements",
+        }
+      : session.activeRole === "TENANT" || session.activeRole === "ADMIN"
+        ? {
+            href: "/dashboard/tenant/properties",
+            label: "Voir les annonces",
+          }
+        : null;
+
+  if (!propertiesCta) return null;
+
+  return (
+    <Link
+      href={propertiesCta.href}
+      className="mt-6 inline-flex h-11 items-center justify-center rounded-xl bg-[#166534] px-5 text-sm font-semibold text-white shadow-xs transition-all hover:bg-[#14532d] active:scale-98 dark:bg-emerald-500 dark:text-zinc-950 dark:hover:bg-emerald-400 dark:shadow-[0_0_25px_-5px_rgba(34,197,94,0.45)]"
+    >
+      {propertiesCta.label}
+    </Link>
   );
 }
 
@@ -146,6 +189,9 @@ export default function Home() {
           <p className="mt-6 text-lg leading-relaxed text-[#6B7280] dark:text-zinc-400 max-w-2xl">
             HomeCheck connecte locataires, propriétaires et techniciens dans une Progressive Web App unique : matching prédictif, état des lieux numérique assisté par IA et suivi en direct des maintenances.
           </p>
+          <Suspense fallback={null}>
+            <HomePropertiesCta />
+          </Suspense>
         </div>
 
         {/* Interactive Search Mockup / Quick Action Bar */}

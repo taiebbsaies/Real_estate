@@ -1,8 +1,10 @@
+import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { getSession } from "@/lib/session";
 import { getMyProperties } from "@/lib/properties/queries";
+import { getOwnerPropertyStats } from "@/lib/properties/owner-stats";
 import {
   PROPERTY_AVAILABILITY_LABELS,
   PROPERTY_CONDITION_LABELS,
@@ -75,6 +77,10 @@ export default async function OwnerPropertiesPage() {
   }
 
   const properties = await getMyProperties();
+  const propertyStats = await getOwnerPropertyStats(
+    session.userId,
+    properties.map((property) => property._id),
+  );
 
   return (
     <div className="relative min-h-full bg-zinc-50 dark:bg-zinc-950">
@@ -143,78 +149,110 @@ export default async function OwnerPropertiesPage() {
               const availability =
                 AVAILABILITY_CONFIG[property.availability] ??
                 { label: property.availability, className: "" };
+              const coverImage =
+                property.coverImage &&
+                property.images.includes(property.coverImage)
+                  ? property.coverImage
+                  : property.images[0];
 
               return (
                 <li key={property._id}>
                   <article className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div>
-                        <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
-                          {PROPERTY_TYPE_LABELS[property.type]}
-                        </p>
-                        <h2 className="mt-0.5 text-sm font-bold text-zinc-900 dark:text-zinc-100">
-                          {property.title}
-                        </h2>
-                        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                          {property.address}
-                          {property.zone ? ` · ${property.zone}` : ""}{" "}
-                          — {property.city}
-                        </p>
-                        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                          Surface : {property.surface} m²
-                          {property.bedrooms !== undefined
-                            ? ` · ${property.bedrooms} ch.`
-                            : ""}
-                          {property.bathrooms !== undefined
-                            ? ` · ${property.bathrooms} salle(s) de bain`
-                            : ""}
-                        </p>
+                    <div className="flex flex-col gap-5 sm:flex-row">
+                      <div className="relative aspect-[4/3] w-full shrink-0 overflow-hidden rounded-xl bg-zinc-100 dark:bg-zinc-800 sm:w-48">
+                        {coverImage ? (
+                          <Image
+                            src={coverImage}
+                            alt={`Photo du logement ${property.title}`}
+                            fill
+                            sizes="(max-width: 640px) 100vw, 12rem"
+                            className="object-cover"
+                            unoptimized
+                          />
+                        ) : (
+                          <div className="flex h-full items-center justify-center text-sm text-zinc-500 dark:text-zinc-400">
+                            Aucune photo
+                          </div>
+                        )}
                       </div>
-                      <div className="flex flex-wrap gap-2">
-                        <span
-                          className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${moderation.className}`}
-                        >
-                          {moderation.label}
-                        </span>
-                        <span
-                          className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${availability.className}`}
-                        >
-                          {PROPERTY_AVAILABILITY_LABELS[property.availability]}
-                        </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div>
+                            <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
+                              {PROPERTY_TYPE_LABELS[property.type]}
+                            </p>
+                            <h2 className="mt-0.5 text-sm font-bold text-zinc-900 dark:text-zinc-100">
+                              {property.title}
+                            </h2>
+                            <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                              {property.address}
+                              {property.zone ? ` · ${property.zone}` : ""}{" "}
+                              — {property.city}
+                            </p>
+                            <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                              Surface : {property.surface} m²
+                              {property.bedrooms !== undefined
+                                ? ` · ${property.bedrooms} ch.`
+                                : ""}
+                              {property.bathrooms !== undefined
+                                ? ` · ${property.bathrooms} salle(s) de bain`
+                                : ""}
+                            </p>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            <span
+                              className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${moderation.className}`}
+                            >
+                              {moderation.label}
+                            </span>
+                            <span
+                              className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${availability.className}`}
+                            >
+                              {PROPERTY_AVAILABILITY_LABELS[property.availability]}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-zinc-600 dark:text-zinc-400">
+                          <span>
+                            Loyer :{" "}
+                            <strong className="text-zinc-900 dark:text-zinc-100">
+                              {property.price} DT / mois
+                            </strong>
+                          </span>
+                          <span>
+                            État :{" "}
+                            {PROPERTY_CONDITION_LABELS[property.condition]}
+                          </span>
+                          {property.availableFrom && (
+                            <span>
+                              Disponible à partir du{" "}
+                              {formatDate(property.availableFrom)}
+                            </span>
+                          )}
+                        </div>
+
+                        <p className="mt-3 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                          👁 {propertyStats[property._id]?.views ?? 0} vues · ♥{" "}
+                          {propertyStats[property._id]?.favorites ?? 0} favoris
+                        </p>
+
+                        {property.moderationReason && (
+                          <p className="mt-3 rounded-xl border border-red-100 bg-red-50/60 p-3 text-xs text-red-800 dark:border-red-800/40 dark:bg-red-950/30 dark:text-red-300">
+                            Motif de rejet : {property.moderationReason}
+                          </p>
+                        )}
+
+                        <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-zinc-100 pt-4 dark:border-zinc-800">
+                          <Link
+                            href={`/dashboard/owner/properties/${property._id}/edit`}
+                            className="inline-flex h-8 items-center justify-center rounded-lg border border-zinc-200 bg-white/80 px-3 text-xs font-semibold text-zinc-700 transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                          >
+                            Modifier
+                          </Link>
+                          <DeletePropertyButton propertyId={property._id} />
+                        </div>
                       </div>
-                    </div>
-
-                    <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-zinc-600 dark:text-zinc-400">
-                      <span>
-                        Loyer :{" "}
-                        <strong className="text-zinc-900 dark:text-zinc-100">
-                          {property.price} DT / mois
-                        </strong>
-                      </span>
-                      <span>
-                        État : {PROPERTY_CONDITION_LABELS[property.condition]}
-                      </span>
-                      {property.availableFrom && (
-                        <span>
-                          Disponible à partir du {formatDate(property.availableFrom)}
-                        </span>
-                      )}
-                    </div>
-
-                    {property.moderationReason && (
-                      <p className="mt-3 rounded-xl border border-red-100 bg-red-50/60 p-3 text-xs text-red-800 dark:border-red-800/40 dark:bg-red-950/30 dark:text-red-300">
-                        Motif de rejet : {property.moderationReason}
-                      </p>
-                    )}
-
-                    <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-zinc-100 pt-4 dark:border-zinc-800">
-                      <Link
-                        href={`/dashboard/owner/properties/${property._id}/edit`}
-                        className="inline-flex h-8 items-center justify-center rounded-lg border border-zinc-200 bg-white/80 px-3 text-xs font-semibold text-zinc-700 transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
-                      >
-                        Modifier
-                      </Link>
-                      <DeletePropertyButton propertyId={property._id} />
                     </div>
                   </article>
                 </li>
