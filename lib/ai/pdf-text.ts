@@ -13,15 +13,18 @@ export type PdfTextResult =
     };
 
 function withTimeout<T>(promise: Promise<T>): Promise<T> {
-  return Promise.race([
-    promise,
-    new Promise<never>((_, reject) => {
-      setTimeout(
-        () => reject(new Error("pdf_timeout")),
-        PDF_TIMEOUT_MS,
-      );
-    }),
-  ]);
+  let timer: ReturnType<typeof setTimeout> | undefined;
+
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(
+      () => reject(new Error("pdf_timeout")),
+      PDF_TIMEOUT_MS,
+    );
+  });
+
+  return Promise.race([promise, timeout]).finally(() => {
+    clearTimeout(timer);
+  });
 }
 
 function isTimeout(error: unknown): boolean {
