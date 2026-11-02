@@ -142,6 +142,7 @@ export default function ExpenseFileInput({
           accept="image/jpeg,image/png,image/webp"
           capture="environment"
           className="sr-only"
+          disabled={pending || !isOnline}
           onChange={onInputChange}
         />
         <input
@@ -149,6 +150,7 @@ export default function ExpenseFileInput({
           type="file"
           accept={GALLERY_ACCEPT}
           className="sr-only"
+          disabled={pending || !isOnline}
           onChange={onInputChange}
         />
 

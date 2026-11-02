@@ -39,6 +39,7 @@ export default function ExpenseDraftInput({
           maxLength={300}
           required
           autoComplete="off"
+          disabled={pending}
           placeholder="Ex. j'ai payé 85 dinars d'électricité hier"
           aria-invalid={!!textErrors}
           aria-describedby={textErrors ? "expense-text-error" : undefined}

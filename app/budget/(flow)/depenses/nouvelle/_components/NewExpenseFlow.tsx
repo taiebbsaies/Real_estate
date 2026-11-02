@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   parseExpenseText,
   type ExpenseDraftActionState,
@@ -12,8 +12,13 @@ import {
 import ExpenseForm, {
   type ExpenseFormValues,
 } from "@/app/budget/_components/ExpenseForm";
-import type { BudgetCategory } from "@/lib/constants/budget";
 import Alert from "@/app/budget/_components/ui/Alert";
+import { Button } from "@/app/budget/_components/ui/Button";
+import {
+  resolveAnalysis,
+  type DraftPayload,
+  type AnalysisOutcome,
+} from "@/lib/ai/analysis-response";
 import ExpenseDraftInput from "./ExpenseDraftInput";
 import ExpenseFileInput from "./ExpenseFileInput";
 
@@ -23,70 +28,120 @@ type DraftState = {
   multipleExpenses: boolean;
 };
 
+const FILE_THROWN_MESSAGE = "Fichier trop volumineux ou envoi impossible.";
+
 export default function NewExpenseFlow() {
   const [state, setState] = useState<ExpenseDraftActionState | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [fileState, setFileState] = useState<ExpenseFileActionState | null>(
     null,
   );
-  const [isScanning, setIsScanning] = useState(false);
+  const [busy, setBusy] = useState(false);
   const [draft, setDraft] = useState<DraftState | null>(null);
   const [draftKey, setDraftKey] = useState(0);
+  const [heldDraft, setHeldDraft] = useState<DraftPayload | null>(null);
+  const requestSeq = useRef(0);
+  const formDirtyRef = useRef(false);
 
-  function applyDraft(nextState: {
-    draft?: {
-      amount: string;
-      date: string;
-      category: BudgetCategory;
-      note: string;
-    };
-    uncertainFields?: string[];
-    multipleExpenses?: boolean;
-  }): void {
-    if (nextState.draft) {
-      setDraft({
-        form: {
-          id: "",
-          amount: nextState.draft.amount,
-          date: nextState.draft.date,
-          category: nextState.draft.category,
-          note: nextState.draft.note,
-        },
-        uncertainFields: nextState.uncertainFields ?? [],
-        multipleExpenses: nextState.multipleExpenses ?? false,
-      });
-      setDraftKey((key) => key + 1);
+  function applyDraft(payload: DraftPayload): void {
+    setDraft({
+      form: {
+        id: "",
+        amount: payload.amount,
+        date: payload.date,
+        category: payload.category,
+        note: payload.note,
+      },
+      uncertainFields: payload.uncertainFields,
+      multipleExpenses: payload.multipleExpenses,
+    });
+    setDraftKey((key) => key + 1);
+    formDirtyRef.current = false;
+    setHeldDraft(null);
+  }
+
+  function applyHeldDraft(): void {
+    if (heldDraft) {
+      applyDraft(heldDraft);
+    }
+  }
+
+  function markFormDirty(): void {
+    formDirtyRef.current = true;
+  }
+
+  function consumeOutcome(outcome: AnalysisOutcome): void {
+    if (outcome.kind === "apply") {
+      applyDraft(outcome.draft);
+    } else if (outcome.kind === "hold") {
+      setHeldDraft(outcome.draft);
     }
   }
 
   async function handleDraftSubmit(formData: FormData): Promise<void> {
-    setIsSubmitting(true);
+    const seq = ++requestSeq.current;
+
+    setBusy(true);
 
     try {
       const nextState = await parseExpenseText(null, formData);
+      const outcome = resolveAnalysis({
+        seq,
+        latestSeq: requestSeq.current,
+        formDirty: formDirtyRef.current,
+        response: nextState,
+        thrownMessage: "",
+      });
+
+      if (outcome.kind === "stale") {
+        return;
+      }
 
       setState(nextState);
-      applyDraft(nextState);
+      consumeOutcome(outcome);
     } finally {
-      setIsSubmitting(false);
+      if (seq === requestSeq.current) {
+        setBusy(false);
+      }
     }
   }
 
   async function handleFileSubmit(formData: FormData): Promise<void> {
-    setIsScanning(true);
+    const seq = ++requestSeq.current;
+
+    setBusy(true);
 
     try {
       const nextState = await parseExpenseFile(null, formData);
+      const outcome = resolveAnalysis({
+        seq,
+        latestSeq: requestSeq.current,
+        formDirty: formDirtyRef.current,
+        response: nextState,
+        thrownMessage: FILE_THROWN_MESSAGE,
+      });
+
+      if (outcome.kind === "stale") {
+        return;
+      }
 
       setFileState(nextState);
-      applyDraft(nextState);
+      consumeOutcome(outcome);
     } catch {
-      setFileState({
-        success: false,
-        message: "Fichier trop volumineux ou envoi impossible.",
+      const outcome = resolveAnalysis({
+        seq,
+        latestSeq: requestSeq.current,
+        formDirty: formDirtyRef.current,
+        response: null,
+        thrownMessage: FILE_THROWN_MESSAGE,
       });
+
+      if (outcome.kind === "error") {
+        setFileState({ success: false, message: outcome.message });
+      }
     } finally {
-      setIsScanning(false);
+      if (seq === requestSeq.current) {
+        setBusy(false);
+      }
     }
   }
 
@@ -95,13 +150,13 @@ export default function NewExpenseFlow() {
       <ExpenseDraftInput
         formAction={handleDraftSubmit}
         state={state}
-        pending={isSubmitting}
+        pending={busy}
       />
 
       <ExpenseFileInput
         formAction={handleFileSubmit}
         state={fileState}
-        pending={isScanning}
+        pending={busy}
       />
 
       {fileState?.success && fileState.possibleDuplicate && (
@@ -111,6 +166,20 @@ export default function NewExpenseFlow() {
             Vérifiez qu&apos;il ne s&apos;agit pas d&apos;un doublon avant
             d&apos;enregistrer.
           </p>
+        </Alert>
+      )}
+
+      {heldDraft && (
+        <Alert kind="success" role="status">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <p className="font-medium leading-snug">
+              Le brouillon IA est prêt. Le formulaire contient déjà vos
+              modifications : l&apos;appliquer remplacera leur contenu.
+            </p>
+            <Button variant="secondary" onClick={applyHeldDraft}>
+              Appliquer
+            </Button>
+          </div>
         </Alert>
       )}
 
@@ -128,12 +197,14 @@ export default function NewExpenseFlow() {
         </Alert>
       )}
 
-      <ExpenseForm
-        mode="create"
-        key={draftKey}
-        expense={draft?.form}
-        highlightFields={draft?.uncertainFields}
-      />
+      <div onChange={markFormDirty}>
+        <ExpenseForm
+          mode="create"
+          key={draftKey}
+          expense={draft?.form}
+          highlightFields={draft?.uncertainFields}
+        />
+      </div>
     </div>
   );
 }
