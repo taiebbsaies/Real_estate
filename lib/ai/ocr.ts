@@ -71,7 +71,10 @@ async function preprocess(
   { ok: true; bytes: Uint8Array } | { ok: false; reason: "too_large" | "preprocess_failed" }
 > {
   try {
-    const image = sharp(bytes, { failOn: "none" });
+    const image = sharp(bytes, {
+      failOn: "none",
+      limitInputPixels: MAX_OCR_PIXELS,
+    });
     const metadata = await image.metadata();
     const pixels = (metadata.width ?? 0) * (metadata.height ?? 0);
 
@@ -93,7 +96,14 @@ async function preprocess(
       .toBuffer();
 
     return { ok: true, bytes: new Uint8Array(buffer) };
-  } catch {
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      error.message.includes("pixel limit")
+    ) {
+      return { ok: false, reason: "too_large" };
+    }
+
     return { ok: false, reason: "preprocess_failed" };
   }
 }
