@@ -103,7 +103,7 @@ const bathroomsField = numberField(
 const priceField = numberField(
   1,
   100000,
-  "Le loyer doit être compris entre 0 et 100 000 DT.",
+  "Le loyer doit être compris entre 1 et 100 000 DT.",
 );
 
 const optionalTextField = (max: number, message: string) =>
@@ -196,9 +196,15 @@ export const deletePropertySchema = z.object({
   id: idField,
 });
 
+/** Input for the owner property image upload action (propertyId is ObjectId-checked). */
+export const propertyImageUploadSchema = z.object({
+  propertyId: idField,
+});
+
 // ─── Inferred types ───────────────────────────────────────────────────────────
 
 export type CreatePropertyInput = z.infer<typeof createPropertySchema>;
 export type UpdatePropertyInput = z.infer<typeof updatePropertySchema>;
 export type ModeratePropertyInput = z.infer<typeof moderatePropertySchema>;
 export type DeletePropertyInput = z.infer<typeof deletePropertySchema>;
+export type PropertyImageUploadInput = z.infer<typeof propertyImageUploadSchema>;

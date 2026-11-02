@@ -152,7 +152,7 @@ export async function createProperty(
   try {
     await connectDB();
 
-    await Property.create({
+    const created = await Property.create({
       ownerId: session.userId,
       title,
       description,
@@ -181,6 +181,7 @@ export async function createProperty(
     return {
       success: true,
       message: "Logement publié avec succès. Il est soumis à validation.",
+      propertyId: String(created._id),
     };
   } catch (error: unknown) {
     console.error("[createProperty] error:", error);
@@ -196,10 +197,11 @@ export async function createProperty(
 /**
  * Update a property listing — OWNER only, and only for their own listings.
  *
- * Editing always resets the moderation status back to "pending" and clears the
- * moderation reason: any meaningful change has to be re-reviewed by an admin.
- * Optional fields that are absent (undefined) are explicitly $unset so stale
- * values from the previous version do not survive the update.
+ * Editing resets the moderation status back to "pending" and clears the
+ * moderation reason only when a public field changed: any meaningful change has
+ * to be re-reviewed by an admin. Optional fields that are absent (undefined)
+ * are explicitly $unset so stale values from the previous version do not
+ * survive the update.
  */
 export async function updateProperty(
   _prevState: PropertyActionState | null,

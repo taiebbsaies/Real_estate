@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { getMyPropertyById } from "@/lib/properties/queries";
 import PropertyForm from "../../_components/PropertyForm";
+import PropertyImagesManager from "../../_components/PropertyImagesManager";
 
 export const dynamic = "force-dynamic";
 
@@ -41,6 +42,7 @@ export default async function EditPropertyPage({
         ← Mes logements
       </Link>
       <PropertyForm mode="edit" property={property} />
+      <PropertyImagesManager property={property} />
     </main>
   );
 }
