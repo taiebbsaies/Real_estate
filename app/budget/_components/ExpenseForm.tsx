@@ -39,6 +39,7 @@ export type ExpenseFormValues = {
 type ExpenseFormProps = {
   mode: "create" | "edit";
   expense?: ExpenseFormValues;
+  highlightFields?: string[];
 };
 
 function todayLocalIso(): string {
@@ -66,7 +67,7 @@ function SubmitButton({ disabled = false }: { disabled?: boolean }) {
   );
 }
 
-export default function ExpenseForm({ mode, expense }: ExpenseFormProps) {
+export default function ExpenseForm({ mode, expense, highlightFields }: ExpenseFormProps) {
   const router = useRouter();
   const [state, formAction] = useActionState(
     mode === "create" ? createExpense : updateExpense,
@@ -76,6 +77,11 @@ export default function ExpenseForm({ mode, expense }: ExpenseFormProps) {
   const [date, setDate] = useState<string | undefined>(expense?.date);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const isOnline = useOnlineStatus();
+  const isHighlighted = (field: string) =>
+    mode === "create" && (highlightFields?.includes(field) ?? false);
+  const dateHighlighted = isHighlighted("date");
+  const categoryHighlighted = isHighlighted("category");
+  const noteHighlighted = isHighlighted("note");
 
   const today = useSyncExternalStore(
     subscribeToNothing,
@@ -112,6 +118,7 @@ export default function ExpenseForm({ mode, expense }: ExpenseFormProps) {
             label="Montant"
             hint="En dinars, par exemple 85 / 85,5 / 85,500."
             errors={state?.errors?.amount}
+            highlight={isHighlighted("amount")}
             placeholder="Ex. 85,500"
             defaultValue={expense?.amount ?? ""}
           />
@@ -122,11 +129,11 @@ export default function ExpenseForm({ mode, expense }: ExpenseFormProps) {
               name="date"
               type="date"
               required
-              aria-invalid={!!state?.errors?.date}
+              aria-invalid={!!state?.errors?.date || dateHighlighted}
               aria-describedby={state?.errors?.date ? "date-error" : undefined}
               value={dateValue}
               onChange={(event) => setDate(event.target.value)}
-              className={fieldClass(!!state?.errors?.date)}
+              className={fieldClass(!!state?.errors?.date || dateHighlighted)}
             />
           </Field>
 
@@ -159,6 +166,9 @@ export default function ExpenseForm({ mode, expense }: ExpenseFormProps) {
                 {error}
               </p>
             ))}
+            {categoryHighlighted && !state?.errors?.category?.length && (
+              <p className={fieldErrorClass}>Catégorie à vérifier.</p>
+            )}
           </fieldset>
 
           <Field id="note" label="Note (facultatif)" errors={state?.errors?.note}>
@@ -168,11 +178,11 @@ export default function ExpenseForm({ mode, expense }: ExpenseFormProps) {
               type="text"
               maxLength={200}
               autoComplete="off"
-              aria-invalid={!!state?.errors?.note}
+              aria-invalid={!!state?.errors?.note || noteHighlighted}
               aria-describedby={state?.errors?.note ? "note-error" : undefined}
               placeholder="Ex. Facture STEG"
               defaultValue={expense?.note ?? ""}
-              className={fieldClass(!!state?.errors?.note)}
+              className={fieldClass(!!state?.errors?.note || noteHighlighted)}
             />
           </Field>
 

@@ -9,6 +9,7 @@ type AmountInputProps = Omit<
   label: string;
   hint?: string;
   errors?: string[];
+  highlight?: boolean;
   size?: "lg" | "md";
 };
 
@@ -22,12 +23,13 @@ export default function AmountInput({
   label,
   hint,
   errors,
+  highlight = false,
   size = "lg",
   ...inputProps
 }: AmountInputProps) {
   return (
     <Field id={id} label={label} hint={hint} errors={errors}>
-      <div className={fieldShellClass(!!errors)}>
+      <div className={fieldShellClass(!!errors || highlight)}>
         <input
           id={id}
           name={id}
@@ -35,7 +37,7 @@ export default function AmountInput({
           inputMode="decimal"
           autoComplete="off"
           required
-          aria-invalid={!!errors}
+          aria-invalid={!!errors || highlight}
           aria-describedby={errors ? `${id}-error` : undefined}
           className={`tabular-nums w-full bg-transparent text-zinc-900 outline-none placeholder:font-normal placeholder:text-zinc-400 dark:text-zinc-100 dark:placeholder:text-zinc-600 ${sizeClasses[size]}`}
           {...inputProps}

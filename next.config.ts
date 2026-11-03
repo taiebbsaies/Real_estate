@@ -1,6 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "6mb",
+    },
+  },
+  serverExternalPackages: ["unpdf", "tesseract.js", "sharp"],
   turbopack: {
     rules: {
       "*.css": {
