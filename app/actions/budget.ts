@@ -9,6 +9,7 @@ import Expense from "@/models/expense";
 import type { IBudget } from "@/models/budget";
 import { getUserId } from "@/lib/budget/current-user";
 import { budgetCacheTag } from "@/lib/budget/queries";
+import { BUDGET_CATEGORIES } from "@/lib/constants/budget";
 import {
   budgetSchema,
   deleteBudgetSchema,
@@ -42,14 +43,25 @@ function isDuplicateKeyError(error: unknown): boolean {
   );
 }
 
+function formValue(formData: FormData, key: string): string | undefined {
+  const value = formData.get(key);
+  return typeof value === "string" ? value : undefined;
+}
+
 export async function upsertBudget(
-  _previousState: BudgetActionState | null,
+  _previous_state: BudgetActionState | null,
   formData: FormData,
 ): Promise<BudgetActionState> {
   const parsed = budgetSchema.safeParse({
     month: formData.get("month"),
     limit: formData.get("limit"),
     income: formData.get("income") ?? undefined,
+    categoryLimits: Object.fromEntries(
+      BUDGET_CATEGORIES.map((category) => [
+        category,
+        formValue(formData, `categoryLimits.${category}`),
+      ]),
+    ),
   });
 
   if (!parsed.success) {
@@ -65,11 +77,25 @@ export async function upsertBudget(
   try {
     await connectDB();
 
-    const { month, limit, income } = parsed.data;
+    const { month, limit, income, categoryLimits } = parsed.data;
+
+    const unset: Record<string, string> = {};
+
+    if (income === undefined) {
+      unset.income = "";
+    }
+
+    if (categoryLimits === undefined) {
+      unset.categoryLimits = "";
+    }
 
     const update: UpdateQuery<IBudget> = {
-      $set: { limit, ...(income !== undefined ? { income } : {}) },
-      ...(income === undefined ? { $unset: { income: "" } } : {}),
+      $set: {
+        limit,
+        ...(income !== undefined ? { income } : {}),
+        ...(categoryLimits !== undefined ? { categoryLimits } : {}),
+      },
+      ...(Object.keys(unset).length > 0 ? { $unset: unset } : {}),
     };
 
     const upsertOptions = {

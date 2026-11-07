@@ -1,11 +1,16 @@
 import "server-only";
 import mongoose, { Schema, type Model } from "mongoose";
+import {
+  BUDGET_CATEGORIES,
+  type BudgetCategory,
+} from "@/lib/constants/budget";
 
 export interface IBudget {
   userId: mongoose.Types.ObjectId;
   month: string;
   limit: number;
   income?: number;
+  categoryLimits?: Partial<Record<BudgetCategory, number>>;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -14,6 +19,20 @@ const isIntegerMillimes = {
   validator: (value: number) => Number.isInteger(value),
   message: "Les montants sont stockés en millimes (entiers).",
 };
+
+const categoryLimitsSchema = new Schema(
+  Object.fromEntries(
+    BUDGET_CATEGORIES.map((category) => [
+      category,
+      {
+        type: Number,
+        min: [1, "Le plafond de catégorie doit être supérieur à 0."],
+        validate: isIntegerMillimes,
+      },
+    ]),
+  ),
+  { _id: false },
+);
 
 const BudgetSchema = new Schema<IBudget>(
   {
@@ -42,6 +61,10 @@ const BudgetSchema = new Schema<IBudget>(
       type: Number,
       min: [0, "Le revenu ne peut pas être négatif."],
       validate: isIntegerMillimes,
+    },
+
+    categoryLimits: {
+      type: categoryLimitsSchema,
     },
   },
   {

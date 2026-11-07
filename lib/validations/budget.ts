@@ -1,5 +1,8 @@
 import { z } from "zod";
-import { BUDGET_CATEGORIES } from "@/lib/constants/budget";
+import {
+  BUDGET_CATEGORIES,
+  type BudgetCategory,
+} from "@/lib/constants/budget";
 import { tndToMillimes } from "@/lib/budget/calculations";
 
 const millimesAmount = z
@@ -50,10 +53,46 @@ const noteField = z
   .transform((value) => (value === "" ? undefined : value))
   .optional();
 
+const optionalCategoryLimit = z
+  .union([z.string(), z.number()])
+  .optional()
+  .transform((value) => {
+    if (value === undefined || (typeof value === "string" && value === "")) {
+      return undefined;
+    }
+
+    return tndToMillimes(value);
+  })
+  .refine(
+    (millimes) =>
+      millimes === undefined || (Number.isInteger(millimes) && millimes > 0),
+    { error: "Le plafond de catégorie doit être supérieur à 0." },
+  );
+
+const optionalCategoryLimits = z
+  .object(
+    Object.fromEntries(
+      BUDGET_CATEGORIES.map((category) => [category, optionalCategoryLimit]),
+    ),
+  )
+  .optional()
+  .transform((limits) => {
+    if (!limits) {
+      return undefined;
+    }
+
+    const defined = Object.fromEntries(
+      Object.entries(limits).filter(([, value]) => value !== undefined),
+    ) as Partial<Record<BudgetCategory, number>>;
+
+    return Object.keys(defined).length > 0 ? defined : undefined;
+  });
+
 export const budgetSchema = z.object({
   month: monthField,
   limit: millimesAmount,
   income: optionalMillimesAmount,
+  categoryLimits: optionalCategoryLimits,
 });
 
 export const expenseSchema = z.object({
