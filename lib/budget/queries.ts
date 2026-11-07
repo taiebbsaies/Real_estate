@@ -3,7 +3,14 @@ import { Types } from "mongoose";
 import { connectDB } from "@/lib/mongodb";
 import Budget from "@/models/budget";
 import Expense from "@/models/expense";
+import BudgetInsight from "@/models/budgetInsight";
 import type { BudgetCategory } from "@/lib/constants/budget";
+import type { MonthlySummaryInsight } from "@/lib/budget/insights";
+import {
+  toPredictiveAlertViews,
+  type PredictiveAlertsInsight,
+  type StoredInsightAlert,
+} from "@/lib/budget/projections";
 import {
   alertLevel,
   currentMonth,
@@ -20,6 +27,7 @@ type LeanBudgetDoc = {
   month: string;
   limit: number;
   income?: number;
+  categoryLimits?: Partial<Record<BudgetCategory, number>>;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -40,6 +48,7 @@ export type SerializedBudget = {
   month: string;
   limit: number;
   income?: number;
+  categoryLimits?: Partial<Record<BudgetCategory, number>>;
   createdAt: string;
   updatedAt: string;
 };
@@ -89,6 +98,9 @@ function serializeBudget(doc: LeanBudgetDoc): SerializedBudget {
     month: doc.month,
     limit: doc.limit,
     ...(doc.income !== undefined ? { income: doc.income } : {}),
+    ...(doc.categoryLimits !== undefined
+      ? { categoryLimits: { ...doc.categoryLimits } }
+      : {}),
     createdAt: doc.createdAt.toISOString(),
     updatedAt: doc.updatedAt.toISOString(),
   };
@@ -115,6 +127,66 @@ export async function getBudget(
   const doc = await Budget.findOne({ userId, month }).lean<LeanBudgetDoc>();
 
   return doc ? serializeBudget(doc) : null;
+}
+
+type LeanBudgetInsightDoc = {
+  _id: Types.ObjectId;
+  source: "ai" | "template";
+  text?: string;
+  generatedAt: Date;
+};
+
+export async function getMonthlySummaryInsight(
+  userId: string,
+  month: string,
+): Promise<MonthlySummaryInsight | null> {
+  await connectDB();
+
+  const doc = await BudgetInsight.findOne({
+    userId,
+    month,
+    kind: "summary",
+  }).lean<LeanBudgetInsightDoc>();
+
+  if (!doc || !doc.text) {
+    return null;
+  }
+
+  return {
+    text: doc.text,
+    source: doc.source,
+    generatedAt: doc.generatedAt.toISOString(),
+  };
+}
+
+type LeanBudgetAlertsDoc = {
+  _id: Types.ObjectId;
+  source: "ai" | "template";
+  alerts?: StoredInsightAlert[];
+  generatedAt: Date;
+};
+
+export async function getPredictiveAlertsInsight(
+  userId: string,
+  month: string,
+): Promise<PredictiveAlertsInsight | null> {
+  await connectDB();
+
+  const doc = await BudgetInsight.findOne({
+    userId,
+    month,
+    kind: "alerts",
+  }).lean<LeanBudgetAlertsDoc>();
+
+  if (!doc || !doc.alerts || doc.alerts.length === 0) {
+    return null;
+  }
+
+  return {
+    alerts: toPredictiveAlertViews(doc.alerts),
+    source: doc.source,
+    generatedAt: doc.generatedAt.toISOString(),
+  };
 }
 
 export async function getPreviousBudget(
