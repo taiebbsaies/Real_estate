@@ -1,12 +1,15 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  cacheComponents: true,
+  partialPrefetching: true,
+  serverExternalPackages: ["unpdf", "tesseract.js", "sharp"],
   experimental: {
+    agentUpgrade: "security",
     serverActions: {
       bodySizeLimit: "6mb",
     },
   },
-  serverExternalPackages: ["unpdf", "tesseract.js", "sharp"],
   turbopack: {
     rules: {
       "*.css": {
