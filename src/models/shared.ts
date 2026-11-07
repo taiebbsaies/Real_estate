@@ -2,7 +2,7 @@ import mongoose, { Schema, type Document, type Types } from "mongoose";
 import { getOrCreateModel } from "@/src/lib/model";
 import { USER_ROLES, type UserRole } from "@/lib/constants/user";
 
-// Re-export User from root models if available, or define fallback stub
+// Canonical User model — shared by signup layer and maintenance module
 export interface IUser extends Document {
   _id: Types.ObjectId;
   firstName: string;
@@ -13,15 +13,19 @@ export interface IUser extends Document {
   avatarUrl?: string;
   roles: UserRole[];
   activeRole?: UserRole;
+  // Audit fields (populated by signup layer)
+  emailVerifiedAt?: Date;
+  lastLoginAt?: Date;
+  deletedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
 
 const UserSchema = new Schema<IUser>(
   {
-    firstName: { type: String, required: true, trim: true },
-    lastName: { type: String, required: true, trim: true },
-    email: { type: String, required: true, unique: true, lowercase: true, trim: true },
+    firstName: { type: String, required: true, trim: true, maxlength: 80 },
+    lastName: { type: String, required: true, trim: true, maxlength: 80 },
+    email: { type: String, required: true, unique: true, lowercase: true, trim: true, maxlength: 254 },
     passwordHash: { type: String, select: false },
     phone: { type: String, trim: true },
     avatarUrl: { type: String },
@@ -29,11 +33,25 @@ const UserSchema = new Schema<IUser>(
       type: [{ type: String, enum: USER_ROLES }],
       required: true,
       default: ["TENANT"],
+      validate: {
+        validator: (roles: UserRole[]) =>
+          roles.length > 0 && new Set(roles).size === roles.length,
+        message: "Roles must be non-empty and unique",
+      },
     },
     activeRole: { type: String, enum: USER_ROLES },
+    emailVerifiedAt: { type: Date },
+    lastLoginAt: { type: Date },
+    deletedAt: { type: Date },
   },
-  { timestamps: true }
+  { timestamps: true, versionKey: false }
 );
+
+UserSchema.pre("validate", function () {
+  if (this.activeRole && !this.roles.includes(this.activeRole)) {
+    this.invalidate("activeRole", "The active role must be assigned to this user.");
+  }
+});
 
 export const UserModel = getOrCreateModel<IUser>("User", UserSchema);
 

@@ -26,6 +26,12 @@
   --card: #ffffff;
   --border: #dcfce7;
   --accent: #22c55e;
+
+  /* Maintenance module tokens */
+  --color-primary: #2563eb;
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-danger: #f43f5e;
 }
 
 html.dark {
@@ -42,6 +48,12 @@ html.dark {
   --dark-text: #f4f4f5;
   --secondary-text: #9ca3af;
   --bg-green: #060907;
+
+  /* Maintenance module tokens in dark mode */
+  --color-primary: #3b82f6;
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-danger: #f43f5e;
 }
 
 @theme inline {

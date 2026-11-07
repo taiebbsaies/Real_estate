@@ -1,11 +1,13 @@
 import { cookies, headers } from "next/headers";
 import { type ActorRole } from "@/src/modules/maintenance/constants";
+import { type UserRole } from "@/lib/constants/user";
 import { UserModel, type IUser } from "@/src/models/shared";
 import connectDB from "@/src/lib/mongoose";
 
 export interface AuthUser {
   id: string;
-  role: ActorRole;
+  /** Active role for this session. Never "SYSTEM" — that is an internal actor only. */
+  role: UserRole;
   email: string;
   firstName: string;
   lastName: string;
@@ -57,16 +59,18 @@ export const DEFAULT_DEMO_USERS: Record<Exclude<ActorRole, "SYSTEM">, AuthUser> 
  * Perfect for evaluation defense and rapid role switching.
  */
 export async function auth(): Promise<AuthSession> {
-  let targetRole: ActorRole = "TENANT";
+  let targetRole: UserRole = "TENANT";
   let targetUserId: string | null = null;
+
+  const VALID_USER_ROLES: readonly string[] = ["TENANT", "OWNER", "TECHNICIAN", "ADMIN"];
 
   try {
     const cookieStore = await cookies();
     const cookieRole = cookieStore.get("homecheck_role")?.value;
     const cookieUserId = cookieStore.get("homecheck_user_id")?.value;
 
-    if (cookieRole && ["TENANT", "OWNER", "TECHNICIAN", "ADMIN"].includes(cookieRole)) {
-      targetRole = cookieRole as ActorRole;
+    if (cookieRole && VALID_USER_ROLES.includes(cookieRole)) {
+      targetRole = cookieRole as UserRole;
     }
     if (cookieUserId) {
       targetUserId = cookieUserId;
@@ -80,8 +84,8 @@ export async function auth(): Promise<AuthSession> {
     const headerRole = headerStore.get("x-user-role");
     const headerUserId = headerStore.get("x-user-id");
 
-    if (headerRole && ["TENANT", "OWNER", "TECHNICIAN", "ADMIN"].includes(headerRole)) {
-      targetRole = headerRole as ActorRole;
+    if (headerRole && VALID_USER_ROLES.includes(headerRole)) {
+      targetRole = headerRole as UserRole;
     }
     if (headerUserId) {
       targetUserId = headerUserId;
@@ -99,7 +103,7 @@ export async function auth(): Promise<AuthSession> {
       dbUser = await UserModel.findById(targetUserId).lean() as unknown as (IUser & { _id: { toString(): string } }) | null;
     }
 
-    if (!dbUser && targetRole && targetRole !== "SYSTEM") {
+    if (!dbUser && targetRole) {
       dbUser = await UserModel.findOne({
         roles: targetRole,
       }).lean() as unknown as (IUser & { _id: { toString(): string } }) | null;
