@@ -11,6 +11,7 @@ import {
 } from "@/lib/budget/calculations";
 import { getBudget, getMonthSummary, getPreviousBudget } from "@/lib/budget/queries";
 import { formatMonthLabel, formatTnd } from "@/lib/budget/format";
+import { BUDGET_CATEGORIES, type BudgetCategory } from "@/lib/constants/budget";
 import BudgetForm from "./_components/BudgetForm";
 import {
   ArrowLeftIcon,
@@ -212,6 +213,14 @@ async function MonthContent({ searchParams }: { searchParams: SearchParams }) {
             ? formatTnd(budget.income).replace(" TND", "")
             : ""
         }
+        initialCategoryLimits={Object.fromEntries(
+          BUDGET_CATEGORIES.map((category) => [
+            category,
+            budget?.categoryLimits?.[category] !== undefined
+              ? formatTnd(budget.categoryLimits[category]).replace(" TND", "")
+              : "",
+          ]),
+        ) as Record<BudgetCategory, string>}
         hasBudget={budget !== null}
         previousBudget={
           previousBudget
@@ -219,6 +228,9 @@ async function MonthContent({ searchParams }: { searchParams: SearchParams }) {
                 limit: previousBudget.limit,
                 ...(previousBudget.income !== undefined
                   ? { income: previousBudget.income }
+                  : {}),
+                ...(previousBudget.categoryLimits !== undefined
+                  ? { categoryLimits: previousBudget.categoryLimits }
                   : {}),
               }
             : null

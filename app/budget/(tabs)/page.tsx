@@ -14,6 +14,8 @@ import {
 } from "@/lib/budget/calculations";
 import {
   getMonthSummary,
+  getMonthlySummaryInsight,
+  getPredictiveAlertsInsight,
   listExpenses,
   type MonthSummary,
   type SerializedExpense,
@@ -40,6 +42,8 @@ import Card from "../_components/ui/Card";
 import Alert from "../_components/ui/Alert";
 import EmptyState from "../_components/ui/EmptyState";
 import { ButtonLink } from "../_components/ui/Button";
+import MonthlySummaryCard from "../_components/insights/MonthlySummaryCard";
+import PredictiveAlertsCard from "../_components/insights/PredictiveAlertsCard";
 
 export const metadata: Metadata = {
   title: "Budget",
@@ -215,14 +219,21 @@ async function HomeContent({ searchParams }: { searchParams: SearchParams }) {
   const month = MONTH_PATTERN.test(rawMonth) ? rawMonth : currentMonthTunis();
 
   const userId = await getUserId();
-  const [summary, expenses] = await Promise.all([
+  const nowMonth = currentMonthTunis();
+  const isCurrentMonth = month === nowMonth;
+
+  const [summary, expenses, monthlyInsight, alertsInsight] = await Promise.all([
     getMonthSummary(userId, month),
     listExpenses(userId, { month }),
+    isCurrentMonth
+      ? getMonthlySummaryInsight(userId, month)
+      : Promise.resolve(null),
+    isCurrentMonth
+      ? getPredictiveAlertsInsight(userId, month)
+      : Promise.resolve(null),
   ]);
 
   const monthLabel = formatMonthLabel(month);
-  const nowMonth = currentMonthTunis();
-  const isCurrentMonth = month === nowMonth;
   const isPastMonth = month < nowMonth;
   const daysLeft = isCurrentMonth ? daysLeftInMonthTunis() : null;
 
@@ -337,6 +348,16 @@ async function HomeContent({ searchParams }: { searchParams: SearchParams }) {
 
       <div className="flex flex-col gap-4 md:mx-auto md:w-full md:max-w-[720px] lg:grid lg:max-w-none lg:grid-cols-2 lg:items-start lg:gap-6">
         <div className="flex flex-col gap-4 lg:gap-6">
+          {isCurrentMonth &&
+            summary.budget?.categoryLimits !== undefined &&
+            Object.keys(summary.budget.categoryLimits).length > 0 && (
+              <PredictiveAlertsCard month={month} initial={alertsInsight} />
+            )}
+
+          {isCurrentMonth && summary.spent > 0 && (
+            <MonthlySummaryCard month={month} initial={monthlyInsight} />
+          )}
+
           {isCurrentMonth && summary.budget && (
             <ForecastCard summary={summary} month={month} />
           )}

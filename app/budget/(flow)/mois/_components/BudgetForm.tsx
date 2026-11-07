@@ -5,6 +5,11 @@ import { useRouter } from "next/navigation";
 import { useFormStatus } from "react-dom";
 import { deleteBudget, upsertBudget } from "@/app/actions/budget";
 import { millimesToTnd } from "@/lib/budget/calculations";
+import {
+  BUDGET_CATEGORIES,
+  BUDGET_CATEGORY_LABELS,
+  type BudgetCategory,
+} from "@/lib/constants/budget";
 import { useOnlineStatus } from "@/lib/hooks/useOnlineStatus";
 import AmountInput from "../../../_components/AmountInput";
 import ConfirmDialog from "../../../_components/ConfirmDialog";
@@ -13,14 +18,34 @@ import Alert from "../../../_components/ui/Alert";
 import { Button } from "../../../_components/ui/Button";
 import { fieldErrorClass } from "../../../_components/ui/Field";
 
+type CategoryLimitValues = Record<BudgetCategory, string>;
+
 type BudgetFormProps = {
   month: string;
   initialLimit: string;
   initialIncome: string;
+  initialCategoryLimits: CategoryLimitValues;
   hasBudget: boolean;
-  previousBudget: { limit: number; income?: number } | null;
+  previousBudget: {
+    limit: number;
+    income?: number;
+    categoryLimits?: Partial<Record<BudgetCategory, number>>;
+  } | null;
   previousMonthLabel: string;
 };
+
+function toCategoryLimitValues(
+  limits: Partial<Record<BudgetCategory, number>> | undefined,
+): CategoryLimitValues {
+  return Object.fromEntries(
+    BUDGET_CATEGORIES.map((category) => [
+      category,
+      limits?.[category] !== undefined
+        ? millimesToTnd(limits[category])
+        : "",
+    ]),
+  ) as CategoryLimitValues;
+}
 
 function SubmitButton({ disabled = false }: { disabled?: boolean }) {
   const { pending } = useFormStatus();
@@ -41,6 +66,7 @@ export default function BudgetForm({
   month,
   initialLimit,
   initialIncome,
+  initialCategoryLimits,
   hasBudget,
   previousBudget,
   previousMonthLabel,
@@ -49,6 +75,8 @@ export default function BudgetForm({
   const [deleteState, deleteAction] = useActionState(deleteBudget, null);
   const [limit, setLimit] = useState(initialLimit);
   const [income, setIncome] = useState(initialIncome);
+  const [categoryLimits, setCategoryLimits] =
+    useState<CategoryLimitValues>(initialCategoryLimits);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const router = useRouter();
   const isOnline = useOnlineStatus();
@@ -73,6 +101,7 @@ export default function BudgetForm({
         ? millimesToTnd(previousBudget.income)
         : "",
     );
+    setCategoryLimits(toCategoryLimitValues(previousBudget.categoryLimits));
   }
 
   return (
@@ -112,6 +141,43 @@ export default function BudgetForm({
           value={income}
           onChange={(event) => setIncome(event.target.value)}
         />
+
+        <div className="flex flex-col gap-3 border-t border-zinc-200 pt-4 dark:border-zinc-800">
+          <div className="flex flex-col gap-1">
+            <h3 className="text-sm font-bold text-zinc-950 dark:text-zinc-50">
+              Plafonds par catégorie (optionnel)
+            </h3>
+            <p className="text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
+              Fixez un plafond par catégorie pour être alerté en cas de risque
+              de dépassement. Laissez vide une catégorie sans plafond.
+            </p>
+            {state?.errors?.categoryLimits?.map((error) => (
+              <p key={error} className={fieldErrorClass}>
+                {error}
+              </p>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {BUDGET_CATEGORIES.map((category) => (
+              <AmountInput
+                key={category}
+                id={`categoryLimits.${category}`}
+                label={BUDGET_CATEGORY_LABELS[category]}
+                placeholder="Optionnel"
+                size="md"
+                required={false}
+                value={categoryLimits[category]}
+                onChange={(event) =>
+                  setCategoryLimits((previous) => ({
+                    ...previous,
+                    [category]: event.target.value,
+                  }))
+                }
+              />
+            ))}
+          </div>
+        </div>
 
         {showReuseButton && (
           <button
