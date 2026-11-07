@@ -1,8 +1,9 @@
 import React from "react";
+import { redirect } from "next/navigation";
 import { auth } from "@/src/lib/auth";
 import { Navbar } from "@/src/components/maintenance/Navbar";
 
-export const instant = false;
+export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "Module Maintenance — HomeCheck",
@@ -15,6 +16,11 @@ export default async function MaintenanceLayout({
   children: React.ReactNode;
 }) {
   const session = await auth();
+
+  // The maintenance view is driven by the signed-in user's role: no session, no access.
+  if (!session.user) {
+    redirect("/login?callbackUrl=/maintenance");
+  }
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-blue-500/30 selection:text-white">

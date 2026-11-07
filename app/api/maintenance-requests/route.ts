@@ -6,11 +6,13 @@ import { MaintenanceRequestModel } from "@/src/models/maintenance-request";
 import { PropertyModel } from "@/src/models/shared";
 import { createMaintenanceRequestSchema } from "@/src/modules/maintenance/validations";
 import { transitionStatus } from "@/src/services/maintenance-status.service";
+import { forbiddenResponse, unauthorizedResponse } from "@/src/lib/maintenance-access";
 
 export async function GET(req: NextRequest) {
   try {
     const session = await auth();
     const { user } = session;
+    if (!user) return unauthorizedResponse();
 
     await connectDB();
 
@@ -33,10 +35,11 @@ export async function GET(req: NextRequest) {
       const propIds = ownedProperties.map((p) => p._id);
       filter.propertyId = { $in: propIds };
     } else if (user.role === "TECHNICIAN") {
-      // Tech sees requests assigned to them, or available accepted requests ready for dispatch
+      // Tech sees requests assigned to them, or accepted requests still waiting for a technician
       filter.$or = [
         { assignedTechnicianId: new mongoose.Types.ObjectId(user.id) },
-        { status: { $in: ["ACCEPTEE", "TECHNICIEN_ASSIGNE", "EN_COURS", "RESOLUE", "CLOTUREE"] } },
+        { status: "ACCEPTEE", assignedTechnicianId: { $exists: false } },
+        { status: "ACCEPTEE", assignedTechnicianId: null },
       ];
     }
     // ADMIN has full visibility
@@ -55,9 +58,14 @@ export async function GET(req: NextRequest) {
       filter.propertyId = new mongoose.Types.ObjectId(propertyId);
     }
     if (search) {
-      filter.$or = [
-        { title: { $regex: search, $options: "i" } },
-        { description: { $regex: search, $options: "i" } },
+      // Combined with $and so the search never overrides the technician's $or scope
+      filter.$and = [
+        {
+          $or: [
+            { title: { $regex: search, $options: "i" } },
+            { description: { $regex: search, $options: "i" } },
+          ],
+        },
       ];
     }
 
@@ -72,6 +80,13 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
+      userRole: user.role,
+      currentUser: {
+        id: user.id,
+        role: user.role,
+        firstName: user.firstName,
+        lastName: user.lastName,
+      },
       data: requests,
       total: requests.length,
     });
@@ -88,6 +103,7 @@ export async function POST(req: NextRequest) {
   try {
     const session = await auth();
     const { user } = session;
+    if (!user) return unauthorizedResponse();
 
     const rawBody = await req.json();
     const validation = createMaintenanceRequestSchema.safeParse(rawBody);
@@ -106,13 +122,32 @@ export async function POST(req: NextRequest) {
     const data = validation.data;
     await connectDB();
 
+    // The request must target the tenant's own property: its owner is the one who validates it
+    const property = await PropertyModel.findById(data.propertyId).select("ownerId tenantId").lean();
+    if (!property) {
+      return NextResponse.json(
+        { success: false, message: "Logement introuvable." },
+        { status: 404 }
+      );
+    }
+    if (user.role === "TENANT" && String(property.tenantId) !== user.id) {
+      return forbiddenResponse("Vous ne pouvez signaler un problème que pour le logement qui vous est assigné.");
+    }
+    if (!["TENANT", "ADMIN"].includes(user.role)) {
+      return forbiddenResponse("Seuls les locataires peuvent signaler un problème.");
+    }
+
     // 1. Create document in initial status CREEE
     const newRequest = await MaintenanceRequestModel.create({
       title: data.title,
       description: data.description,
       categoryId: new mongoose.Types.ObjectId(data.categoryId),
       propertyId: new mongoose.Types.ObjectId(data.propertyId),
-      tenantId: new mongoose.Types.ObjectId(user.id),
+      // An admin reporting on behalf of the tenant: the request stays attached to the occupant
+      tenantId:
+        user.role === "ADMIN" && property.tenantId
+          ? property.tenantId
+          : new mongoose.Types.ObjectId(user.id),
       equipmentId: data.equipmentId ? new mongoose.Types.ObjectId(data.equipmentId) : undefined,
       priority: data.priority,
       status: "CREEE",

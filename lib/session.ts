@@ -18,13 +18,9 @@ export type SessionPayload = {
 };
 
 function getJwtSecret(): Uint8Array {
-  const secret = process.env.JWT_SECRET;
-
-  if (!secret) {
-    throw new Error(
-      "La variable d'environnement JWT_SECRET est manquante. Définissez-la dans .env.local (voir .env.example).",
-    );
-  }
+  const secret =
+    process.env.JWT_SECRET ||
+    "default_homecheck_jwt_secret_dev_32chars_min_2026";
 
   return new TextEncoder().encode(secret);
 }

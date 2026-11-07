@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/src/lib/auth";
+import { loadRequestFor } from "@/src/lib/maintenance-access";
 import { updateStatusSchema } from "@/src/modules/maintenance/validations";
 import {
   transitionStatus,
@@ -15,6 +16,10 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
     const { id } = await params;
     const session = await auth();
     const { user } = session;
+
+    // Owner must own the property, tenant must be the requester, technician must be the assigned one
+    const access = await loadRequestFor(user, id, "act");
+    if (access.error) return access.error;
 
     const rawBody = await req.json();
     const validation = updateStatusSchema.safeParse(rawBody);

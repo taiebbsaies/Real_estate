@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/src/lib/auth";
+import { loadRequestFor } from "@/src/lib/maintenance-access";
 import { assignTechnicianSchema } from "@/src/modules/maintenance/validations";
 import { assignmentService } from "@/src/services/assignment.service";
 
@@ -12,6 +13,10 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     const { id } = await params;
     const session = await auth();
     const { user } = session;
+
+    // Only the owner of the property (or an admin) assigns; a technician answers a proposal he can see
+    const access = await loadRequestFor(user, id, user?.role === "TECHNICIAN" ? "view" : "act");
+    if (access.error) return access.error;
 
     const rawBody = await req.json();
     const validation = assignTechnicianSchema.safeParse(rawBody);

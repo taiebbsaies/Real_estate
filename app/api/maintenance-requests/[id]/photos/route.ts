@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/src/lib/auth";
+import { loadRequestFor } from "@/src/lib/maintenance-access";
 import connectDB from "@/src/lib/mongoose";
 import { MaintenanceRequestModel } from "@/src/models/maintenance-request";
 import { storageService, MAX_PHOTOS_PER_REQUEST } from "@/src/services/storage.service";
@@ -13,6 +14,9 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     const { id } = await params;
     const session = await auth();
     const { user } = session;
+
+    const access = await loadRequestFor(user, id, "act");
+    if (access.error) return access.error;
 
     await connectDB();
 

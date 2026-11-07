@@ -6,6 +6,7 @@ import { MaintenanceHistoryModel } from "@/src/models/maintenance-history";
 import InterventionModel from "@/src/models/intervention";
 import AssignmentModel from "@/src/models/assignment";
 import { getAllowedTransitions } from "@/src/modules/maintenance/state-machine";
+import { canViewRequest, forbiddenResponse, unauthorizedResponse } from "@/src/lib/maintenance-access";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -16,6 +17,8 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     const { id } = await params;
     const session = await auth();
     const { user } = session;
+
+    if (!user) return unauthorizedResponse();
 
     await connectDB();
 
@@ -32,6 +35,10 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
         { success: false, message: "Demande introuvable" },
         { status: 404 }
       );
+    }
+
+    if (!(await canViewRequest(user, request))) {
+      return forbiddenResponse();
     }
 
     // Associated Intervention

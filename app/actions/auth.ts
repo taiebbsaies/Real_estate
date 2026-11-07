@@ -6,6 +6,7 @@ import { UserModel } from "@/src/models/shared";
 import { signUpSchema, loginSchema } from "@/lib/validations/auth";
 import type { UserRole } from "@/lib/constants/user";
 import { setSessionCookie, clearSessionCookie } from "@/lib/session";
+import { cookies } from "next/headers";
 
 export type SignUpState = {
   success: boolean;
@@ -122,6 +123,11 @@ export async function signUp(
 
 export async function signOut() {
   await clearSessionCookie();
+  try {
+    const cookieStore = await cookies();
+    cookieStore.delete("homecheck_role");
+    cookieStore.delete("homecheck_user_id");
+  } catch {}
 }
 
 export async function signIn(

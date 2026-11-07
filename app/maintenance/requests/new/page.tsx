@@ -41,6 +41,7 @@ function NewRequestForm() {
   // Options
   const [categories, setCategories] = useState<any[]>([]);
   const [properties, setProperties] = useState<any[]>([]);
+  const [propertiesLoaded, setPropertiesLoaded] = useState(false);
   const [equipments, setEquipments] = useState<any[]>([]);
 
   // Photos to upload after request creation
@@ -76,8 +77,11 @@ function NewRequestForm() {
             setPropertyId(json.data[0]._id);
           }
         }
-      });
+      })
+      .finally(() => setPropertiesLoaded(true));
   }, []);
+
+  const noProperty = propertiesLoaded && properties.length === 0;
 
   // Fetch equipments when propertyId changes
   useEffect(() => {
@@ -272,6 +276,19 @@ function NewRequestForm() {
         </div>
       </div>
 
+      {noProperty && (
+        <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 flex items-start gap-3">
+          <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-semibold text-amber-200">Aucun logement associé à votre compte</p>
+            <p className="text-xs text-amber-200/80 mt-1">
+              Demandez à votre propriétaire de vous assigner à votre logement (avec votre adresse e-mail).
+              Vous pourrez ensuite signaler un problème : il recevra la demande pour la valider.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Property & Equipment Target */}
       <div className="rounded-2xl bg-slate-900 border border-slate-800 p-5 space-y-4">
         <label className="block text-xs font-bold text-slate-200 uppercase tracking-wider">
@@ -454,7 +471,7 @@ function NewRequestForm() {
         </Link>
         <button
           type="submit"
-          disabled={submitting}
+          disabled={submitting || noProperty}
           className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-lg shadow-blue-500/25 disabled:opacity-50 transition-all hover:-translate-y-0.5"
         >
           {submitting && <Loader2 className="w-4 h-4 animate-spin" />}

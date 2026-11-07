@@ -1,8 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  cacheComponents: true,
-  partialPrefetching: true,
+  allowedDevOrigins: ["192.168.1.15", "localhost:3000"],
   serverExternalPackages: ["unpdf", "tesseract.js", "sharp"],
   experimental: {
     agentUpgrade: "security",
