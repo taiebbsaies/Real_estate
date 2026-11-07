@@ -115,3 +115,12 @@ Upload via Server Action : `serverActions.bodySizeLimit` relevé à 6 Mo dans `n
 ### Phase 2 — OCR de repli (`AI_VISION=false`)
 
 Quand la vision est désactivée, les images passent par **tesseract.js** (`lib/ai/ocr.ts`, langues fra+eng+ara fournies localement) après un prétraitement **sharp** (niveaux de gris, redimensionnement). Le texte OCR suit exactement le même pipeline que la saisie texte. Les PDF scannés restent refusés (l'OCR ne lit pas les PDF) : prendre une photo ou activer `AI_VISION`.
+
+## IA — Résumé mensuel et alertes prédictives
+
+Sur `/budget` (mois courant), deux cartes pilotées par le modèle avec un **calcul 100 % déterministe** et l'IA cantonnée à la **rédaction** :
+
+- **Résumé du mois** (`MonthlySummaryCard` + `refreshMonthlySummary`) : 4–6 lignes en français (vouvoiement) expliquant où part l'argent, ce qui a changé vs le mois précédent et l'état du budget. Les données envoyées au modèle sont un JSON **pré-calculé** (`lib/budget/insights.ts`) : l'IA ne fait aucun calcul, et **aucune note de dépense n'est envoyée**. Après génération, chaque montant du texte est vérifié contre les données d'entrée — un montant inconnu fait basculer sur un template déterministe (`source: "template"`).
+- **Alertes de dépassement** (`PredictiveAlertsCard` + `refreshPredictiveAlerts`) : visibles si l'utilisateur a défini des **plafonds par catégorie** (formulaire `/budget/mois`). La projection (`lib/budget/projections.ts`) extrapole le rythme actuel (loyer exclu, marges et minimum de données pour éviter les faux positifs) et estime le **jour de dépassement** ; l'IA rédige une phrase par catégorie à risque à partir d'un seul appel.
+
+Coûts et cache (`models/budgetInsight.ts`, index unique `{userId, month, kind}`) : le résumé/alertes sont stockés en base avec une empreinte des données d'entrée (`budget.updatedAt`, nombre de dépenses, total, dernière modification). L'IA n'est rappelée que si les données ont changé, **au plus 1 appel/jour/mois** (garde en base), avec rate-limit mémoire en complément et re-vérification du cache juste avant l'appel (anti double-appel). Hors ligne, la dernière version est servie par le cache de navigation du service worker et la régénération est désactivée (`useOnlineStatus`).
