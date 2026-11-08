@@ -4,7 +4,21 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { DashboardIcon, HistoryIcon, ReceiptIcon } from "./icons";
 
+function AppHomeIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+    </svg>
+  );
+}
+
 export const TABS = [
+  {
+    href: "/",
+    label: "HomeCheck",
+    Icon: AppHomeIcon,
+    isActive: () => false,
+  },
   {
     href: "/budget",
     label: "Accueil",

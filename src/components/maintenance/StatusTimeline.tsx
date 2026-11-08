@@ -67,7 +67,7 @@ export function StatusTimeline({ currentStatus }: StatusTimelineProps) {
   }
 
   return (
-    <div className="w-full py-4">
+    <div className="w-full overflow-x-auto py-4">
       {isReopened && (
         <div className="mb-4 p-3 rounded-lg bg-orange-500/10 border border-orange-500/20 text-orange-300 flex items-center gap-2 text-xs">
           <RotateCcw className="w-4 h-4 text-orange-400 shrink-0" />
@@ -76,7 +76,7 @@ export function StatusTimeline({ currentStatus }: StatusTimelineProps) {
       )}
 
       {/* Progress Bar / Steps Container */}
-      <div className="relative flex items-center justify-between">
+      <div className="relative flex min-w-[480px] items-center justify-between sm:min-w-0">
         {/* Continuous Connecting Line */}
         <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-slate-800 -z-0" />
         <div

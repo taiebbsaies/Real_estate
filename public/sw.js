@@ -1,6 +1,5 @@
-const CACHE_NAME = "homecheck-cache-v5";
+const CACHE_NAME = "homecheck-cache-v6";
 const STATIC_ASSETS = [
-  "/",
   "/login",
   "/signup",
   "/offline",
@@ -86,15 +85,17 @@ function isCacheable(response) {
 
 // Navigations HTML : network-first, fallback cache, puis /offline en dernier recours
 async function networkFirstNavigation(request) {
+  // Offline, the home page only shows the app shell (navigation and message), never a stale copy.
+  const isHome = new URL(request.url).pathname === "/";
   try {
     const response = await fetch(request);
-    if (isCacheable(response)) {
+    if (!isHome && isCacheable(response)) {
       const cache = await caches.open(CACHE_NAME);
       await cache.put(request, response.clone());
     }
     return response;
   } catch {
-    return (await caches.match(request)) || caches.match("/offline");
+    return (!isHome && (await caches.match(request))) || caches.match("/offline");
   }
 }
 

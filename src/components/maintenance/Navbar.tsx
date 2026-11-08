@@ -80,9 +80,9 @@ export function Navbar({ user }: NavbarProps) {
 
   return (
     <header className="sticky top-0 z-30 w-full border-b border-slate-800 bg-slate-900/90 backdrop-blur-md">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2 sm:gap-4">
         {/* Brand & Module Indicator */}
-        <div className="flex items-center gap-3 sm:gap-5">
+        <div className="flex min-w-0 items-center gap-2 sm:gap-5">
           {/* Back to Home button */}
           <Link
             href="/"
@@ -93,14 +93,14 @@ export function Navbar({ user }: NavbarProps) {
             <span className="hidden sm:inline">Accueil</span>
           </Link>
 
-          <Link href="/maintenance" className="flex items-center gap-2.5 group">
-            <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform">
+          <Link href="/maintenance" className="flex min-w-0 items-center gap-2.5 group">
+            <div className="hidden sm:flex w-9 h-9 rounded-xl bg-blue-600 items-center justify-center text-white shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform">
               <Wrench className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <span className="font-bold text-slate-100 text-base tracking-tight">HomeCheck</span>
-                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                <span className="hidden sm:inline px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-blue-500/10 text-blue-400 border border-blue-500/20">
                   Maintenance
                 </span>
               </div>
@@ -131,14 +131,14 @@ export function Navbar({ user }: NavbarProps) {
         </div>
 
         {/* Right Section: role of the signed-in user (read-only) & avatar */}
-        <div className="flex items-center gap-3">
+        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
           <ThemeToggle />
           <div
             className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-semibold shadow-sm ${roleBadge.className}`}
             title={`Connecté en tant que ${roleBadge.label}`}
           >
             <RoleIcon className="w-3.5 h-3.5" />
-            <span>{roleBadge.label}</span>
+            <span className="hidden sm:inline">{roleBadge.label}</span>
             <span className="text-[10px] opacity-75 hidden md:inline">
               ({user.firstName} {user.lastName})
             </span>
@@ -159,6 +159,25 @@ export function Navbar({ user }: NavbarProps) {
           </div>
         </div>
       </div>
+
+      {/* The links above do not fit on a phone: they scroll sideways in their own row. */}
+      <nav aria-label="Navigation du module maintenance" className="md:hidden flex gap-1 overflow-x-auto px-4 pb-2">
+        {visibleLinks.map((link) => {
+          const Icon = link.icon;
+          return (
+            <Link
+              key={link.href}
+              href={link.href}
+              className={`inline-flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium ${
+                link.active ? "bg-slate-800 text-blue-400 font-semibold" : "text-slate-400"
+              }`}
+            >
+              <Icon className="w-3.5 h-3.5" />
+              <span>{link.label}</span>
+            </Link>
+          );
+        })}
+      </nav>
     </header>
   );
 }

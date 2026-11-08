@@ -578,9 +578,9 @@ export default function MaintenanceRequestDetailPage({ params }: PageProps) {
           {(request.history || []).map((entry: any) => (
             <div
               key={entry._id}
-              className="p-3 rounded-xl bg-slate-800/30 border border-slate-800 flex items-start justify-between gap-3 text-xs"
+              className="p-3 rounded-xl bg-slate-800/30 border border-slate-800 flex items-start flex-wrap justify-between gap-3 text-xs"
             >
-              <div className="space-y-1">
+              <div className="min-w-0 space-y-1">
                 <div className="flex items-center gap-2">
                   <span className="font-bold text-slate-200">
                     {entry.actorRole === "SYSTEM"

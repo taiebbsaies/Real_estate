@@ -13,7 +13,8 @@ export default function BottomNav() {
   const pathname = usePathname();
 
   // Hide bottom bar on auth pages to avoid virtual keyboard overlap
-  if (pathname === "/login" || pathname === "/signup") {
+  // The budget module has its own bottom navigation, which this bar would cover.
+  if (pathname === "/login" || pathname === "/signup" || pathname.startsWith("/budget")) {
     return null;
   }
 
@@ -60,7 +61,7 @@ export default function BottomNav() {
     },
     {
       name: "Tableau de bord",
-      href: "/dashboard/tenant",
+      href: "/dashboard",
       icon: (active) => (
         <svg
           className={`h-5 w-5 transition-transform duration-200 ${
@@ -111,7 +112,7 @@ export default function BottomNav() {
         {items.map((item) => {
           const isActive =
             item.href === "/"
-              ? pathname === "/"
+              ? pathname === "/" || pathname === "/offline"
               : pathname.startsWith(item.href);
 
           return (

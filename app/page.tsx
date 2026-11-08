@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getSession } from "@/lib/session";
 import { signOut } from "@/app/actions/auth";
 import ThemeToggle from "./_components/ThemeToggle";
+import OnlineOnly from "./_components/OnlineOnly";
 
 async function UserNav() {
   const session = await getSession();
@@ -132,6 +133,7 @@ export default function Home() {
       </header>
 
       {/* Hero Section */}
+      <OnlineOnly>
       <main className="mx-auto max-w-6xl px-6 pt-16 pb-24">
         {/* Subtle pill banner */}
         <div className="flex justify-center sm:justify-start">
@@ -386,6 +388,7 @@ export default function Home() {
           </div>
         </div>
       </main>
+      </OnlineOnly>
     </div>
   );
 }

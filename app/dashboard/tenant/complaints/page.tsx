@@ -36,7 +36,7 @@ export default async function TenantComplaintsPage() {
     <div className="relative min-h-full linear-grid bg-[var(--background)] text-[var(--foreground)]">
       {/* Header */}
       <header className="sticky top-0 z-50 border-b border-zinc-200/80 bg-white/75 backdrop-blur-md dark:border-zinc-800/80 dark:bg-[#08080a]/80">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3.5">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 sm:px-6 py-3.5">
           <div className="flex items-center gap-3">
             <Link href="/" className="flex items-center gap-2">
               <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-zinc-950 text-xs font-bold text-white shadow-xs dark:bg-white dark:text-zinc-950">
@@ -46,10 +46,10 @@ export default async function TenantComplaintsPage() {
                 HomeCheck
               </span>
             </Link>
-            <span className="text-zinc-300 dark:text-zinc-700">/</span>
+            <span className="hidden sm:inline text-zinc-300 dark:text-zinc-700">/</span>
             <Link
               href="/dashboard/tenant"
-              className="text-xs font-medium text-zinc-500 hover:text-zinc-800 dark:text-zinc-500 dark:hover:text-zinc-300"
+              className="hidden sm:inline text-xs font-medium text-zinc-500 hover:text-zinc-800 dark:text-zinc-500 dark:hover:text-zinc-300"
             >
               Locataire
             </Link>
@@ -67,7 +67,7 @@ export default async function TenantComplaintsPage() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl px-6 py-10">
+      <main className="mx-auto max-w-6xl px-4 sm:px-6 py-10">
         {/* Page heading */}
         <div className="mb-8 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
           <div>
