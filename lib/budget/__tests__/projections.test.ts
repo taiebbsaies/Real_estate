@@ -62,9 +62,84 @@ describe("buildCategoryProjections", () => {
     expect(result.alerts).toEqual([]);
   });
 
+  it("ne déclenche pas d'alerte quand la projection égale le plafond plus la marge", () => {
+    const atBoundary = buildCategoryProjections(
+      buildArgs({
+        categoryLimits: { DIVERS: 55_000 },
+        dayOfMonth: 10,
+        daysOfTheMonth: 15,
+      }),
+    );
+
+    expect(atBoundary.alerts).toEqual([]);
+
+    const justAbove = buildCategoryProjections(
+      buildArgs({
+        categoryLimits: { DIVERS: 54_900 },
+        dayOfMonth: 10,
+        daysOfTheMonth: 15,
+      }),
+    );
+
+    expect(justAbove.alerts).toHaveLength(1);
+    expect(justAbove.alerts[0]).toMatchObject({
+      level: "risk",
+      crossingDay: 14,
+    });
+  });
+
   it("ignore les catégories sans plafond", () => {
     const result = buildCategoryProjections(
       buildArgs({ categoryLimits: { ENERGIE: 100_000 } }),
+    );
+
+    expect(result.alerts).toEqual([]);
+  });
+
+  it("plafonne le jour estimé au dernier jour du mois", () => {
+    const result = buildCategoryProjections(
+      buildArgs({
+        totalsByCategory: { DIVERS: 30_000 },
+        expenses: [expense({ id: "d1", amount: 30_000, category: "DIVERS" })],
+        categoryLimits: { DIVERS: 94_000 },
+        dayOfMonth: 3,
+        daysOfTheMonth: 10,
+      }),
+    );
+
+    expect(result).toEqual({
+      dayOfMonth: 3,
+      daysOfTheMonth: 10,
+      alerts: [
+        {
+          key: "DIVERS",
+          label: "Divers",
+          level: "risk",
+          limit: 94_000,
+          spent: 30_000,
+          projection: 100_000,
+          overshoot: 6_000,
+          limitTnd: "94,000",
+          spentTnd: "30,000",
+          projectionTnd: "100,000",
+          overshootTnd: "+6,000",
+          crossingDay: 10,
+        },
+      ],
+    });
+  });
+
+  it("ignore un plafond nul ou négatif", () => {
+    const result = buildCategoryProjections(
+      buildArgs({
+        totalsByCategory: { DIVERS: 40_000, ENERGIE: 50_000 },
+        expenses: [
+          expense({ id: "d1", amount: 25_000, category: "DIVERS" }),
+          expense({ id: "d2", amount: 15_000, category: "DIVERS" }),
+          expense({ id: "e1", amount: 50_000, category: "ENERGIE" }),
+        ],
+        categoryLimits: { DIVERS: 0, ENERGIE: -1 },
+      }),
     );
 
     expect(result.alerts).toEqual([]);
