@@ -179,13 +179,34 @@ describe("refreshMonthlySummary", () => {
     expect(generateTextMock.mock.calls[0][0].prompt).toContain(
       '"spentTnd":"100,000"',
     );
-    expect(findOneAndUpdateMock).toHaveBeenCalledTimes(1);
+    expect(findOneAndUpdateMock).toHaveBeenCalledTimes(2);
     expect(findOneAndUpdateMock.mock.calls[0][0]).toEqual({
       userId: "user-1",
       month: MONTH,
       kind: "summary",
+      $or: [
+        { lastAiAttemptAt: { $exists: false } },
+        { lastAiAttemptAt: { $lt: expect.any(Date) } },
+      ],
     });
-    expect(findOneAndUpdateMock.mock.calls[0][1].$set).toMatchObject({
+    expect(findOneAndUpdateMock.mock.calls[0][1]).toEqual({
+      $set: { lastAiAttemptAt: expect.any(Date) },
+      $setOnInsert: {
+        source: "template",
+        text: expect.any(String),
+        inputFingerprint: FRESH_FINGERPRINT,
+        generatedAt: expect.any(Date),
+      },
+    });
+    expect(findOneAndUpdateMock.mock.calls[0][2]).toMatchObject({
+      upsert: true,
+    });
+    expect(findOneAndUpdateMock.mock.calls[1][0]).toEqual({
+      userId: "user-1",
+      month: MONTH,
+      kind: "summary",
+    });
+    expect(findOneAndUpdateMock.mock.calls[1][1].$set).toMatchObject({
       text: AI_SUMMARY_OK,
       source: "ai",
       inputFingerprint: FRESH_FINGERPRINT,
@@ -246,7 +267,7 @@ describe("refreshMonthlySummary", () => {
       insight: { source: "ai" },
     });
     expect(generateTextMock).toHaveBeenCalledTimes(1);
-    expect(findOneAndUpdateMock.mock.calls[0][1].$set.source).toBe("ai");
+    expect(findOneAndUpdateMock.mock.calls[1][1].$set.source).toBe("ai");
   });
 
   it("respecte le cooldown de 24 h quand les données ont changé", async () => {
@@ -281,7 +302,7 @@ describe("refreshMonthlySummary", () => {
     expect(state.ok && state.insight.text).toContain(
       "Ce mois-ci, vous avez dépensé 100,000 TND sur un plafond de 150,000 TND.",
     );
-    expect(findOneAndUpdateMock.mock.calls[0][1].$set.source).toBe("template");
+    expect(findOneAndUpdateMock.mock.calls[1][1].$set.source).toBe("template");
   });
 
   it("bascule sur le template si le provider échoue", async () => {
@@ -291,7 +312,7 @@ describe("refreshMonthlySummary", () => {
 
     expect(state.ok).toBe(true);
     expect(state.ok && state.insight.source).toBe("template");
-    expect(findOneAndUpdateMock).toHaveBeenCalledTimes(1);
+    expect(findOneAndUpdateMock).toHaveBeenCalledTimes(2);
   });
 
   it("sert le cache sans appel IA quand le rate-limit refuse", async () => {
@@ -330,6 +351,39 @@ describe("refreshMonthlySummary", () => {
     });
     expect(generateTextMock).not.toHaveBeenCalled();
     expect(findOneAndUpdateMock).not.toHaveBeenCalled();
+  });
+
+  it("ne génère qu'un appel IA quand deux requêtes sont simultanées", async () => {
+    findOneMock.mockImplementation(() => ({
+      lean: async () => null,
+    }));
+    findOneAndUpdateMock
+      .mockResolvedValueOnce({ lastAiAttemptAt: new Date() })
+      .mockResolvedValueOnce({})
+      .mockResolvedValueOnce(null);
+
+    const winner = await refreshMonthlySummary(MONTH);
+    const loser = await refreshMonthlySummary(MONTH);
+
+    expect(winner).toMatchObject({
+      ok: true,
+      insight: { text: AI_SUMMARY_OK, source: "ai" },
+    });
+    expect(loser).toMatchObject({
+      ok: true,
+      insight: { source: "template" },
+    });
+    expect(generateTextMock).toHaveBeenCalledTimes(1);
+    expect(findOneAndUpdateMock).toHaveBeenCalledTimes(3);
+    expect(findOneAndUpdateMock.mock.calls[2][0]).toEqual({
+      userId: "user-1",
+      month: MONTH,
+      kind: "summary",
+      $or: [
+        { lastAiAttemptAt: { $exists: false } },
+        { lastAiAttemptAt: { $lt: expect.any(Date) } },
+      ],
+    });
   });
 
   it("rejette un mois invalide", async () => {
@@ -460,13 +514,41 @@ describe("refreshPredictiveAlerts", () => {
     expect(generateTextMock.mock.calls[0][0].prompt).toContain(
       '"projectionTnd":"180,000"',
     );
-    expect(findOneAndUpdateMock).toHaveBeenCalledTimes(1);
+    expect(findOneAndUpdateMock).toHaveBeenCalledTimes(2);
     expect(findOneAndUpdateMock.mock.calls[0][0]).toEqual({
       userId: "user-1",
       month: MONTH,
       kind: "alerts",
+      $or: [
+        { lastAiAttemptAt: { $exists: false } },
+        { lastAiAttemptAt: { $lt: expect.any(Date) } },
+      ],
     });
-    expect(findOneAndUpdateMock.mock.calls[0][1].$set).toMatchObject({
+    expect(findOneAndUpdateMock.mock.calls[0][1]).toEqual({
+      $set: { lastAiAttemptAt: expect.any(Date) },
+      $setOnInsert: {
+        source: "template",
+        alerts: [
+          {
+            categoryKey: "DIVERS",
+            level: "risk",
+            crossingDay: 17,
+            text: expect.any(String),
+          },
+        ],
+        inputFingerprint: ALERTS_FINGERPRINT,
+        generatedAt: expect.any(Date),
+      },
+    });
+    expect(findOneAndUpdateMock.mock.calls[0][2]).toMatchObject({
+      upsert: true,
+    });
+    expect(findOneAndUpdateMock.mock.calls[1][0]).toEqual({
+      userId: "user-1",
+      month: MONTH,
+      kind: "alerts",
+    });
+    expect(findOneAndUpdateMock.mock.calls[1][1].$set).toMatchObject({
       source: "ai",
       inputFingerprint: ALERTS_FINGERPRINT,
       alerts: [
@@ -592,7 +674,7 @@ describe("refreshPredictiveAlerts", () => {
     expect(state.ok && state.insight.alerts[0].text).toContain(
       "vers le 17 (≈ 80,000 TND au-dessus du plafond)",
     );
-    expect(findOneAndUpdateMock.mock.calls[0][1].$set.source).toBe("template");
+    expect(findOneAndUpdateMock.mock.calls[1][1].$set.source).toBe("template");
   });
 
   it("bascule sur le template si le provider échoue", async () => {
@@ -601,7 +683,7 @@ describe("refreshPredictiveAlerts", () => {
     const state = await refreshPredictiveAlerts(MONTH);
 
     expect(state.ok && state.insight.source).toBe("template");
-    expect(findOneAndUpdateMock).toHaveBeenCalledTimes(1);
+    expect(findOneAndUpdateMock).toHaveBeenCalledTimes(2);
   });
 
   it("évite un double appel via la re-vérification juste avant l'IA", async () => {

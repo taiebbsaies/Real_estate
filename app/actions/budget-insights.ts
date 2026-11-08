@@ -236,6 +236,45 @@ export async function refreshMonthlySummary(
       return { ok: true, insight: toInsight(recheck, templateText) };
     }
 
+    const lock = await BudgetInsight.findOneAndUpdate(
+      {
+        userId,
+        month: monthInput,
+        kind: "summary",
+        $or: [
+          { lastAiAttemptAt: { $exists: false } },
+          {
+            lastAiAttemptAt: {
+              $lt: new Date(now.getTime() - RECHECK_WINDOW_MS),
+            },
+          },
+        ],
+      },
+      {
+        $set: { lastAiAttemptAt: now },
+        $setOnInsert: {
+          source: "template",
+          text: templateText,
+          inputFingerprint: fingerprint,
+          generatedAt: now,
+        },
+      },
+      { new: true, upsert: true, runValidators: true, setDefaultsOnInsert: true },
+    );
+
+    if (lock === null) {
+      return {
+        ok: true,
+        insight: cached
+          ? toInsight(cached, templateText)
+          : {
+              text: templateText,
+              source: "template",
+              generatedAt: now.toISOString(),
+            },
+      };
+    }
+
     let text = templateText;
     let source: "ai" | "template" = "template";
 
@@ -390,6 +429,16 @@ export async function refreshPredictiveAlerts(
       }),
     );
 
+    const toStoredAlerts = (
+      views: PredictiveAlertView[],
+    ): StoredInsightAlert[] =>
+      views.map((view) => ({
+        categoryKey: view.key,
+        level: view.level,
+        ...(view.crossingDay !== null ? { crossingDay: view.crossingDay } : {}),
+        text: view.text,
+      }));
+
     if (projections.alerts.length === 0) {
       if (
         (await BudgetInsight.findOne(filter).lean<LeanBudgetInsightDoc>()) !==
@@ -443,6 +492,41 @@ export async function refreshPredictiveAlerts(
       now.getTime() - lastAttemptAt(recheck).getTime() < RECHECK_WINDOW_MS
     ) {
       return { ok: true, insight: toAlertsInsight(recheck) };
+    }
+
+    const lock = await BudgetInsight.findOneAndUpdate(
+      {
+        userId,
+        month: monthInput,
+        kind: "alerts",
+        $or: [
+          { lastAiAttemptAt: { $exists: false } },
+          {
+            lastAiAttemptAt: {
+              $lt: new Date(now.getTime() - RECHECK_WINDOW_MS),
+            },
+          },
+        ],
+      },
+      {
+        $set: { lastAiAttemptAt: now },
+        $setOnInsert: {
+          source: "template",
+          alerts: toStoredAlerts(templateViews),
+          inputFingerprint: fingerprint,
+          generatedAt: now,
+        },
+      },
+      { new: true, upsert: true, runValidators: true, setDefaultsOnInsert: true },
+    );
+
+    if (lock === null) {
+      return {
+        ok: true,
+        insight: cached
+          ? toAlertsInsight(cached)
+          : { ...emptyInsight, alerts: templateViews },
+      };
     }
 
     let views = templateViews;
@@ -501,12 +585,7 @@ export async function refreshPredictiveAlerts(
       }
     }
 
-    const storedAlerts: StoredInsightAlert[] = views.map((view) => ({
-      categoryKey: view.key,
-      level: view.level,
-      ...(view.crossingDay !== null ? { crossingDay: view.crossingDay } : {}),
-      text: view.text,
-    }));
+    const storedAlerts = toStoredAlerts(views);
 
     await upsertInsight({
       userId,
