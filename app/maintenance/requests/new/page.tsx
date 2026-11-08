@@ -108,9 +108,9 @@ function NewRequestForm() {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
 
-    const validFiles = files.filter((f) => f.size <= 5 * 1024 * 1024);
+    const validFiles = files.filter((f) => f.size <= MAX_PHOTO_BYTES);
     if (validFiles.length < files.length) {
-      setError("Certains fichiers dépassent la taille maximale autorisée de 5 Mo.");
+      setError("Certains fichiers dépassent la taille maximale autorisée de 4 Mo.");
     }
 
     const updated = [...selectedPhotos, ...validFiles].slice(0, 10);
@@ -500,6 +500,8 @@ function NewRequestForm() {
     </form>
   );
 }
+
+const MAX_PHOTO_BYTES = 4 * 1024 * 1024;
 
 export default function NewMaintenanceRequestPage() {
   return (

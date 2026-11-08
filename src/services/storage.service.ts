@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import crypto from "node:crypto";
+import { del, get, put } from "@vercel/blob";
 
 export interface StoredFileMetadata {
   storageKey: string;
@@ -17,8 +18,25 @@ export const ALLOWED_MIME_TYPES = [
   "image/heic",
 ];
 
-export const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
+// Vercel rejects function requests above 4.5 MB, multipart overhead included.
+export const MAX_FILE_SIZE_BYTES = 4 * 1024 * 1024; // 4 MB
 export const MAX_PHOTOS_PER_REQUEST = 10;
+
+const BLOB_FOLDER = "maintenance";
+
+/** Vercel has no persistent disk, so it always uses Blob. Local development uses disk unless a token is set. */
+function usesBlob(): boolean {
+  return Boolean(process.env.BLOB_READ_WRITE_TOKEN || process.env.VERCEL);
+}
+
+function blobPath(storageKey: string): string {
+  return `${BLOB_FOLDER}/${path.basename(storageKey)}`;
+}
+
+function blobOptions() {
+  // Set by Vercel when the store is connected to the project.
+  return { storeId: process.env.BLOB_READ_WRITE_TOKEN_STORE_ID || undefined };
+}
 
 export class StorageService {
   private baseDir: string;
@@ -40,7 +58,7 @@ export class StorageService {
   }
 
   /**
-   * Saves a file buffer or Blob to local disk with a secure randomized storageKey.
+   * Saves a file with a secure randomized storageKey.
    */
   async saveFile(
     fileBuffer: Buffer | Uint8Array,
@@ -55,17 +73,25 @@ export class StorageService {
 
     if (fileBuffer.byteLength > MAX_FILE_SIZE_BYTES) {
       throw new Error(
-        `Taille de fichier excessive (${(fileBuffer.byteLength / 1024 / 1024).toFixed(1)} Mo). Limite autorisée: 5 Mo.`
+        `Taille de fichier excessive (${(fileBuffer.byteLength / 1024 / 1024).toFixed(1)} Mo). Limite autorisée : 4 Mo.`
       );
     }
 
-    await this.ensureDir();
-
     const ext = path.extname(originalName).toLowerCase() || ".jpg";
     const storageKey = `${crypto.randomUUID()}${ext}`;
-    const destinationPath = path.join(/*turbopackIgnore: true*/ this.baseDir, storageKey);
 
-    await fs.writeFile(destinationPath, Buffer.from(fileBuffer));
+    if (usesBlob()) {
+      await put(blobPath(storageKey), Buffer.from(fileBuffer), {
+        ...blobOptions(),
+        access: "private",
+        contentType: mimeType,
+        addRandomSuffix: false,
+      });
+    } else {
+      await this.ensureDir();
+      const destinationPath = path.join(/*turbopackIgnore: true*/ this.baseDir, storageKey);
+      await fs.writeFile(destinationPath, Buffer.from(fileBuffer));
+    }
 
     return {
       storageKey,
@@ -77,15 +103,23 @@ export class StorageService {
   }
 
   /**
-   * Retrieves a file from local storage by its storageKey.
+   * Retrieves a file by its storageKey. Throws when it does not exist.
    */
-  async getFile(storageKey: string): Promise<{ buffer: Buffer; filePath: string }> {
+  async getFile(storageKey: string): Promise<{ buffer: Buffer }> {
+    if (usesBlob()) {
+      const result = await get(blobPath(storageKey), { ...blobOptions(), access: "private" });
+      if (!result || result.statusCode !== 200) {
+        throw new Error(`Fichier introuvable : ${storageKey}`);
+      }
+      return { buffer: Buffer.from(await new Response(result.stream).arrayBuffer()) };
+    }
+
     // Prevent directory traversal attacks
     const sanitizedKey = path.basename(storageKey);
     const filePath = path.join(/*turbopackIgnore: true*/ this.baseDir, sanitizedKey);
 
     const buffer = await fs.readFile(filePath);
-    return { buffer, filePath };
+    return { buffer };
   }
 
   /**
@@ -93,6 +127,11 @@ export class StorageService {
    */
   async deleteFile(storageKey: string): Promise<void> {
     try {
+      if (usesBlob()) {
+        await del(blobPath(storageKey), blobOptions());
+        return;
+      }
+
       const sanitizedKey = path.basename(storageKey);
       const filePath = path.join(/*turbopackIgnore: true*/ this.baseDir, sanitizedKey);
       await fs.unlink(filePath);

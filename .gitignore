@@ -46,3 +46,6 @@ next-env.d.ts
 /skills-lock.json
 /.superdesign
 /docs
+
+# user photos
+/uploads/

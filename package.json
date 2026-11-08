@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@ai-sdk/google": "^4.0.109",
+    "@vercel/blob": "^2.8.2",
     "ai": "^7.0.159",
     "bcryptjs": "^3.0.3",
     "jose": "^6.2.13",

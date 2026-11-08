@@ -42,8 +42,8 @@ export function PhotoUploader({
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      setError("Le fichier dépasse la taille maximale autorisée de 5 Mo.");
+    if (file.size > 4 * 1024 * 1024) {
+      setError("Le fichier dépasse la taille maximale autorisée de 4 Mo.");
       return;
     }
 
@@ -120,7 +120,7 @@ export function PhotoUploader({
       </div>
 
       <div className="flex items-center justify-between text-[11px] text-slate-500">
-        <span>Formats: JPG, PNG, WEBP (Max 5 Mo)</span>
+        <span>Formats: JPG, PNG, WEBP (Max 4 Mo)</span>
         <span>
           {existingPhotosCount} / {maxPhotos} photo{maxPhotos > 1 ? "s" : ""}
         </span>
