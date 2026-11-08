@@ -65,8 +65,10 @@ export interface ITechnicianProfile extends Document {
     type: "Point";
     coordinates: [number, number]; // [lng, lat]
   };
+  city?: string;
   address: string;
   phone?: string;
+  yearsExperience?: number;
   averageRating: number;
   completedInterventionsCount: number;
   hourlyRateDT?: number;
@@ -90,8 +92,10 @@ const TechnicianProfileSchema = new Schema<ITechnicianProfile>(
         default: [10.1815, 36.8065], // Default Tunis [lng, lat]
       },
     },
+    city: { type: String, trim: true },
     address: { type: String, default: "Tunis, Tunisie" },
     phone: { type: String },
+    yearsExperience: { type: Number, min: 0 },
     averageRating: { type: Number, default: 5.0, min: 1, max: 5 },
     completedInterventionsCount: { type: Number, default: 0 },
     hourlyRateDT: { type: Number, default: 45 },

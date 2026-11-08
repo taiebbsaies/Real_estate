@@ -3,6 +3,7 @@ import { getSession } from "@/lib/session";
 import { redirect } from "next/navigation";
 import { connectDB } from "@/lib/mongodb";
 import User from "@/models/user";
+import { TechnicianProfileModel } from "@/src/models/shared";
 import ProfileForm from "./ProfileForm";
 import ThemeToggle from "@/app/_components/ThemeToggle";
 
@@ -21,6 +22,11 @@ export default async function ProfilePage() {
   if (!dbUser) {
     redirect("/login");
   }
+
+  const isTechnician = dbUser.roles.includes("TECHNICIAN");
+  const technicianProfile = isTechnician
+    ? await TechnicianProfileModel.findOne({ userId: dbUser._id }).lean()
+    : null;
 
   const roleDashboardMap: Record<string, string> = {
     TENANT: "/dashboard/tenant",
@@ -75,6 +81,19 @@ export default async function ProfilePage() {
               phone: dbUser.phone,
               role: session.activeRole,
             }}
+            technician={
+              isTechnician
+                ? {
+                    skills: technicianProfile?.skills ?? [],
+                    city: technicianProfile?.city ?? "",
+                    address: technicianProfile?.address ?? "",
+                    phone: dbUser.phone ?? technicianProfile?.phone ?? "",
+                    yearsExperience: technicianProfile?.yearsExperience?.toString() ?? "",
+                    hourlyRateDT: technicianProfile?.hourlyRateDT?.toString() ?? "",
+                    isAvailable: technicianProfile?.isAvailable ?? true,
+                  }
+                : undefined
+            }
           />
         </div>
       </main>

@@ -2,6 +2,7 @@
 
 import { useActionState, useState, useCallback } from "react";
 import { signUp, type SignUpState } from "@/app/actions/auth";
+import TechnicianFields from "@/app/_components/TechnicianFields";
 
 const initialState: SignUpState = {
   success: false,
@@ -185,6 +186,10 @@ export default function SignUpForm() {
           })}
         </div>
       </div>
+
+      {selectedRole === "TECHNICIAN" && (
+        <TechnicianFields errors={state.errors} inputClass={fieldClass} labelClass={labelClass} />
+      )}
 
       {/* Name fields */}
       <div className="grid gap-5 sm:grid-cols-2">

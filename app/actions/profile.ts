@@ -2,6 +2,9 @@
 
 import { connectDB } from "@/lib/mongodb";
 import User from "@/models/user";
+import { TechnicianProfileModel } from "@/src/models/shared";
+import { parseTechnicianDetails, type TechnicianDetails } from "@/lib/validations/technician";
+import { getGovernorateCoordinates } from "@/lib/constants/technician";
 import { getSession } from "@/lib/session";
 import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
@@ -9,6 +12,7 @@ import { revalidatePath } from "next/cache";
 export type ProfileState = {
   success: boolean;
   message: string;
+  errors?: Record<string, string[]>;
 };
 
 export async function updateProfile(
@@ -38,6 +42,24 @@ export async function updateProfile(
       return { success: false, message: "Utilisateur non trouvé." };
     }
 
+    // The role comes from the database: a form field or a stale session cannot grant it.
+    let technicianDetails: TechnicianDetails | null = null;
+    if (user.roles.includes("TECHNICIAN")) {
+      const parsed = parseTechnicianDetails(formData);
+      if (!parsed.success) {
+        return {
+          success: false,
+          message: "Veuillez corriger les champs indiqués.",
+          errors: Object.fromEntries(
+            Object.entries(parsed.error.flatten().fieldErrors).filter(
+              (entry): entry is [string, string[]] => entry[1] !== undefined,
+            ),
+          ),
+        };
+      }
+      technicianDetails = parsed.data;
+    }
+
     user.firstName = firstName;
     user.lastName = lastName;
     if (phone !== undefined) {
@@ -65,6 +87,28 @@ export async function updateProfile(
     }
 
     await user.save();
+
+    if (technicianDetails) {
+      // Technicians created before this form existed may not have a profile yet.
+      const profile =
+        (await TechnicianProfileModel.findOne({ userId: user._id })) ??
+        new TechnicianProfileModel({ userId: user._id });
+
+      profile.skills = technicianDetails.skills;
+      profile.city = technicianDetails.city;
+      profile.address = technicianDetails.address || technicianDetails.city;
+      profile.phone = technicianDetails.phone;
+      profile.yearsExperience = technicianDetails.yearsExperience;
+      profile.hourlyRateDT = technicianDetails.hourlyRateDT;
+      profile.isAvailable = technicianDetails.isAvailable;
+      profile.location = {
+        type: "Point",
+        coordinates:
+          getGovernorateCoordinates(technicianDetails.city) ?? profile.location.coordinates,
+      };
+      await profile.save();
+    }
+
     revalidatePath("/profile");
 
     return {
