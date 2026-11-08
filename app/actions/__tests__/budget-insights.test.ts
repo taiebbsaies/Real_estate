@@ -142,6 +142,8 @@ function mockFindOneResults(docs: unknown | unknown[]): void {
 describe("refreshMonthlySummary", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-11-15T10:00:00.000Z"));
     checkRateLimitMock.mockReturnValue(true);
     getMonthSummaryMock.mockImplementation(
       async (_userId: string, month: string) => {
@@ -160,6 +162,10 @@ describe("refreshMonthlySummary", () => {
     mockFindOneResults(null);
     findOneAndUpdateMock.mockResolvedValue({});
     generateTextMock.mockResolvedValue({ output: { summary: AI_SUMMARY_OK } });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it("régénère par IA et upsert quand aucun cache n'existe", async () => {
@@ -384,6 +390,28 @@ describe("refreshMonthlySummary", () => {
         { lastAiAttemptAt: { $lt: expect.any(Date) } },
       ],
     });
+  });
+
+  it("rejette un mois passé et ne sert que le cache existant", async () => {
+    mockFindOneResults(cachedDoc({ month: "2026-10", text: "Résumé ancien." }));
+
+    const cachedState = await refreshMonthlySummary("2026-10");
+
+    expect(cachedState).toMatchObject({
+      ok: true,
+      insight: { text: "Résumé ancien.", source: "ai" },
+    });
+    expect(generateTextMock).not.toHaveBeenCalled();
+
+    mockFindOneResults(null);
+    const missedState = await refreshMonthlySummary("2026-10");
+
+    expect(missedState).toEqual({
+      ok: false,
+      message: "Le résumé mensuel n'est disponible que pour le mois en cours.",
+    });
+    expect(getMonthSummaryMock).not.toHaveBeenCalled();
+    expect(listExpensesMock).not.toHaveBeenCalled();
   });
 
   it("rejette un mois invalide", async () => {

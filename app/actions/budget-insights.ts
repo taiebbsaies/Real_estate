@@ -163,6 +163,29 @@ export async function refreshMonthlySummary(
   try {
     await connectDB();
 
+    const filter = {
+      userId,
+      month: monthInput,
+      kind: "summary",
+    } as const;
+
+    if (monthInput !== currentMonthTunis(now)) {
+      const cachedPast =
+        await BudgetInsight.findOne(filter).lean<LeanBudgetInsightDoc>();
+
+      if (cachedPast) {
+        return {
+          ok: true,
+          insight: toInsight(cachedPast, "Résumé indisponible."),
+        };
+      }
+
+      return {
+        ok: false,
+        message: "Le résumé mensuel n'est disponible que pour le mois en cours.",
+      };
+    }
+
     const [current, previous, expenses] = await Promise.all([
       getMonthSummary(userId, monthInput),
       getMonthSummary(userId, previousMonth(monthInput)),
@@ -180,12 +203,6 @@ export async function refreshMonthlySummary(
       expenses,
     });
     const templateText = buildTemplateSummary(data);
-
-    const filter = {
-      userId,
-      month: monthInput,
-      kind: "summary",
-    } as const;
 
     const cached =
       await BudgetInsight.findOne(filter).lean<LeanBudgetInsightDoc>();
