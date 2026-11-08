@@ -253,31 +253,45 @@ export async function refreshMonthlySummary(
       return { ok: true, insight: toInsight(recheck, templateText) };
     }
 
-    const lock = await BudgetInsight.findOneAndUpdate(
-      {
-        userId,
-        month: monthInput,
-        kind: "summary",
-        $or: [
-          { lastAiAttemptAt: { $exists: false } },
-          {
-            lastAiAttemptAt: {
-              $lt: new Date(now.getTime() - RECHECK_WINDOW_MS),
+    let lock: unknown;
+    try {
+      lock = await BudgetInsight.findOneAndUpdate(
+        {
+          userId,
+          month: monthInput,
+          kind: "summary",
+          $or: [
+            { lastAiAttemptAt: { $exists: false } },
+            {
+              lastAiAttemptAt: {
+                $lt: new Date(now.getTime() - RECHECK_WINDOW_MS),
+              },
             },
-          },
-        ],
-      },
-      {
-        $set: { lastAiAttemptAt: now },
-        $setOnInsert: {
-          source: "template",
-          text: templateText,
-          inputFingerprint: fingerprint,
-          generatedAt: now,
+          ],
         },
-      },
-      { new: true, upsert: true, runValidators: true, setDefaultsOnInsert: true },
-    );
+        {
+          $set: { lastAiAttemptAt: now },
+          $setOnInsert: {
+            source: "template",
+            text: templateText,
+            inputFingerprint: fingerprint,
+            generatedAt: now,
+          },
+        },
+        {
+          new: true,
+          upsert: true,
+          runValidators: true,
+          setDefaultsOnInsert: true,
+        },
+      );
+    } catch (error) {
+      if (!isDuplicateKeyError(error)) {
+        throw error;
+      }
+
+      lock = null;
+    }
 
     if (lock === null) {
       return {
@@ -511,31 +525,45 @@ export async function refreshPredictiveAlerts(
       return { ok: true, insight: toAlertsInsight(recheck) };
     }
 
-    const lock = await BudgetInsight.findOneAndUpdate(
-      {
-        userId,
-        month: monthInput,
-        kind: "alerts",
-        $or: [
-          { lastAiAttemptAt: { $exists: false } },
-          {
-            lastAiAttemptAt: {
-              $lt: new Date(now.getTime() - RECHECK_WINDOW_MS),
+    let lock: unknown;
+    try {
+      lock = await BudgetInsight.findOneAndUpdate(
+        {
+          userId,
+          month: monthInput,
+          kind: "alerts",
+          $or: [
+            { lastAiAttemptAt: { $exists: false } },
+            {
+              lastAiAttemptAt: {
+                $lt: new Date(now.getTime() - RECHECK_WINDOW_MS),
+              },
             },
-          },
-        ],
-      },
-      {
-        $set: { lastAiAttemptAt: now },
-        $setOnInsert: {
-          source: "template",
-          alerts: toStoredAlerts(templateViews),
-          inputFingerprint: fingerprint,
-          generatedAt: now,
+          ],
         },
-      },
-      { new: true, upsert: true, runValidators: true, setDefaultsOnInsert: true },
-    );
+        {
+          $set: { lastAiAttemptAt: now },
+          $setOnInsert: {
+            source: "template",
+            alerts: toStoredAlerts(templateViews),
+            inputFingerprint: fingerprint,
+            generatedAt: now,
+          },
+        },
+        {
+          new: true,
+          upsert: true,
+          runValidators: true,
+          setDefaultsOnInsert: true,
+        },
+      );
+    } catch (error) {
+      if (!isDuplicateKeyError(error)) {
+        throw error;
+      }
+
+      lock = null;
+    }
 
     if (lock === null) {
       return {

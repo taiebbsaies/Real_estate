@@ -392,6 +392,26 @@ describe("refreshMonthlySummary", () => {
     });
   });
 
+  it("traite un doublon E11000 sur le verrou comme un verrou refusé", async () => {
+    findOneAndUpdateMock
+      .mockResolvedValueOnce({ lastAiAttemptAt: new Date() })
+      .mockResolvedValueOnce({})
+      .mockRejectedValueOnce({ code: 11000 });
+
+    const winner = await refreshMonthlySummary(MONTH);
+    const loser = await refreshMonthlySummary(MONTH);
+
+    expect(winner).toMatchObject({
+      ok: true,
+      insight: { text: AI_SUMMARY_OK, source: "ai" },
+    });
+    expect(loser).toMatchObject({
+      ok: true,
+      insight: { source: "template" },
+    });
+    expect(generateTextMock).toHaveBeenCalledTimes(1);
+  });
+
   it("rejette un mois passé et ne sert que le cache existant", async () => {
     mockFindOneResults(cachedDoc({ month: "2026-10", text: "Résumé ancien." }));
 
