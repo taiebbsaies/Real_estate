@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useActionState, useState, useCallback } from "react";
 import { signUp, type SignUpState } from "@/app/actions/auth";

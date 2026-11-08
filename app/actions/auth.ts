@@ -2,9 +2,11 @@
 
 import bcrypt from "bcryptjs";
 import { connectDB } from "@/lib/mongodb";
-import User from "@/models/user";
+import { UserModel } from "@/src/models/shared";
 import { signUpSchema, loginSchema } from "@/lib/validations/auth";
 import type { UserRole } from "@/lib/constants/user";
+import { setSessionCookie, clearSessionCookie } from "@/lib/session";
+import { cookies } from "next/headers";
 
 export type SignUpState = {
   success: boolean;
@@ -56,7 +58,7 @@ export async function signUp(
   try {
     await connectDB();
 
-    const existingUser = await User.findOne({
+    const existingUser = await UserModel.findOne({
       email: parsed.data.email,
     })
       .select("_id")
@@ -72,7 +74,7 @@ export async function signUp(
     const passwordHash = await bcrypt.hash(parsed.data.password, 12);
     const chosenRole = (parsed.data.role as UserRole) || "TENANT";
 
-    const createdUser = await User.create({
+    const createdUser = await UserModel.create({
       firstName: parsed.data.firstName,
       lastName: parsed.data.lastName,
       email: parsed.data.email,
@@ -119,10 +121,13 @@ export async function signUp(
   }
 }
 
-import { setSessionCookie, clearSessionCookie } from "@/lib/session";
-
 export async function signOut() {
   await clearSessionCookie();
+  try {
+    const cookieStore = await cookies();
+    cookieStore.delete("homecheck_role");
+    cookieStore.delete("homecheck_user_id");
+  } catch {}
 }
 
 export async function signIn(
@@ -152,7 +157,7 @@ export async function signIn(
   try {
     await connectDB();
 
-    const user = await User.findOne({
+    const user = await UserModel.findOne({
       email: parsed.data.email,
     }).select("+passwordHash");
 
@@ -165,7 +170,7 @@ export async function signIn(
 
     const isValidPassword = await bcrypt.compare(
       parsed.data.password,
-      user.passwordHash,
+      user.passwordHash || "",
     );
 
     if (!isValidPassword) {
@@ -209,4 +214,3 @@ export async function signIn(
     };
   }
 }
-

@@ -1,4 +1,4 @@
-import { Suspense } from "react";
+﻿import { Suspense } from "react";
 import Link from "next/link";
 import { getSession } from "@/lib/session";
 import { signOut } from "@/app/actions/auth";
@@ -40,6 +40,15 @@ async function UserNav() {
             <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
           </svg>
           <span className="hidden md:inline">Budget</span>
+        </Link>
+        <Link
+          href="/maintenance"
+          className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium text-[#1F2937] transition-colors hover:bg-[#DCFCE7] hover:text-[#166534] dark:text-zinc-300 dark:hover:bg-emerald-950/50 dark:hover:text-emerald-300"
+        >
+          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+          </svg>
+          <span className="hidden md:inline">Maintenance</span>
         </Link>
         <Link
           href="/profile"
@@ -316,7 +325,10 @@ export default function Home() {
             </div>
 
             {/* Technicien Card */}
-            <div className="linear-card group relative flex flex-col justify-between rounded-2xl border border-[#DCFCE7] bg-white p-6 shadow-sm shadow-[#166534]/5 dark:border-emerald-500/15 dark:bg-[#0c1410]/80 dark:backdrop-blur-md">
+            <Link
+              href="/maintenance"
+              className="linear-card group relative flex flex-col justify-between rounded-2xl border border-[#DCFCE7] bg-white p-6 shadow-sm shadow-[#166534]/5 dark:border-emerald-500/15 dark:bg-[#0c1410]/80 dark:backdrop-blur-md hover:border-emerald-500/40 transition-all hover:-translate-y-0.5"
+            >
               <div>
                 <div className="flex items-center justify-between">
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#DCFCE7] text-sm font-bold text-[#166534] dark:bg-emerald-500/15 dark:text-emerald-400 dark:shadow-[0_0_15px_-3px_rgba(34,197,94,0.3)]">
@@ -370,7 +382,7 @@ export default function Home() {
                 <span>Diagnostics &amp; SLA garantis</span>
                 <span className="text-zinc-400 group-hover:translate-x-1 transition-transform">Voir les interventions →</span>
               </div>
-            </div>
+            </Link>
           </div>
         </div>
       </main>

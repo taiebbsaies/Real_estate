@@ -8,9 +8,12 @@ export default defineConfig({
     alias: {
       "server-only": `${root}lib/test-stubs/server-only.ts`,
       "@": root,
+      "@/src": `${root}src`,
     },
   },
   test: {
-    include: ["lib/**/*.test.ts", "app/**/*.test.ts"],
+    environment: "node",
+    globals: true,
+    include: ["src/**/*.test.ts", "lib/**/*.test.ts", "app/**/*.test.ts"],
   },
 });

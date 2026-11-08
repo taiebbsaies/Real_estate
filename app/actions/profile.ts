@@ -53,7 +53,7 @@ export async function updateProfile(
         };
       }
 
-      const isMatch = await bcrypt.compare(currentPassword, user.passwordHash);
+      const isMatch = await bcrypt.compare(currentPassword, user.passwordHash || "");
       if (!isMatch) {
         return {
           success: false,

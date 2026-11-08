@@ -18,10 +18,10 @@ import BottomNav from "./_components/BottomNav";
 
 export const metadata: Metadata = {
   title: {
-    default: "HomeCheck",
+    default: "HomeCheck — Gestion & Maintenance Locative",
     template: "%s | HomeCheck",
   },
-  description: "Browse and manage real estate with HomeCheck.",
+  description: "Plateforme PWA de gestion du cycle de vie locatif, maintenance et budget HomeCheck.",
   manifest: "/manifest.json",
   icons: {
     apple: "/icons/apple-touch-icon.png",

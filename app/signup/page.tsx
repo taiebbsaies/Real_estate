@@ -33,7 +33,7 @@ export default function SignUpPage() {
               Rejoignez HomeCheck
             </h1>
             <p className="mt-1.5 text-xs text-[#6B7280] leading-relaxed dark:text-zinc-400">
-              Créez votre compte pour explorer les annonces, planifier des états des lieux ou gérer des interventions.
+              Créez votre compte pour explorer les annonces, gérer votre budget ou suivre les interventions de maintenance.
             </p>
           </div>
 
