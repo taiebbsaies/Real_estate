@@ -1,9 +1,10 @@
-const CACHE_NAME = "homecheck-cache-v6";
+const CACHE_NAME = "homecheck-cache-v7";
 const STATIC_ASSETS = [
   "/login",
   "/signup",
   "/offline",
   "/manifest.json",
+  "/icons/favicon.svg",
   "/icons/icon-192x192.png",
   "/icons/icon-512x512.png",
   "/icons/icon-192x192-maskable.png",

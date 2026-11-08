@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Logo from "@/app/_components/Logo";
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { getSession } from "@/lib/session";
@@ -39,12 +40,7 @@ export default async function TenantComplaintsPage() {
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 sm:px-6 py-3.5">
           <div className="flex items-center gap-3">
             <Link href="/" className="flex items-center gap-2">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-zinc-950 text-xs font-bold text-white shadow-xs dark:bg-white dark:text-zinc-950">
-                H
-              </div>
-              <span className="text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
-                HomeCheck
-              </span>
+              <Logo />
             </Link>
             <span className="hidden sm:inline text-zinc-300 dark:text-zinc-700">/</span>
             <Link

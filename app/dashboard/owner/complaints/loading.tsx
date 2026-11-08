@@ -1,11 +1,11 @@
+import Logo from "@/app/_components/Logo";
+
 export default function OwnerComplaintsLoading() {
   return (
     <div className="min-h-full bg-zinc-50 dark:bg-zinc-950" aria-busy="true">
       <header className="border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
         <div className="mx-auto flex max-w-6xl items-center gap-3 px-6 py-4">
-          <span className="text-lg font-semibold tracking-tight text-blue-600 dark:text-blue-400">
-            HomeCheck
-          </span>
+          <Logo />
           <span className="text-zinc-400">/</span>
           <span className="text-sm text-zinc-500">Propriétaire</span>
           <span className="text-zinc-400">/</span>

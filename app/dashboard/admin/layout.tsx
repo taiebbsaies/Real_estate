@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Logo from "@/app/_components/Logo";
 import Link from "next/link";
 import ThemeToggle from "@/app/_components/ThemeToggle";
 import { requireAdminPage } from "./_components/guard";
@@ -25,7 +26,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       <header className="border-b border-[#DCFCE7] bg-white dark:border-emerald-500/15 dark:bg-[#0c1410]">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
           <div className="flex items-center gap-2 text-sm font-bold text-[#1F2937] dark:text-zinc-50">
-            <Link href="/">HomeCheck</Link>
+            <Link href="/"><Logo /></Link>
             <span className="font-normal text-[#6B7280] dark:text-zinc-400">/ Administration</span>
           </div>
           <div className="flex items-center gap-3">

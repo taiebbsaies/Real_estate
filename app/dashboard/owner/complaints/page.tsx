@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Logo from "@/app/_components/Logo";
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { getSession } from "@/lib/session";
@@ -88,9 +89,7 @@ export default async function OwnerComplaintsPage({
       <header className="border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 sm:px-6 py-4">
           <div className="flex items-center gap-3">
-            <Link href="/" className="text-lg font-semibold tracking-tight text-blue-600 dark:text-blue-400">
-              HomeCheck
-            </Link>
+            <Link href="/" className="text-lg font-semibold tracking-tight text-blue-600 dark:text-blue-400"><Logo /></Link>
             <span className="hidden sm:inline text-zinc-400">/</span>
             <Link href="/dashboard/owner" className="hidden sm:inline text-sm text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300">
               Propriétaire

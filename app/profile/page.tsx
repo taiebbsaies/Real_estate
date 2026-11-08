@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Logo from "@/app/_components/Logo";
 import { getSession } from "@/lib/session";
 import { redirect } from "next/navigation";
 import { connectDB } from "@/lib/mongodb";
@@ -40,13 +41,11 @@ export default async function ProfilePage() {
   return (
     <div className="min-h-full bg-zinc-50 dark:bg-zinc-950">
       <header className="border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
-        <div className="mx-auto flex max-w-4xl items-center justify-between px-6 py-4">
+        <div className="mx-auto flex max-w-4xl items-center justify-between gap-3 px-4 py-4 sm:px-6">
           <div className="flex items-center gap-3">
-            <Link href="/" className="text-lg font-semibold tracking-tight text-blue-600 dark:text-blue-400">
-              HomeCheck
-            </Link>
-            <span className="text-zinc-400">/</span>
-            <span className="text-sm font-medium text-zinc-900 dark:text-zinc-50">
+            <Link href="/" className="text-lg font-semibold tracking-tight text-blue-600 dark:text-blue-400"><Logo /></Link>
+            <span className="hidden text-zinc-400 sm:inline">/</span>
+            <span className="hidden text-sm font-medium text-zinc-900 dark:text-zinc-50 sm:inline">
               Paramètres du compte
             </span>
           </div>
@@ -54,16 +53,16 @@ export default async function ProfilePage() {
           <div className="flex items-center gap-3">
             <Link
               href={dashboardUrl}
-              className="rounded-full border border-zinc-300 px-4 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              className="whitespace-nowrap rounded-full border border-zinc-300 px-3 py-1.5 text-xs sm:px-4 font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
             >
-              ← Accéder à mon tableau de bord
+              ← <span className="hidden sm:inline">Accéder à mon tableau de bord</span><span className="sm:hidden">Tableau de bord</span>
             </Link>
             <ThemeToggle />
           </div>
         </div>
       </header>
 
-      <main className="mx-auto max-w-4xl px-6 py-10">
+      <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
         <div className="rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
           <div className="mb-6 border-b border-zinc-200 pb-4 dark:border-zinc-800">
             <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-50">

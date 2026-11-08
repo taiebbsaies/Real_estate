@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { Wrench, PlusCircle, BarChart3, Home, Shield, ArrowLeft, UserCheck, Building } from "lucide-react";
 import { type ActorRole } from "@/src/modules/maintenance/constants";
 import ThemeToggle from "@/app/_components/ThemeToggle";
+import Logo from "@/app/_components/Logo";
 
 interface NavbarProps {
   user: {
@@ -94,12 +95,9 @@ export function Navbar({ user }: NavbarProps) {
           </Link>
 
           <Link href="/maintenance" className="flex min-w-0 items-center gap-2.5 group">
-            <div className="hidden sm:flex w-9 h-9 rounded-xl bg-blue-600 items-center justify-center text-white shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform">
-              <Wrench className="w-5 h-5" />
-            </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-bold text-slate-100 text-base tracking-tight">HomeCheck</span>
+                <Logo />
                 <span className="hidden sm:inline px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-blue-500/10 text-blue-400 border border-blue-500/20">
                   Maintenance
                 </span>

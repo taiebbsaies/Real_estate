@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Logo from "@/app/_components/Logo";
 import Link from "next/link";
 import ThemeToggle from "@/app/_components/ThemeToggle";
 import OfflineMessage from "./OfflineMessage";
@@ -22,10 +23,7 @@ export default function OfflinePage() {
       <header className="border-b border-[#DCFCE7] bg-white dark:border-emerald-500/15 dark:bg-[#0c1410]">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
           <Link href="/" className="flex items-center gap-2">
-            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#166534] text-xs font-bold text-white">
-              H
-            </span>
-            <span className="text-sm font-bold tracking-tight text-[#1F2937] dark:text-zinc-50">HomeCheck</span>
+            <Logo />
           </Link>
           <div className="flex items-center gap-4">
             <nav aria-label="Navigation principale" className="hidden items-center gap-4 md:flex">

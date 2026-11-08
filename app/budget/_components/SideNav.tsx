@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense } from "react";
+import Logo from "@/app/_components/Logo";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { TABS } from "./BottomNav";
@@ -43,12 +44,7 @@ export default function SideNav() {
   return (
     <aside className="fixed inset-y-0 left-0 z-40 hidden w-[260px] flex-col border-r border-zinc-200/80 bg-white/75 px-5 py-6 backdrop-blur-md dark:border-zinc-800/80 dark:bg-[#08080a]/75 md:flex">
       <Link href="/" className="flex items-center gap-2 px-3">
-        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-zinc-950 text-xs font-bold text-white shadow-xs dark:bg-white dark:text-zinc-950">
-          H
-        </div>
-        <span className="text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
-          HomeCheck
-        </span>
+        <Logo />
       </Link>
 
       <nav

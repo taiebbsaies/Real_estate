@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Logo from "@/app/_components/Logo";
 import Link from "next/link";
 import SignUpForm from "./SignUpForm";
 import ThemeToggle from "../_components/ThemeToggle";
@@ -22,12 +23,7 @@ export default function SignUpPage() {
               href="/"
               className="inline-flex items-center gap-2 group"
             >
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#166534] text-xs font-bold text-white shadow-xs dark:bg-white dark:text-zinc-950">
-                H
-              </div>
-              <span className="text-sm font-bold tracking-tight text-[#1F2937] dark:text-zinc-50">
-                HomeCheck
-              </span>
+              <Logo showTagline />
             </Link>
             <h1 className="mt-4 text-2xl font-bold tracking-tight text-[#1F2937] dark:text-zinc-50">
               Rejoignez HomeCheck

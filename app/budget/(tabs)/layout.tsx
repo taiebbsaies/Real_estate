@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Logo from "@/app/_components/Logo";
 import BottomNav from "../_components/BottomNav";
 import { PlusIcon } from "../_components/icons";
 
@@ -10,12 +11,7 @@ export default function TabsLayout({ children }: LayoutProps<"/budget">) {
         className="flex items-center gap-2 px-4 pt-5 md:hidden"
         aria-label="Retour à l'accueil HomeCheck"
       >
-        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-zinc-950 text-xs font-bold text-white shadow-xs dark:bg-white dark:text-zinc-950">
-          H
-        </div>
-        <span className="text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
-          HomeCheck
-        </span>
+        <Logo />
       </Link>
 
       <div className="flex flex-1 flex-col pb-28 md:pb-12">{children}</div>
