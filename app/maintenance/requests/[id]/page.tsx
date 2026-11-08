@@ -86,7 +86,7 @@ export default function MaintenanceRequestDetailPage({ params }: PageProps) {
     return (
       <div className="py-16 text-center space-y-3">
         <AlertTriangle className="w-10 h-10 text-rose-400 mx-auto" />
-        <h2 className="text-lg font-bold text-white">Demande introuvable</h2>
+        <h2 className="text-lg font-bold text-slate-100">Demande introuvable</h2>
         <p className="text-xs text-slate-400">{error || "Cet incident n'existe pas."}</p>
         <Link
           href="/maintenance"
@@ -207,7 +207,7 @@ export default function MaintenanceRequestDetailPage({ params }: PageProps) {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <Link
           href="/maintenance"
-          className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-100 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Retour à la liste</span>
@@ -232,7 +232,7 @@ export default function MaintenanceRequestDetailPage({ params }: PageProps) {
           <span className="text-[11px] font-bold uppercase tracking-wider text-blue-400">
             {request.categoryId?.name || "Maintenance"}
           </span>
-          <h1 className="text-xl sm:text-2xl font-extrabold text-white mt-1">
+          <h1 className="text-xl sm:text-2xl font-extrabold text-slate-100 mt-1">
             {request.title}
           </h1>
           <p className="text-xs sm:text-sm text-slate-300 mt-2 leading-relaxed">
@@ -273,7 +273,7 @@ export default function MaintenanceRequestDetailPage({ params }: PageProps) {
               <User className="w-3.5 h-3.5 text-slate-400" /> Parties prenantes
             </span>
             <div className="text-[11px] text-slate-300">
-              Locataire : <strong className="text-white">{request.tenantId?.firstName} {request.tenantId?.lastName}</strong>
+              Locataire : <strong className="text-slate-100">{request.tenantId?.firstName} {request.tenantId?.lastName}</strong>
             </div>
             <div className="text-[11px] text-slate-300 mt-1">
               Technicien :{" "}
@@ -336,7 +336,7 @@ export default function MaintenanceRequestDetailPage({ params }: PageProps) {
                     alt="Photo signalement"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                   />
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-[10px] text-white">
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-[10px] text-slate-100">
                     {p.originalName}
                   </div>
                 </div>
@@ -473,7 +473,7 @@ export default function MaintenanceRequestDetailPage({ params }: PageProps) {
           <div className="flex items-center justify-between pb-3 border-b border-slate-800">
             <div className="flex items-center gap-2 text-emerald-400">
               <CheckCircle2 className="w-5 h-5" />
-              <h3 className="font-bold text-base text-white">Rapport d'Intervention Finalisé</h3>
+              <h3 className="font-bold text-base text-slate-100">Rapport d'Intervention Finalisé</h3>
             </div>
             <span className="text-xs font-extrabold px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
               Coût Total : {request.intervention.cost} DT
@@ -567,7 +567,7 @@ export default function MaintenanceRequestDetailPage({ params }: PageProps) {
         <div className="flex items-center justify-between pb-3 border-b border-slate-800">
           <div className="flex items-center gap-2 text-slate-300">
             <History className="w-5 h-5 text-blue-400" />
-            <h3 className="font-bold text-base text-white">Journal d'Audit Immuable (Jumeau Numérique)</h3>
+            <h3 className="font-bold text-base text-slate-100">Journal d'Audit Immuable (Jumeau Numérique)</h3>
           </div>
           <span className="text-xs text-slate-500">
             {request.history?.length || 0} événement(s) enregistré(s)

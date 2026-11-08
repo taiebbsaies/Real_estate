@@ -111,6 +111,7 @@ export async function signUp(
       await TechnicianProfileModel.create({
         userId: createdUser._id,
         ...details,
+        verificationStatus: "PENDING",
         city,
         address: address || city,
         location: {
@@ -214,6 +215,13 @@ export async function signIn(
       return {
         success: false,
         message: "Invalid email or password.",
+      };
+    }
+
+    if (user.suspendedAt || user.deletedAt) {
+      return {
+        success: false,
+        message: "Ce compte a été suspendu. Contactez l'administrateur.",
       };
     }
 

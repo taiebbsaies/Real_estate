@@ -36,6 +36,24 @@ export const TUNISIA_GOVERNORATES = [
   { name: "Zaghouan", coordinates: [10.1425, 36.4029] },
 ] as const satisfies readonly { name: string; coordinates: readonly [number, number] }[];
 
+function normalizeLocation(text: string): string {
+  return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+}
+
+/** Finds a governorate named in free text, trying each text in order. Whole words only: "Tunisie" is not "Tunis". */
+export function findGovernorateCoordinates(...texts: (string | undefined)[]): [number, number] | null {
+  for (const text of texts) {
+    if (!text) continue;
+    const normalized = normalizeLocation(text);
+    for (const { name, coordinates } of TUNISIA_GOVERNORATES) {
+      if (new RegExp(`\\b${normalizeLocation(name)}\\b`).test(normalized)) {
+        return [coordinates[0], coordinates[1]];
+      }
+    }
+  }
+  return null;
+}
+
 export function getGovernorateCoordinates(name: string): [number, number] | null {
   const match = TUNISIA_GOVERNORATES.find((governorate) => governorate.name === name);
   return match ? [match.coordinates[0], match.coordinates[1]] : null;

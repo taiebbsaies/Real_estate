@@ -15,6 +15,7 @@ import {
   Sparkles,
   Camera,
 } from "lucide-react";
+import { TECHNICIAN_SKILLS } from "@/lib/constants/technician";
 import { PhotoUploader } from "./PhotoUploader";
 
 // --- 1. REJECT MODAL ---
@@ -39,9 +40,9 @@ export function RejectModal({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-rose-400">
             <AlertTriangle className="w-5 h-5" />
-            <h3 className="font-bold text-base text-white">Rejeter la demande</h3>
+            <h3 className="font-bold text-base text-slate-100">Rejeter la demande</h3>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-white">
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-100">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -69,7 +70,7 @@ export function RejectModal({
             type="button"
             onClick={onClose}
             disabled={loading}
-            className="px-4 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700"
+            className="px-4 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-100 bg-slate-800 hover:bg-slate-700"
           >
             Annuler
           </button>
@@ -110,9 +111,9 @@ export function ReopenModal({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-orange-400">
             <AlertTriangle className="w-5 h-5" />
-            <h3 className="font-bold text-base text-white">Réouvrir la demande</h3>
+            <h3 className="font-bold text-base text-slate-100">Réouvrir la demande</h3>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-white">
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-100">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -140,7 +141,7 @@ export function ReopenModal({
             type="button"
             onClick={onClose}
             disabled={loading}
-            className="px-4 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700"
+            className="px-4 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-100 bg-slate-800 hover:bg-slate-700"
           >
             Annuler
           </button>
@@ -176,10 +177,12 @@ export function AssignTechnicianModal({
   const [technicians, setTechnicians] = useState<any[]>([]);
   const [fetching, setFetching] = useState(false);
   const [selectedTechId, setSelectedTechId] = useState<string | null>(null);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen && requestId) {
       setFetching(true);
+      setFetchError(null);
       fetch(`/api/technicians/recommended?requestId=${requestId}`)
         .then((res) => res.json())
         .then((json) => {
@@ -188,9 +191,14 @@ export function AssignTechnicianModal({
             if (json.data.length > 0) {
               setSelectedTechId(json.data[0].technicianId);
             }
+          } else {
+            setFetchError(json.message || "Impossible de charger les techniciens.");
           }
         })
-        .catch((err) => console.error("Error loading recommendations:", err))
+        .catch((err) => {
+          console.error("Error loading recommendations:", err);
+          setFetchError("Impossible de charger les techniciens.");
+        })
         .finally(() => setFetching(false));
     }
   }, [isOpen, requestId]);
@@ -203,16 +211,16 @@ export function AssignTechnicianModal({
         <div className="flex items-center justify-between pb-4 border-b border-slate-800">
           <div className="flex items-center gap-2 text-blue-400">
             <Sparkles className="w-5 h-5 text-blue-400" />
-            <h3 className="font-bold text-base text-white">Assigner un Technicien (Matching IA)</h3>
+            <h3 className="font-bold text-base text-slate-100">Techniciens disponibles pour cette mission</h3>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-white">
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-100">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         <p className="text-xs text-slate-400 mt-3 mb-4">
-          Algorithme multicritère calculant la compatibilité selon la spécialité (35%), la disponibilité (25%),
-          la proximité kilométrique (20%), la note client (10%) et l'historique d'interventions (10%).
+          Les techniciens ayant la spécialité demandée sont recommandés en premier, puis classés selon la
+          distance entre l'adresse de leur profil et le logement, leur note et leur expérience.
         </p>
 
         <div className="flex-1 overflow-y-auto space-y-3 pr-1">
@@ -221,14 +229,18 @@ export function AssignTechnicianModal({
               <Loader2 className="w-6 h-6 animate-spin text-blue-400 mb-2" />
               <span>Calcul des scores de compatibilité en temps réel...</span>
             </div>
+          ) : fetchError ? (
+            <div role="alert" className="py-8 text-center text-xs text-rose-400">
+              {fetchError}
+            </div>
           ) : technicians.length === 0 ? (
             <div className="py-8 text-center text-xs text-slate-500">
-              Aucun profil technicien disponible.
+              Aucun technicien disponible pour le moment.
             </div>
           ) : (
             technicians.map((t, idx) => {
               const isSelected = selectedTechId === t.technicianId;
-              const isTop = idx === 0;
+              const isTop = idx === 0 && t.hasRequiredSkill;
 
               return (
                 <div
@@ -260,7 +272,7 @@ export function AssignTechnicianModal({
                         </div>
                       )}
                       <div>
-                        <h4 className="font-semibold text-sm text-white flex items-center gap-2">
+                        <h4 className="font-semibold text-sm text-slate-100 flex items-center gap-2">
                           <span>{t.name}</span>
                           <span
                             className={`px-2 py-0.5 rounded text-[11px] font-extrabold ${
@@ -278,7 +290,10 @@ export function AssignTechnicianModal({
                         <div className="flex flex-wrap items-center gap-3 mt-1.5 text-xs text-slate-400">
                           <span className="inline-flex items-center gap-1">
                             <MapPin className="w-3.5 h-3.5 text-slate-500" />
-                            <span>{t.distanceKm} km</span>
+                            <span>
+                              {t.address || t.city || "Adresse non renseignée"}
+                              {t.distanceKm !== null ? ` · ${t.distanceKm} km` : " · distance inconnue"}
+                            </span>
                           </span>
                           <span className="inline-flex items-center gap-1 text-amber-400">
                             <Star className="w-3.5 h-3.5 fill-amber-400" />
@@ -301,7 +316,22 @@ export function AssignTechnicianModal({
                     />
                   </div>
 
-                  {/* AI Explanation banner */}
+                  <div className="mt-2.5 flex flex-wrap gap-1.5">
+                    {t.skills.length === 0 ? (
+                      <span className="text-[11px] text-slate-500">Aucune spécialité renseignée</span>
+                    ) : (
+                      t.skills.map((skill: string) => (
+                        <span
+                          key={skill}
+                          className="px-2 py-0.5 rounded-full border border-slate-700 bg-slate-800 text-[11px] text-slate-300"
+                        >
+                          {TECHNICIAN_SKILLS.find((item) => item.value === skill)?.label ?? skill}
+                        </span>
+                      ))
+                    )}
+                  </div>
+
+                  {/* Match explanation */}
                   <p className="mt-2.5 pt-2 border-t border-slate-800 text-[11px] text-slate-400 italic">
                     "{t.matchDetails?.explanation}"
                   </p>
@@ -316,7 +346,7 @@ export function AssignTechnicianModal({
             type="button"
             onClick={onClose}
             disabled={loading}
-            className="px-4 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700"
+            className="px-4 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-100 bg-slate-800 hover:bg-slate-700"
           >
             Fermer
           </button>
@@ -365,9 +395,9 @@ export function ReviewModal({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-amber-400">
             <Star className="w-5 h-5 fill-amber-400" />
-            <h3 className="font-bold text-base text-white">Évaluer l'intervention</h3>
+            <h3 className="font-bold text-base text-slate-100">Évaluer l'intervention</h3>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-white">
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-100">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -426,7 +456,7 @@ export function ReviewModal({
             type="button"
             onClick={onClose}
             disabled={loading}
-            className="px-4 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700"
+            className="px-4 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-100 bg-slate-800 hover:bg-slate-700"
           >
             Plus tard
           </button>

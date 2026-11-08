@@ -110,7 +110,7 @@ export function MaintenanceDashboard({ role }: { role: string }) {
       {/* Top Banner / Hero */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-100 tracking-tight">
             {role === "TENANT" && "Mes Demandes d'Intervention"}
             {role === "OWNER" && "Gestion Technique du Parc Locatif"}
             {role === "TECHNICIAN" && "Espace Missions & Travaux"}
@@ -274,7 +274,7 @@ export function MaintenanceDashboard({ role }: { role: string }) {
 
                 {/* Title & Category */}
                 <div>
-                  <h3 className="font-bold text-sm text-white group-hover:text-blue-400 transition-colors line-clamp-1">
+                  <h3 className="font-bold text-sm text-slate-100 group-hover:text-blue-400 transition-colors line-clamp-1">
                     {req.title}
                   </h3>
                   <p className="text-xs text-slate-400 mt-1 line-clamp-2">

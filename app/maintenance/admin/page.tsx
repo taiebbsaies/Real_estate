@@ -111,12 +111,12 @@ export default function MaintenanceAdminPage() {
         <div>
           <Link
             href="/maintenance"
-            className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors mb-2"
+            className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-100 transition-colors mb-2"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>Retour au tableau de bord</span>
           </Link>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight flex items-center gap-2.5">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-100 tracking-tight flex items-center gap-2.5">
             <BarChart3 className="w-7 h-7 text-blue-500" />
             <span>Métriques KPIs & Administration Maintenance</span>
           </h1>
@@ -142,7 +142,7 @@ export default function MaintenanceAdminPage() {
             <span className="text-xs font-semibold">Taux de Résolution</span>
             <CheckCircle2 className="w-4 h-4 text-emerald-400" />
           </div>
-          <div className="text-2xl font-black text-white">
+          <div className="text-2xl font-black text-slate-100">
             {stats?.totalRequests > 0
               ? `${Math.round((stats.resolvedRequests / stats.totalRequests) * 100)} %`
               : "100 %"}
@@ -158,7 +158,7 @@ export default function MaintenanceAdminPage() {
             <span className="text-xs font-semibold">Délai Moyen Résolution</span>
             <Clock className="w-4 h-4 text-blue-400" />
           </div>
-          <div className="text-2xl font-black text-white">
+          <div className="text-2xl font-black text-slate-100">
             {stats?.avgResolutionHours || 0} h
           </div>
           <div className="text-[11px] text-slate-400">
@@ -172,7 +172,7 @@ export default function MaintenanceAdminPage() {
             <span className="text-xs font-semibold">Dépenses Cumulées</span>
             <DollarSign className="w-4 h-4 text-emerald-400" />
           </div>
-          <div className="text-2xl font-black text-white">
+          <div className="text-2xl font-black text-slate-100">
             {stats?.totalCostDT || 0} <span className="text-sm font-bold text-slate-400">DT</span>
           </div>
           <div className="text-[11px] text-slate-400">
@@ -186,7 +186,7 @@ export default function MaintenanceAdminPage() {
             <span className="text-xs font-semibold">En Cours de Traitement</span>
             <TrendingUp className="w-4 h-4 text-amber-400" />
           </div>
-          <div className="text-2xl font-black text-white">
+          <div className="text-2xl font-black text-slate-100">
             {(stats?.inProgressRequests || 0) + (stats?.pendingApprovalRequests || 0)}
           </div>
           <div className="text-[11px] text-slate-400">
@@ -200,7 +200,7 @@ export default function MaintenanceAdminPage() {
         <div className="flex items-center justify-between pb-3 border-b border-slate-800">
           <div className="flex items-center gap-2 text-amber-400">
             <AlertTriangle className="w-5 h-5" />
-            <h3 className="font-bold text-base text-white">
+            <h3 className="font-bold text-base text-slate-100">
               Détection Prédictive de Vétusté (Pipelines d'Agrégation)
             </h3>
           </div>
@@ -228,7 +228,7 @@ export default function MaintenanceAdminPage() {
               <tbody className="divide-y divide-slate-800/60 text-slate-300">
                 {stats.predictiveAlerts.map((alert: any, idx: number) => (
                   <tr key={idx} className="hover:bg-slate-800/30">
-                    <td className="py-3 font-semibold text-white">{alert.equipmentName}</td>
+                    <td className="py-3 font-semibold text-slate-100">{alert.equipmentName}</td>
                     <td className="py-3 text-slate-400">{alert.propertyTitle}</td>
                     <td className="py-3">
                       <span className="px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 font-bold text-[11px]">
@@ -252,7 +252,7 @@ export default function MaintenanceAdminPage() {
         <div className="flex items-center justify-between pb-3 border-b border-slate-800">
           <div className="flex items-center gap-2 text-blue-400">
             <Layers className="w-5 h-5" />
-            <h3 className="font-bold text-base text-white">Gestion des Catégories de Maintenance</h3>
+            <h3 className="font-bold text-base text-slate-100">Gestion des Catégories de Maintenance</h3>
           </div>
           <span className="text-xs text-slate-500">{categories.length} catégories actives</span>
         </div>
@@ -260,7 +260,7 @@ export default function MaintenanceAdminPage() {
         {/* Modal Form for new category */}
         {showCatForm && (
           <form onSubmit={handleCreateCategory} className="p-4 rounded-xl bg-slate-800/60 border border-slate-700 space-y-3">
-            <h4 className="text-xs font-bold text-white uppercase tracking-wider">
+            <h4 className="text-xs font-bold text-slate-100 uppercase tracking-wider">
               Créer une nouvelle catégorie
             </h4>
             {catError && <p className="text-xs text-rose-400">{catError}</p>}

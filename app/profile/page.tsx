@@ -32,6 +32,7 @@ export default async function ProfilePage() {
     TENANT: "/dashboard/tenant",
     OWNER: "/dashboard/owner",
     TECHNICIAN: "/dashboard/technician",
+    ADMIN: "/dashboard/admin",
   };
 
   const dashboardUrl = roleDashboardMap[session.activeRole] || "/";
@@ -72,6 +73,17 @@ export default async function ProfilePage() {
               Gérez vos informations personnelles et identifiants de sécurité.
             </p>
           </div>
+
+          {technicianProfile?.verificationStatus === "PENDING" && (
+            <p role="status" className="mb-6 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-500/30 dark:bg-amber-950/40 dark:text-amber-300">
+              Votre profil technicien est en attente de validation. Vous pourrez recevoir des missions une fois validé.
+            </p>
+          )}
+          {technicianProfile?.verificationStatus === "REJECTED" && (
+            <p role="status" className="mb-6 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-500/30 dark:bg-red-950/40 dark:text-red-300">
+              Votre profil technicien a été refusé et ne peut pas recevoir de missions. Contactez l&apos;administrateur.
+            </p>
+          )}
 
           <ProfileForm
             user={{

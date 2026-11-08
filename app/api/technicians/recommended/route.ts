@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/src/lib/auth";
+import { loadRequestFor, unauthorizedResponse } from "@/src/lib/maintenance-access";
 import { getRecommendedTechnicians } from "@/src/services/matching.service";
 
 export async function GET(req: NextRequest) {
   try {
     const session = await auth();
     const { user } = session;
+
+    if (!user) return unauthorizedResponse();
 
     if (!["OWNER", "ADMIN"].includes(user.role)) {
       return NextResponse.json(
@@ -23,6 +26,10 @@ export async function GET(req: NextRequest) {
         { status: 400 }
       );
     }
+
+    // An owner only sees the technicians for a request on one of his own properties.
+    const access = await loadRequestFor(user, requestId, "act");
+    if (access.error) return access.error;
 
     const recommendations = await getRecommendedTechnicians(requestId);
 

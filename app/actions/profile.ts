@@ -92,7 +92,7 @@ export async function updateProfile(
       // Technicians created before this form existed may not have a profile yet.
       const profile =
         (await TechnicianProfileModel.findOne({ userId: user._id })) ??
-        new TechnicianProfileModel({ userId: user._id });
+        new TechnicianProfileModel({ userId: user._id, verificationStatus: "PENDING" });
 
       profile.skills = technicianDetails.skills;
       profile.city = technicianDetails.city;

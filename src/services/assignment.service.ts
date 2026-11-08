@@ -3,6 +3,7 @@ import AssignmentModel, { type IAssignment } from "@/src/models/assignment";
 import { MaintenanceRequestModel } from "@/src/models/maintenance-request";
 import InterventionModel from "@/src/models/intervention";
 import { NotificationModel, UserModel } from "@/src/models/shared";
+import MaintenanceHistoryModel from "@/src/models/maintenance-history";
 import { transitionStatus } from "./maintenance-status.service";
 import { getRecommendedTechnicians } from "./matching.service";
 import { type ActorRole } from "@/src/modules/maintenance/constants";
@@ -40,6 +41,9 @@ export class AssignmentService {
     // Calculate match score
     const recommended = await getRecommendedTechnicians(requestId);
     const candidate = recommended.find((t) => t.technicianId === technicianId);
+    if (!candidate) {
+      throw new Error("Ce technicien n'est pas disponible pour cette mission.");
+    }
 
     const matchScore = candidate ? candidate.matchScore : 50;
     const matchDetails = candidate
@@ -49,7 +53,7 @@ export class AssignmentService {
           distanceScore: candidate.matchDetails.distanceScore,
           ratingScore: candidate.matchDetails.ratingScore,
           experienceScore: candidate.matchDetails.experienceScore,
-          distanceKm: candidate.distanceKm,
+          distanceKm: candidate.distanceKm ?? undefined,
           explanation: candidate.matchDetails.explanation,
         }
       : undefined;
@@ -108,6 +112,105 @@ export class AssignmentService {
     }
 
     return assignment;
+  }
+
+  /**
+   * Admin assigns a technician to an accepted request, or replaces the technician before work starts.
+   */
+  async reassignTechnician(params: {
+    requestId: string;
+    technicianId: string;
+    actorId: string;
+  }): Promise<void> {
+    const { requestId, technicianId, actorId } = params;
+    await connectDB();
+
+    const request = await MaintenanceRequestModel.findById(requestId);
+    if (!request) {
+      throw new Error("Demande introuvable.");
+    }
+
+    const notifyNewTechnician = () =>
+      NotificationModel.create({
+        userId: new mongoose.Types.ObjectId(technicianId),
+        title: "Nouvelle mission de maintenance",
+        message: `L'administrateur vous a assigné l'intervention "${request.title}".`,
+        type: "ASSIGNMENT",
+        link: `/maintenance/requests/${request._id}`,
+      });
+
+    if (request.status === "ACCEPTEE") {
+      await this.proposeAssignment({
+        requestId,
+        technicianId,
+        proposedById: actorId,
+        proposedByRole: "ADMIN",
+        directAssignment: true,
+      });
+      await notifyNewTechnician();
+      return;
+    }
+
+    if (request.status !== "TECHNICIEN_ASSIGNE") {
+      throw new Error("Le technicien ne peut plus être changé à cette étape.");
+    }
+
+    const previousTechnicianId = request.assignedTechnicianId;
+    if (previousTechnicianId && String(previousTechnicianId) === technicianId) {
+      throw new Error("Ce technicien est déjà assigné à cette demande.");
+    }
+
+    const recommended = await getRecommendedTechnicians(requestId);
+    const candidate = recommended.find((t) => t.technicianId === technicianId);
+    if (!candidate) {
+      throw new Error("Ce technicien n'est pas disponible pour cette mission.");
+    }
+
+    // The status does not change, so this does not go through transitionStatus.
+    await AssignmentModel.updateMany(
+      { requestId: request._id, status: { $in: ["PROPOSED", "ACCEPTED"] } },
+      { status: "CANCELLED" }
+    );
+    await AssignmentModel.create({
+      requestId: request._id,
+      technicianId: new mongoose.Types.ObjectId(technicianId),
+      proposedBy: new mongoose.Types.ObjectId(actorId),
+      status: "ACCEPTED",
+      matchScore: candidate.matchScore,
+      matchDetails: {
+        ...candidate.matchDetails,
+        distanceKm: candidate.distanceKm ?? undefined,
+      },
+    });
+
+    request.assignedTechnicianId = new mongoose.Types.ObjectId(technicianId);
+    await request.save();
+
+    await InterventionModel.updateOne(
+      { requestId: request._id },
+      { technicianId: new mongoose.Types.ObjectId(technicianId) }
+    );
+
+    await MaintenanceHistoryModel.create({
+      requestId: request._id,
+      propertyId: request.propertyId,
+      action: "ASSIGNMENT",
+      fromStatus: request.status,
+      toStatus: request.status,
+      actorId: new mongoose.Types.ObjectId(actorId),
+      actorRole: "ADMIN",
+      comment: `Technicien remplacé par l'administrateur (${candidate.name})`,
+    });
+
+    await notifyNewTechnician();
+    if (previousTechnicianId) {
+      await NotificationModel.create({
+        userId: previousTechnicianId,
+        title: "Mission réassignée",
+        message: `L'intervention "${request.title}" a été confiée à un autre technicien.`,
+        type: "ASSIGNMENT",
+      });
+    }
   }
 
   /**

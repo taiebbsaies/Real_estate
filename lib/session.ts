@@ -2,6 +2,8 @@ import "server-only";
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import type { UserRole } from "@/lib/constants/user";
+import { connectDB } from "@/lib/mongodb";
+import { UserModel } from "@/src/models/shared";
 
 export const SESSION_COOKIE_NAME = "homecheck_session";
 const SESSION_EXPIRATION = "7d";
@@ -78,7 +80,23 @@ export async function getSession(): Promise<SessionPayload | null> {
     return null;
   }
 
-  return await verifySessionToken(token);
+  const session = await verifySessionToken(token);
+  if (!session) return null;
+
+  // The cookie stays valid for days, so a suspension has to be checked against the database.
+  return (await isAccountBlocked(session.userId)) ? null : session;
+}
+
+async function isAccountBlocked(userId: string): Promise<boolean> {
+  try {
+    await connectDB();
+    const user = await UserModel.findById(userId).select("suspendedAt deletedAt").lean();
+    return Boolean(user?.suspendedAt || user?.deletedAt);
+  } catch (error) {
+    // A database outage must not log everyone out: pages reading data will report it themselves.
+    console.error("[SESSION] Account status lookup failed:", error);
+    return false;
+  }
 }
 
 /**

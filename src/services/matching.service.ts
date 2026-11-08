@@ -1,7 +1,43 @@
 import { MaintenanceRequestModel } from "@/src/models/maintenance-request";
 import { PropertyModel, TechnicianProfileModel, UserModel } from "@/src/models/shared";
+import AssignmentModel from "@/src/models/assignment";
 import CategoryModel from "@/src/models/category";
+import { findGovernorateCoordinates } from "@/lib/constants/technician";
 import connectDB from "@/src/lib/mongoose";
+
+// Value stored by the schema defaults: it means "never filled in", not "located in Tunis".
+const DEFAULT_COORDINATES: [number, number] = [10.1815, 36.8065];
+const DEFAULT_TECHNICIAN_ADDRESS = "Tunis, Tunisie";
+
+function isDefaultCoordinates(coordinates?: number[]): boolean {
+  return (
+    !coordinates ||
+    (coordinates[0] === DEFAULT_COORDINATES[0] && coordinates[1] === DEFAULT_COORDINATES[1])
+  );
+}
+
+/** Properties are created without coordinates, so their position comes from the city or the address. */
+export function resolvePropertyCoordinates(property: {
+  city?: string;
+  address?: string;
+  location?: { coordinates?: number[] };
+}): [number, number] | null {
+  const stored = property.location?.coordinates;
+  if (stored && !isDefaultCoordinates(stored)) return [stored[0], stored[1]];
+  return findGovernorateCoordinates(property.city, property.address);
+}
+
+export function resolveTechnicianCoordinates(profile: {
+  city?: string;
+  address?: string;
+  location?: { coordinates?: number[] };
+}): [number, number] | null {
+  const coordinates = profile.location?.coordinates;
+  if (!coordinates) return null;
+  // A technician who never filled in the profile only has the schema defaults.
+  if (!profile.city && profile.address === DEFAULT_TECHNICIAN_ADDRESS) return null;
+  return [coordinates[0], coordinates[1]];
+}
 
 export interface TechnicianMatchResult {
   technicianId: string;
@@ -10,8 +46,12 @@ export interface TechnicianMatchResult {
   phone?: string;
   avatarUrl?: string;
   skills: string[];
+  hasRequiredSkill: boolean;
+  city?: string;
+  address?: string;
   isAvailable: boolean;
-  distanceKm: number;
+  /** null when the position of the property or of the technician is unknown. */
+  distanceKm: number | null;
   averageRating: number;
   completedInterventionsCount: number;
   hourlyRateDT: number;
@@ -59,7 +99,7 @@ export function calculateMatchScore(params: {
   categorySlug: string;
   technicianSkills: string[];
   isAvailable: boolean;
-  distanceKm: number;
+  distanceKm: number | null;
   averageRating: number;
   completedCount: number;
 }): {
@@ -89,7 +129,8 @@ export function calculateMatchScore(params: {
 
   // 3. Proximity: 20 points max
   let distanceScore = 5;
-  if (distanceKm <= 5) distanceScore = 20;
+  if (distanceKm === null) distanceScore = 5;
+  else if (distanceKm <= 5) distanceScore = 20;
   else if (distanceKm <= 15) distanceScore = 15;
   else if (distanceKm <= 30) distanceScore = 10;
 
@@ -107,9 +148,9 @@ export function calculateMatchScore(params: {
     Math.round(skillScore + availabilityScore + distanceScore + ratingScore + experienceScore)
   );
 
-  const explanation = `Technicien recommandé : ${totalScore} % compatible (${
-    hasSkill ? "Spécialité exacte" : "Polyvalent"
-  }, ${distanceKm} km, note ${averageRating}/5, ${completedCount} interventions)`;
+  const explanation = `${hasSkill ? "Technicien recommandé" : "Technicien disponible"} : ${totalScore} % compatible (${
+    hasSkill ? "spécialité exacte" : "autre spécialité"
+  }, ${distanceKm === null ? "distance inconnue" : `${distanceKm} km`}, note ${averageRating}/5, ${completedCount} interventions)`;
 
   return {
     totalScore,
@@ -123,7 +164,8 @@ export function calculateMatchScore(params: {
 }
 
 /**
- * Fetches and ranks recommended technicians for a given maintenance request.
+ * Lists the technicians available for a request, best match first.
+ * Technicians who are unavailable, not approved, suspended or who refused this mission are left out.
  */
 export async function getRecommendedTechnicians(requestId: string): Promise<TechnicianMatchResult[]> {
   await connectDB();
@@ -137,17 +179,34 @@ export async function getRecommendedTechnicians(requestId: string): Promise<Tech
   const property = await PropertyModel.findById(request.propertyId);
 
   const categorySlug = category?.slug || "";
-  const propCoords: [number, number] = property?.location?.coordinates || [10.1815, 36.8065];
+  const propCoords = property ? resolvePropertyCoordinates(property) : null;
 
-  const profiles = await TechnicianProfileModel.find({}).lean();
+  const refusedBy = await AssignmentModel.distinct("technicianId", {
+    requestId: request._id,
+    status: "REFUSED",
+  });
+
+  const profiles = await TechnicianProfileModel.find({
+    isAvailable: true,
+    verificationStatus: { $nin: ["PENDING", "REJECTED"] },
+    userId: { $nin: refusedBy },
+  }).lean();
+  const users = await UserModel.find({
+    _id: { $in: profiles.map((profile) => profile.userId) },
+    roles: "TECHNICIAN",
+    deletedAt: { $exists: false },
+    suspendedAt: { $exists: false },
+  }).lean();
+  const usersById = new Map(users.map((user) => [String(user._id), user]));
   const results: TechnicianMatchResult[] = [];
 
   for (const profile of profiles) {
-    const user = await UserModel.findById(profile.userId).lean();
+    const user = usersById.get(String(profile.userId));
     if (!user) continue;
 
-    const techCoords: [number, number] = profile.location?.coordinates || [10.1815, 36.8065];
-    const distanceKm = calculateHaversineDistanceKm(propCoords, techCoords);
+    const techCoords = resolveTechnicianCoordinates(profile);
+    const distanceKm =
+      propCoords && techCoords ? calculateHaversineDistanceKm(propCoords, techCoords) : null;
 
     const match = calculateMatchScore({
       categorySlug,
@@ -165,6 +224,9 @@ export async function getRecommendedTechnicians(requestId: string): Promise<Tech
       phone: user.phone || profile.phone,
       avatarUrl: user.avatarUrl,
       skills: profile.skills || [],
+      hasRequiredSkill: (profile.skills || []).includes(categorySlug),
+      city: profile.city,
+      address: profile.address,
       isAvailable: profile.isAvailable,
       distanceKm,
       averageRating: profile.averageRating || 5,
@@ -182,6 +244,11 @@ export async function getRecommendedTechnicians(requestId: string): Promise<Tech
     });
   }
 
-  // Sort descending by matchScore
-  return results.sort((a, b) => b.matchScore - a.matchScore);
+  // Specialists first, then best score, then closest.
+  return results.sort(
+    (a, b) =>
+      Number(b.hasRequiredSkill) - Number(a.hasRequiredSkill) ||
+      b.matchScore - a.matchScore ||
+      (a.distanceKm ?? Infinity) - (b.distanceKm ?? Infinity),
+  );
 }

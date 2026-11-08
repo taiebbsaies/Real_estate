@@ -191,7 +191,7 @@ export function InterventionWorkspace({
       <div className="flex items-center justify-between pb-4 border-b border-slate-800">
         <div className="flex items-center gap-2 text-cyan-400">
           <Wrench className="w-5 h-5" />
-          <h3 className="font-bold text-base text-white">Espace Intervention Technicien</h3>
+          <h3 className="font-bold text-base text-slate-100">Espace Intervention Technicien</h3>
         </div>
         {isAssigned && (
           <button

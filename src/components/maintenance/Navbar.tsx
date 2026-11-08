@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Wrench, PlusCircle, BarChart3, Home, Shield, ArrowLeft, UserCheck, Building } from "lucide-react";
 import { type ActorRole } from "@/src/modules/maintenance/constants";
+import ThemeToggle from "@/app/_components/ThemeToggle";
 
 interface NavbarProps {
   user: {
@@ -86,7 +87,7 @@ export function Navbar({ user }: NavbarProps) {
           <Link
             href="/"
             title="Retour à l'accueil HomeCheck"
-            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700/60 transition-all text-xs font-semibold shadow-xs hover:-translate-x-0.5 group"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-slate-300 hover:text-slate-100 border border-slate-700/60 transition-all text-xs font-semibold shadow-xs hover:-translate-x-0.5 group"
           >
             <ArrowLeft className="w-4 h-4 text-emerald-400 group-hover:-translate-x-0.5 transition-transform" />
             <span className="hidden sm:inline">Accueil</span>
@@ -98,7 +99,7 @@ export function Navbar({ user }: NavbarProps) {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-bold text-white text-base tracking-tight">HomeCheck</span>
+                <span className="font-bold text-slate-100 text-base tracking-tight">HomeCheck</span>
                 <span className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-blue-500/10 text-blue-400 border border-blue-500/20">
                   Maintenance
                 </span>
@@ -131,6 +132,7 @@ export function Navbar({ user }: NavbarProps) {
 
         {/* Right Section: role of the signed-in user (read-only) & avatar */}
         <div className="flex items-center gap-3">
+          <ThemeToggle />
           <div
             className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-semibold shadow-sm ${roleBadge.className}`}
             title={`Connecté en tant que ${roleBadge.label}`}

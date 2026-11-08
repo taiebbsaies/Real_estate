@@ -51,7 +51,7 @@ export default function PropertyHistoryPage({ params }: PageProps) {
   if (error || !data) {
     return (
       <div className="py-16 text-center space-y-3">
-        <h2 className="text-lg font-bold text-white">Historique indisponible</h2>
+        <h2 className="text-lg font-bold text-slate-100">Historique indisponible</h2>
         <p className="text-xs text-slate-400">{error || "Erreur de chargement"}</p>
         <Link
           href="/maintenance"
@@ -72,7 +72,7 @@ export default function PropertyHistoryPage({ params }: PageProps) {
       <div>
         <Link
           href="/maintenance"
-          className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors mb-2"
+          className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-100 transition-colors mb-2"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Retour aux interventions</span>
@@ -82,7 +82,7 @@ export default function PropertyHistoryPage({ params }: PageProps) {
             <Building className="w-5 h-5" />
           </div>
           <div>
-            <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
+            <h1 className="text-xl sm:text-2xl font-extrabold text-slate-100 tracking-tight">
               Jumeau Numérique & Historique : {property.title}
             </h1>
             <p className="text-xs text-slate-400">
@@ -115,7 +115,7 @@ export default function PropertyHistoryPage({ params }: PageProps) {
                 <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-800 space-y-2">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                     <div className="flex items-center gap-2">
-                      <span className="font-bold text-xs text-white">
+                      <span className="font-bold text-xs text-slate-100">
                         {item.actorRole === "SYSTEM"
                           ? "Auto-dispatch Système"
                           : `${item.actorId?.firstName || "Utilisateur"} (${item.actorRole})`}

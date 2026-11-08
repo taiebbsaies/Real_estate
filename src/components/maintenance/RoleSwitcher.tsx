@@ -106,7 +106,7 @@ export function RoleSwitcher({ currentRole, userName }: RoleSwitcherProps) {
                     className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-left text-xs transition-colors ${
                       isSelected
                         ? "bg-blue-600/20 text-blue-300 font-semibold"
-                        : "text-slate-300 hover:bg-slate-800/80 hover:text-white"
+                        : "text-slate-300 hover:bg-slate-800/80 hover:text-slate-100"
                     }`}
                   >
                     <div className="flex items-center gap-2.5">

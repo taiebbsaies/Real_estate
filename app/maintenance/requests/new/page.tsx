@@ -40,6 +40,8 @@ function NewRequestForm() {
 
   // Options
   const [categories, setCategories] = useState<any[]>([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
+  const [categoriesError, setCategoriesError] = useState(false);
   const [properties, setProperties] = useState<any[]>([]);
   const [propertiesLoaded, setPropertiesLoaded] = useState(false);
   const [equipments, setEquipments] = useState<any[]>([]);
@@ -64,8 +66,12 @@ function NewRequestForm() {
           if (json.data.length > 0 && !categoryId) {
             setCategoryId(json.data[0]._id);
           }
+        } else {
+          setCategoriesError(true);
         }
-      });
+      })
+      .catch(() => setCategoriesError(true))
+      .finally(() => setCategoriesLoading(false));
 
     // 2. Fetch properties
     fetch("/api/properties")
@@ -207,12 +213,12 @@ function NewRequestForm() {
       <div>
         <Link
           href="/maintenance"
-          className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-100 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Retour aux interventions</span>
         </Link>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight mt-2">
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-100 tracking-tight mt-2">
           Signaler un Incident ou Problème
         </h1>
         <p className="text-xs sm:text-sm text-slate-400 mt-1">
@@ -242,6 +248,17 @@ function NewRequestForm() {
         <label className="block text-xs font-bold text-slate-200 uppercase tracking-wider">
           1. Catégorie de l'incident <span className="text-blue-400">*</span>
         </label>
+        {categoriesLoading ? (
+          <p className="text-xs text-slate-400">Chargement des catégories…</p>
+        ) : categoriesError ? (
+          <p role="alert" className="text-xs text-rose-400">
+            Impossible de charger les catégories. Rechargez la page ou réessayez plus tard.
+          </p>
+        ) : categories.length === 0 ? (
+          <p role="alert" className="text-xs text-amber-400">
+            Aucune catégorie n&apos;est disponible pour le moment. Contactez l&apos;administrateur.
+          </p>
+        ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {categories.map((cat) => {
             const Icon = getCategoryIcon(cat.slug);
@@ -253,7 +270,7 @@ function NewRequestForm() {
                 onClick={() => setCategoryId(cat._id)}
                 className={`p-3.5 rounded-xl border text-left flex items-start gap-3 transition-all ${
                   isSelected
-                    ? "bg-blue-600/15 border-blue-500 ring-2 ring-blue-500/20 text-white"
+                    ? "bg-blue-600/15 border-blue-500 ring-2 ring-blue-500/20 text-slate-100"
                     : "bg-slate-800/40 border-slate-800 text-slate-300 hover:border-slate-700"
                 }`}
               >
@@ -274,6 +291,7 @@ function NewRequestForm() {
             );
           })}
         </div>
+        )}
       </div>
 
       {noProperty && (
@@ -382,7 +400,7 @@ function NewRequestForm() {
                       ? p === "URGENTE"
                         ? "bg-rose-500/20 text-rose-300 border-rose-500 ring-2 ring-rose-500/20"
                         : "bg-blue-600 text-white border-blue-500 shadow-md shadow-blue-500/20"
-                      : "bg-slate-800 text-slate-400 border-slate-700 hover:text-white"
+                      : "bg-slate-800 text-slate-400 border-slate-700 hover:text-slate-100"
                   }`}
                 >
                   {p === "BASSE" && "Basse (Confort)"}

@@ -16,6 +16,7 @@ export interface IUser extends Document {
   // Audit fields (populated by signup layer)
   emailVerifiedAt?: Date;
   lastLoginAt?: Date;
+  suspendedAt?: Date;
   deletedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -42,6 +43,7 @@ const UserSchema = new Schema<IUser>(
     activeRole: { type: String, enum: USER_ROLES },
     emailVerifiedAt: { type: Date },
     lastLoginAt: { type: Date },
+    suspendedAt: { type: Date },
     deletedAt: { type: Date },
   },
   { timestamps: true, versionKey: false }
@@ -56,6 +58,8 @@ UserSchema.pre("validate", function () {
 export const UserModel = getOrCreateModel<IUser>("User", UserSchema);
 
 // Technician Profile with GeoJSON location for proximity matching
+export type TechnicianVerificationStatus = "PENDING" | "APPROVED" | "REJECTED";
+
 export interface ITechnicianProfile extends Document {
   _id: Types.ObjectId;
   userId: Types.ObjectId;
@@ -69,6 +73,7 @@ export interface ITechnicianProfile extends Document {
   address: string;
   phone?: string;
   yearsExperience?: number;
+  verificationStatus: TechnicianVerificationStatus;
   averageRating: number;
   completedInterventionsCount: number;
   hourlyRateDT?: number;
@@ -96,6 +101,13 @@ const TechnicianProfileSchema = new Schema<ITechnicianProfile>(
     address: { type: String, default: "Tunis, Tunisie" },
     phone: { type: String },
     yearsExperience: { type: Number, min: 0 },
+    // Signup stores PENDING explicitly. The default keeps technicians registered before verification existed approved.
+    verificationStatus: {
+      type: String,
+      enum: ["PENDING", "APPROVED", "REJECTED"],
+      default: "APPROVED",
+      index: true,
+    },
     averageRating: { type: Number, default: 5.0, min: 1, max: 5 },
     completedInterventionsCount: { type: Number, default: 0 },
     hourlyRateDT: { type: Number, default: 45 },
