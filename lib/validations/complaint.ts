@@ -37,8 +37,8 @@ const idField = z
   .min(1, "Identifiant de réclamation manquant.");
 
 /**
- * Optional development-only test apartment id. An empty select value means
- * "no specific apartment" and must be treated as absent, not as an error.
+ * The targeted logement id. An empty select value is treated as absent here;
+ * the form and the server action require it for tenants.
  */
 const propertyIdField = z.preprocess(
   (value) =>
@@ -46,7 +46,7 @@ const propertyIdField = z.preprocess(
   z
     .string()
     .trim()
-    .regex(/^[a-f\d]{24}$/i, "Appartement de test invalide.")
+    .regex(/^[a-f\d]{24}$/i, "Logement invalide.")
     .optional(),
 );
 

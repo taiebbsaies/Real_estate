@@ -5,7 +5,6 @@ import type {
   ComplaintPriority,
   ComplaintStatus,
 } from "@/lib/constants/complaint";
-import type { SerializedTestProperty } from "@/lib/test-properties/types";
 
 export type ComplaintActionState = {
   success: boolean;
@@ -15,13 +14,22 @@ export type ComplaintActionState = {
   localDraft?: boolean;
 };
 
+/** A logement a complaint can target. Only test apartments have a code. */
+export type ComplaintProperty = {
+  _id: string;
+  code?: string;
+  label: string;
+  address: string;
+  city: string;
+};
+
 export type SerializedComplaint = {
   _id: string;
   tenantId: string;
-  /** Development-only test apartment reference, when the complaint targets one. */
+  /** The logement the complaint targets. Absent on legacy complaints. */
   propertyId?: string;
-  /** Resolved test apartment metadata for display in tenant/staff views. */
-  property?: SerializedTestProperty;
+  /** Resolved logement details for display in tenant/staff views. */
+  property?: ComplaintProperty;
   title: string;
   description: string;
   category: ComplaintCategory;

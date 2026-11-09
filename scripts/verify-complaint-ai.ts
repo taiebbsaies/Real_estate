@@ -181,11 +181,11 @@ async function main() {
   // Configuration is opt-in: no key/model, no classification.
   assert.equal(getAiProviderConfig({}), null);
   assert.equal(getAiProviderConfig({ AI_API_KEY: "key-only" }), null);
-  assert.equal(getAiProviderConfig({ AI_MODEL: "model-only" }), null);
+  assert.equal(getAiProviderConfig({ AI_MODEL_2: "model-only" }), null);
 
   const configured = getAiProviderConfig({
     AI_API_KEY: " test-key ",
-    AI_MODEL: " test-model ",
+    AI_MODEL_2: " test-model ",
     AI_BASE_URL: "https://example.test/v1///",
   });
   assert.deepEqual(configured, {

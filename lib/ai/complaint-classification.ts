@@ -11,7 +11,8 @@ import type {
 } from "@/lib/ai/types";
 
 export const AI_API_KEY_ENV = "AI_API_KEY";
-export const AI_MODEL_ENV = "AI_MODEL";
+// Separate from AI_MODEL, which selects the Gemini model of the budget features.
+export const AI_MODEL_ENV = "AI_MODEL_2";
 export const AI_BASE_URL_ENV = "AI_BASE_URL";
 
 const DEFAULT_BASE_URL = "https://api.openai.com/v1";
@@ -36,9 +37,9 @@ export type AiProviderConfig = {
 };
 
 /**
- * Read the optional AI provider configuration. The project does not ship an
- * AI SDK, so any OpenAI-compatible chat-completions endpoint can be used
- * without adding a dependency. Nothing is configured by default.
+ * Read the optional AI provider configuration. Any OpenAI-compatible
+ * chat-completions endpoint can be used (for example Groq). Nothing is
+ * configured by default.
  */
 export function getAiProviderConfig(
   env: Record<string, string | undefined> = process.env,

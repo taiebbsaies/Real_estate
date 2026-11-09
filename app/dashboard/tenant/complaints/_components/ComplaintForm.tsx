@@ -11,10 +11,10 @@ import { useFormStatus } from "react-dom";
 import { createComplaint, updateComplaint } from "@/app/actions/complaints";
 import type {
   ComplaintActionState,
+  ComplaintProperty,
   SerializedComplaint,
 } from "@/lib/complaints/types";
-import { formatTestPropertyCode } from "@/lib/test-properties/display";
-import type { SerializedTestProperty } from "@/lib/test-properties/types";
+import { formatComplaintPropertyName } from "@/lib/test-properties/display";
 import { createComplaintSchema } from "@/lib/validations/complaint";
 import { removeDraft, saveDraft } from "./OfflineBanner";
 
@@ -39,13 +39,13 @@ function fieldErrors(error: {
 
 // ─── Submit button ─────────────────────────────────────────────────────────────
 
-function SubmitButton({ label }: { label: string }) {
+function SubmitButton({ label, disabled = false }: { label: string; disabled?: boolean }) {
   const { pending } = useFormStatus();
   return (
     <button
       id="complaint-submit-btn"
       type="submit"
-      disabled={pending}
+      disabled={pending || disabled}
       className="inline-flex h-10 w-full items-center justify-center rounded-xl bg-zinc-950 px-6 text-sm font-semibold text-white shadow-sm transition-all hover:bg-zinc-800 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200"
     >
       {pending ? (
@@ -94,16 +94,28 @@ function FieldError({ errors, field }: { errors?: Record<string, string[]>; fiel
 interface ComplaintFormProps {
   /** Scopes local drafts to the authenticated tenant. */
   ownerId: string;
-  /** Development-only test apartments actively occupied by this tenant. */
-  testProperties?: SerializedTestProperty[];
+  /** Logements this tenant occupies. */
+  properties?: ComplaintProperty[];
+  /** Tenants must choose a logement; an admin may file a general complaint. */
+  requireProperty?: boolean;
   editTarget?: SerializedComplaint | null;
   onClose?: () => void;
 }
 
 // ─── Main form ────────────────────────────────────────────────────────────────
 
-export default function ComplaintForm({ ownerId, testProperties = [], editTarget, onClose }: ComplaintFormProps) {
+export default function ComplaintForm({ ownerId, properties = [], requireProperty = false, editTarget, onClose }: ComplaintFormProps) {
   const isEditing = !!editTarget;
+  // Keep the logement already targeted selectable, even after a move-out.
+  const propertyOptions =
+    editTarget?.property &&
+    !properties.some((property) => property._id === editTarget.property?._id)
+      ? [editTarget.property, ...properties]
+      : properties;
+  const defaultPropertyId =
+    editTarget?.propertyId ??
+    (requireProperty && propertyOptions.length === 1 ? propertyOptions[0]._id : "");
+  const blockedWithoutProperty = requireProperty && propertyOptions.length === 0;
   const formRef = useRef<HTMLFormElement>(null);
   const clientKeyRef = useRef<string | null>(null);
   const [dismissedState, setDismissedState] = useState<ComplaintActionState | null>(null);
@@ -113,6 +125,14 @@ export default function ComplaintForm({ ownerId, testProperties = [], editTarget
       previousState: ComplaintActionState | null,
       formData: FormData,
     ): Promise<ComplaintActionState> => {
+      if (requireProperty && !String(formData.get("propertyId") ?? "").trim()) {
+        return {
+          success: false,
+          message: "Veuillez corriger les champs en surbrillance.",
+          errors: { propertyId: ["Choisissez le logement concerné."] },
+        };
+      }
+
       if (isEditing) {
         try {
           return await updateComplaint(previousState, formData);
@@ -190,7 +210,7 @@ export default function ComplaintForm({ ownerId, testProperties = [], editTarget
         };
       }
     },
-    [isEditing, ownerId],
+    [isEditing, ownerId, requireProperty],
   );
 
   const [state, formAction] = useActionState(submitAction, null);
@@ -259,32 +279,46 @@ export default function ComplaintForm({ ownerId, testProperties = [], editTarget
           <input type="hidden" name="id" value={editTarget._id} />
         )}
 
-        {/* Development-only test apartment selector */}
-        {testProperties.length > 0 && (
+        {/* Logement */}
+        {blockedWithoutProperty && (
+          <p
+            role="alert"
+            className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs leading-relaxed text-amber-800 dark:border-amber-800/60 dark:bg-amber-950/30 dark:text-amber-300"
+          >
+            Aucun logement n&apos;est associé à votre compte. Demandez à votre
+            propriétaire de vous l&apos;attribuer pour pouvoir soumettre une
+            réclamation.
+          </p>
+        )}
+        {propertyOptions.length > 0 && (
           <div>
             <label
               htmlFor="complaint-property"
               className="mb-1 block text-xs font-semibold text-zinc-700 dark:text-zinc-300"
             >
-              Appartement concerné
+              Logement concerné{" "}
+              {requireProperty && (
+                <span className="text-red-500" aria-hidden="true">*</span>
+              )}
             </label>
             <select
               id="complaint-property"
               name="propertyId"
-              defaultValue={editTarget?.propertyId ?? ""}
+              required={requireProperty}
+              defaultValue={defaultPropertyId}
               className="w-full rounded-xl border border-zinc-200 bg-white px-3.5 py-2.5 text-sm text-zinc-900 outline-none transition focus:border-zinc-950 focus:ring-2 focus:ring-zinc-950/10 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:focus:border-zinc-400"
             >
-              <option value="">Aucun appartement (réclamation générale)</option>
-              {testProperties.map((property) => (
+              <option value="" disabled={requireProperty}>
+                {requireProperty
+                  ? "Sélectionner un logement…"
+                  : "Aucun logement (réclamation générale)"}
+              </option>
+              {propertyOptions.map((property) => (
                 <option key={property._id} value={property._id}>
-                  {formatTestPropertyCode(property.code)} — {property.label}, {property.city}
+                  {formatComplaintPropertyName(property)}, {property.city}
                 </option>
               ))}
             </select>
-            <p className="mt-1 text-[11px] text-zinc-400">
-              Appartements fictifs de développement, limités à ceux que vous
-              occupez.
-            </p>
             <FieldError errors={state?.errors} field="propertyId" />
           </div>
         )}
@@ -344,7 +378,10 @@ export default function ComplaintForm({ ownerId, testProperties = [], editTarget
         {/* Actions */}
         <div className={`flex gap-3 pt-1 ${isEditing ? "flex-row-reverse" : ""}`}>
           <div className="flex-1">
-            <SubmitButton label={isEditing ? "Enregistrer" : "Soumettre la réclamation"} />
+            <SubmitButton
+              label={isEditing ? "Enregistrer" : "Soumettre la réclamation"}
+              disabled={blockedWithoutProperty}
+            />
           </div>
           {isEditing && onClose && (
             <button

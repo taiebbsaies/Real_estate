@@ -3,8 +3,7 @@ import { Types } from "mongoose";
 import { connectDB } from "@/lib/mongodb";
 import { getSession } from "@/lib/session";
 import Complaint from "@/models/complaint";
-import { isTestPropertiesEnabled } from "@/lib/test-properties/config";
-import { getOwnedTestPropertyIds } from "@/lib/test-properties/queries";
+import { getOwnedComplaintPropertyIds } from "@/lib/complaints/properties";
 import {
   composeCategoryStats,
   composeMonthlyStats,
@@ -42,15 +41,13 @@ export type ComplaintStatistics = {
 
 /**
  * Mirror the owner visibility rules used by the complaint list: owners see
- * legacy complaints without an apartment and complaints on their own test
- * apartments. Admins see everything.
+ * legacy complaints without a logement and complaints on their own
+ * logements. Admins see everything.
  */
 async function buildOwnerScopeMatch(
   userId: string,
 ): Promise<Record<string, unknown>> {
-  if (!isTestPropertiesEnabled()) return {};
-
-  const ownedPropertyIds = await getOwnedTestPropertyIds(userId);
+  const ownedPropertyIds = await getOwnedComplaintPropertyIds(userId);
   return {
     $or: [
       { propertyId: { $exists: false } },

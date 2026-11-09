@@ -23,11 +23,10 @@ import { getResolutionTimestampUpdate } from "@/lib/complaints/resolution";
 import { createComplaintWithClassification } from "@/lib/complaints/create";
 import { canCorrectComplaintClassification } from "@/lib/complaints/classification-access";
 import { requestComplaintClassification } from "@/lib/ai/complaint-classification";
-import { isTestPropertiesEnabled } from "@/lib/test-properties/config";
 import {
-  getTestPropertyOwnerId,
-  tenantOccupiesTestProperty,
-} from "@/lib/test-properties/queries";
+  getComplaintPropertyOwnerId,
+  tenantCanComplainAbout,
+} from "@/lib/complaints/properties";
 
 export type { ComplaintActionState } from "@/lib/complaints/types";
 
@@ -78,6 +77,23 @@ function notFound(): ComplaintActionState {
   return { success: false, message: "Réclamation introuvable." };
 }
 
+function propertyRequired(): ComplaintActionState {
+  return {
+    success: false,
+    message: "Veuillez corriger les champs en surbrillance.",
+    errors: { propertyId: ["Choisissez le logement concerné."] },
+  };
+}
+
+function propertyNotAllowed(): ComplaintActionState {
+  return {
+    success: false,
+    message:
+      "Ce logement n'est pas associé à votre compte. Choisissez un logement que vous occupez.",
+    errors: { propertyId: ["Logement non associé à votre compte."] },
+  };
+}
+
 function optionalFormValue(value: FormDataEntryValue | null): string | undefined {
   if (typeof value !== "string") return undefined;
   const trimmed = value.trim();
@@ -121,32 +137,18 @@ export async function createComplaint(
 
   const { propertyId, clientKey, title, description } = parsed.data;
 
+  if (!propertyId && session.activeRole === "TENANT") {
+    return propertyRequired();
+  }
+
   try {
     await connectDB();
 
-    if (propertyId) {
-      if (!isTestPropertiesEnabled()) {
-        return {
-          success: false,
-          message: "Les appartements de test ne sont pas activés.",
-          errors: { propertyId: ["Appartement de test indisponible."] },
-        };
-      }
-
-      const occupies = await tenantOccupiesTestProperty(
-        session.userId,
-        propertyId,
-      );
-      if (!occupies) {
-        return {
-          success: false,
-          message:
-            "Vous n'occupez pas cet appartement de test. Choisissez un appartement associé à votre compte.",
-          errors: {
-            propertyId: ["Occupation active requise pour cet appartement."],
-          },
-        };
-      }
+    if (
+      propertyId &&
+      !(await tenantCanComplainAbout(session.userId, propertyId))
+    ) {
+      return propertyNotAllowed();
     }
 
     // The shared workflow checks the client key before calling the provider, so
@@ -243,32 +245,25 @@ export async function updateComplaint(
 
   if (!isValidObjectId(id)) return notFound();
 
+  if (!propertyId && session.activeRole === "TENANT") {
+    return propertyRequired();
+  }
+
   try {
     await connectDB();
 
-    if (propertyId) {
-      if (!isTestPropertiesEnabled()) {
-        return {
-          success: false,
-          message: "Les appartements de test ne sont pas activés.",
-          errors: { propertyId: ["Appartement de test indisponible."] },
-        };
-      }
-
-      const occupies = await tenantOccupiesTestProperty(
-        session.userId,
+    // A tenant who has since moved out can still edit the text of a complaint
+    // about the logement it already targets.
+    if (
+      propertyId &&
+      !(await Complaint.exists({
+        _id: id,
+        tenantId: session.userId,
         propertyId,
-      );
-      if (!occupies) {
-        return {
-          success: false,
-          message:
-            "Vous n'occupez pas cet appartement de test. Choisissez un appartement associé à votre compte.",
-          errors: {
-            propertyId: ["Occupation active requise pour cet appartement."],
-          },
-        };
-      }
+      })) &&
+      !(await tenantCanComplainAbout(session.userId, propertyId))
+    ) {
+      return propertyNotAllowed();
     }
 
     // Category and priority are deliberately absent: the tenant can change the
@@ -279,7 +274,7 @@ export async function updateComplaint(
     }
 
     const update: Record<string, unknown> = { $set: setFields };
-    // Removing the apartment is explicit: an empty select clears the link.
+    // Only an admin can reach this without a logement; tenants must choose one.
     if (!propertyId) {
       update.$unset = { propertyId: "" };
     }
@@ -425,10 +420,10 @@ export async function updateComplaintStatus(
       return forbidden();
     }
 
-    // Owners may only update complaints targeting their own test apartment.
+    // Owners may only update complaints targeting their own logement.
     // Legacy complaints without a property keep the previous behaviour.
     if (session.activeRole === "OWNER" && existing.propertyId) {
-      const ownerId = await getTestPropertyOwnerId(
+      const ownerId = await getComplaintPropertyOwnerId(
         existing.propertyId.toString(),
       );
       if (!ownerId || ownerId !== session.userId) {
@@ -592,7 +587,7 @@ export async function updateComplaintClassification(
     }
 
     if (session.activeRole === "OWNER" && existing.propertyId) {
-      const ownerId = await getTestPropertyOwnerId(
+      const ownerId = await getComplaintPropertyOwnerId(
         existing.propertyId.toString(),
       );
       if (!ownerId || ownerId !== session.userId) {

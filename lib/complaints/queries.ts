@@ -4,11 +4,10 @@ import { getSession } from "@/lib/session";
 import Complaint, { type IComplaint } from "@/models/complaint";
 import type { ComplaintStatus } from "@/lib/constants/complaint";
 import type { SerializedComplaint } from "@/lib/complaints/types";
-import { isTestPropertiesEnabled } from "@/lib/test-properties/config";
 import {
-  getOwnedTestPropertyIds,
-  getTestPropertyMap,
-} from "@/lib/test-properties/queries";
+  getComplaintPropertyMap,
+  getOwnedComplaintPropertyIds,
+} from "@/lib/complaints/properties";
 
 const STAFF_ROLES = ["OWNER", "TECHNICIAN", "ADMIN"] as const;
 
@@ -38,10 +37,10 @@ function serializeComplaint(doc: IComplaint & { _id: unknown }): SerializedCompl
 }
 
 /**
- * Attach the test apartment code/address used by the complaint cards.
+ * Attach the logement details used by the complaint cards.
  * Complaints without a property (including all legacy complaints) are untouched.
  */
-async function attachTestProperties(
+async function attachProperties(
   complaints: SerializedComplaint[],
 ): Promise<void> {
   const propertyIds = complaints
@@ -50,7 +49,7 @@ async function attachTestProperties(
 
   if (propertyIds.length === 0) return;
 
-  const propertyMap = await getTestPropertyMap(propertyIds);
+  const propertyMap = await getComplaintPropertyMap(propertyIds);
   for (const complaint of complaints) {
     if (!complaint.propertyId) continue;
     const property = propertyMap.get(complaint.propertyId);
@@ -78,7 +77,7 @@ export async function getMyComplaints(): Promise<SerializedComplaint[]> {
     .lean();
 
   const complaints = docs.map(serializeComplaint);
-  await attachTestProperties(complaints);
+  await attachProperties(complaints);
 
   return complaints;
 }
@@ -87,9 +86,8 @@ export async function getMyComplaints(): Promise<SerializedComplaint[]> {
  * Fetch complaints for staff views.
  *
  * - Admins can see every complaint.
- * - Owners see legacy complaints (no apartment) and complaints targeting their
- *   own test apartments. The filter only applies while the development-only
- *   test apartments are enabled.
+ * - Owners see legacy complaints (no logement) and complaints targeting their
+ *   own logements.
  * - Technicians only see unassigned complaints and complaints assigned to them.
  */
 export async function getAllComplaints(
@@ -112,8 +110,8 @@ export async function getAllComplaints(
       { technicianId: session.userId },
       { technicianId: { $exists: false } },
     ];
-  } else if (session.activeRole === "OWNER" && isTestPropertiesEnabled()) {
-    const ownedPropertyIds = await getOwnedTestPropertyIds(session.userId);
+  } else if (session.activeRole === "OWNER") {
+    const ownedPropertyIds = await getOwnedComplaintPropertyIds(session.userId);
     query.$or = [
       { propertyId: { $exists: false } },
       { propertyId: null },
@@ -128,7 +126,7 @@ export async function getAllComplaints(
   const docs = await Complaint.find(query).sort({ createdAt: -1 }).lean();
 
   const complaints = docs.map(serializeComplaint);
-  await attachTestProperties(complaints);
+  await attachProperties(complaints);
 
   return complaints;
 }

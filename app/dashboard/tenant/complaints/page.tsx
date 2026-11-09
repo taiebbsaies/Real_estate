@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { getSession } from "@/lib/session";
 import { getMyComplaints } from "@/lib/complaints/queries";
-import { getOccupiedTestProperties } from "@/lib/test-properties/queries";
+import { getTenantComplaintProperties } from "@/lib/complaints/properties";
 import ComplaintForm from "./_components/ComplaintForm";
 import ComplaintList from "./_components/ComplaintList";
 import OfflineBanner from "./_components/OfflineBanner";
@@ -24,8 +24,8 @@ export default async function TenantComplaintsPage() {
   }
 
   const complaints = await getMyComplaints();
-  // Development-only: empty unless ENABLE_TEST_PROPERTIES=true locally.
-  const testProperties = await getOccupiedTestProperties(session.userId);
+  const properties = await getTenantComplaintProperties(session.userId);
+  const requireProperty = session.activeRole === "TENANT";
 
   // KPI counts
   const total = complaints.length;
@@ -119,7 +119,8 @@ export default async function TenantComplaintsPage() {
           <section aria-label="Nouvelle réclamation">
             <ComplaintForm
               ownerId={session.userId}
-              testProperties={testProperties}
+              properties={properties}
+              requireProperty={requireProperty}
             />
           </section>
 
@@ -134,7 +135,8 @@ export default async function TenantComplaintsPage() {
             <ComplaintList
               ownerId={session.userId}
               complaints={complaints}
-              testProperties={testProperties}
+              properties={properties}
+              requireProperty={requireProperty}
             />
           </section>
         </div>

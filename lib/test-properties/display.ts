@@ -7,3 +7,13 @@
 export function formatTestPropertyCode(code: string): string {
   return code.replace(/^TEST-/, "");
 }
+
+/** Name shown for a complaint's logement. Only test apartments have a code. */
+export function formatComplaintPropertyName(property: {
+  code?: string;
+  label: string;
+}): string {
+  return property.code
+    ? `${formatTestPropertyCode(property.code)} — ${property.label}`
+    : property.label;
+}
