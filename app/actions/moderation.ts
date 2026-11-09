@@ -5,11 +5,15 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { connectDB } from "@/lib/mongodb";
 import { getSession } from "@/lib/session";
+import {
+  getModerationPropertyById,
+  type ModerationPropertyDetail,
+} from "@/lib/properties/admin-queries";
 import Property from "@/models/property";
 import Report from "@/models/Report";
 
 const propertyIdSchema = z.string().refine(isValidObjectId);
-const rejectionReasonSchema = z.string().trim().min(10).max(500);
+const rejectionReasonSchema = z.string().trim().min(10).max(1000);
 
 export type ModerationActionResult = {
   success: boolean;
@@ -97,7 +101,7 @@ export async function rejectProperty(
     return {
       success: false,
       message: reasonIsInvalid
-        ? "Le motif doit contenir entre 10 et 500 caractères."
+        ? "Le motif doit contenir entre 10 et 1000 caractères."
         : "Logement introuvable.",
     };
   }
@@ -196,5 +200,27 @@ export async function dismissReports(
       success: false,
       message: "Impossible de traiter les signalements. Veuillez réessayer.",
     };
+  }
+}
+
+export async function getModerationPropertyDetail(
+  propertyId: string,
+): Promise<ModerationPropertyDetail | null> {
+  const session = await getSession();
+  if (!session || session.activeRole !== "ADMIN") {
+    return null;
+  }
+
+  const parsedId = propertyIdSchema.safeParse(propertyId);
+  if (!parsedId.success) {
+    return null;
+  }
+
+  try {
+    const detail = await getModerationPropertyById(parsedId.data);
+    return detail;
+  } catch (error: unknown) {
+    console.error("[getModerationPropertyDetail] error:", error);
+    return null;
   }
 }

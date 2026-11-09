@@ -2,11 +2,15 @@ import "server-only";
 import type { Types } from "mongoose";
 import type { ReportReason } from "@/lib/validations/report";
 import type {
+  PropertyAvailability,
+  PropertyCondition,
+  PropertyEquipment,
   PropertyModerationStatus,
   PropertyType,
 } from "@/lib/constants/property";
 import { connectDB } from "@/lib/mongodb";
 import { getSession } from "@/lib/session";
+import { computeQualityScore, type QualityScore } from "@/lib/properties/quality-score";
 import Property from "@/models/property";
 import Report from "@/models/Report";
 import User from "@/models/user";
@@ -18,6 +22,9 @@ export type ModerationProperty = {
   zone?: string;
   price: number;
   type: PropertyType;
+  surface: number;
+  bedrooms?: number;
+  bathrooms?: number;
   images: string[];
   coverImage?: string;
   moderationStatus: PropertyModerationStatus;
@@ -25,6 +32,7 @@ export type ModerationProperty = {
   reportCount: number;
   createdAt: string;
   updatedAt: string;
+  quality: QualityScore;
   owner: {
     name: string;
     email: string;
@@ -32,10 +40,10 @@ export type ModerationProperty = {
 };
 
 export type ModerationCounts = {
-  pending: number;
-  approved: number;
-  rejected: number;
-  reports: number;
+  pending: number | null;
+  approved: number | null;
+  rejected: number | null;
+  reports: number | null;
 };
 
 export type OpenReportGroup = {
@@ -56,6 +64,7 @@ export type OpenReportGroup = {
 
 export async function getPropertiesForModeration(
   status: "pending" | "approved" | "rejected",
+  sortDirection: "asc" | "desc" = "desc",
 ): Promise<ModerationProperty[]> {
   const session = await getSession();
   if (!session || session.activeRole !== "ADMIN") {
@@ -68,9 +77,9 @@ export async function getPropertiesForModeration(
     moderationStatus: status,
     deletedAt: null,
   })
-    .sort({ createdAt: -1 })
+    .sort({ createdAt: sortDirection })
     .select(
-      "_id ownerId title city zone price type images coverImage moderationStatus moderationReason createdAt updatedAt",
+      "_id ownerId title description city zone address latitude longitude price type surface bedrooms bathrooms availableFrom equipments images coverImage rules moderationStatus moderationReason createdAt updatedAt",
     )
     .lean();
 
@@ -115,6 +124,9 @@ export async function getPropertiesForModeration(
     zone: property.zone,
     price: property.price,
     type: property.type,
+    surface: property.surface,
+    bedrooms: property.bedrooms,
+    bathrooms: property.bathrooms,
     images: property.images,
     coverImage: property.coverImage,
     moderationStatus: property.moderationStatus,
@@ -122,6 +134,7 @@ export async function getPropertiesForModeration(
     reportCount: reportCountByProperty.get(String(property._id)) ?? 0,
     createdAt: property.createdAt.toISOString(),
     updatedAt: property.updatedAt.toISOString(),
+    quality: computeQualityScore(property),
     owner: ownersById.get(String(property.ownerId)) ?? {
       name: "Propriétaire indisponible",
       email: "",
@@ -137,14 +150,46 @@ export async function getModerationCounts(): Promise<ModerationCounts> {
 
   await connectDB();
 
-  const [pending, approved, rejected, reports] = await Promise.all([
-    Property.countDocuments({ moderationStatus: "pending", deletedAt: null }),
-    Property.countDocuments({ moderationStatus: "approved", deletedAt: null }),
-    Property.countDocuments({ moderationStatus: "rejected", deletedAt: null }),
-    Report.countDocuments({ status: "open" }),
-  ]);
+  const [pending, approved, rejected, reportCounts] =
+    await Promise.allSettled([
+      Property.countDocuments({ moderationStatus: "pending", deletedAt: null }),
+      Property.countDocuments({ moderationStatus: "approved", deletedAt: null }),
+      Property.countDocuments({ moderationStatus: "rejected", deletedAt: null }),
+      Report.aggregate<{ total: number }>([
+        { $match: { status: "open" } },
+        {
+          $lookup: {
+            from: Property.collection.name,
+            localField: "propertyId",
+            foreignField: "_id",
+            as: "property",
+          },
+        },
+        { $unwind: "$property" },
+        { $match: { "property.deletedAt": null } },
+        { $count: "total" },
+      ]),
+    ]);
 
-  return { pending, approved, rejected, reports };
+  const countOrNull = <T,>(result: PromiseSettledResult<T>): T | null => {
+    if (result.status === "fulfilled") {
+      return result.value;
+    }
+
+    console.error(
+      result.reason instanceof Error ? result.reason.name : "UnknownError",
+    );
+    return null;
+  };
+
+  const reportCountResult = countOrNull(reportCounts);
+
+  return {
+    pending: countOrNull(pending),
+    approved: countOrNull(approved),
+    rejected: countOrNull(rejected),
+    reports: reportCountResult?.[0]?.total ?? (reportCountResult ? 0 : null),
+  };
 }
 
 export async function getOpenReportsByProperty(): Promise<OpenReportGroup[]> {
@@ -166,7 +211,7 @@ export async function getOpenReportsByProperty(): Promise<OpenReportGroup[]> {
   const propertyIds = [...new Set(reports.map((report) => String(report.propertyId)))];
   const reporterIds = [...new Set(reports.map((report) => String(report.reporterId)))];
   const [properties, reporters] = await Promise.all([
-    Property.find({ _id: { $in: propertyIds } })
+    Property.find({ _id: { $in: propertyIds }, deletedAt: null })
       .select("_id title city zone moderationStatus")
       .lean(),
     User.find({ _id: { $in: reporterIds } })
@@ -214,4 +259,82 @@ export async function getOpenReportsByProperty(): Promise<OpenReportGroup[]> {
   }
 
   return [...groupByPropertyId.values()];
+}
+
+export type ModerationPropertyDetail = {
+  _id: string;
+  title: string;
+  description: string;
+  price: number;
+  city: string;
+  zone?: string;
+  address: string;
+  latitude: number;
+  longitude: number;
+  surface: number;
+  bedrooms?: number;
+  bathrooms?: number;
+  type: PropertyType;
+  condition: PropertyCondition;
+  availability: PropertyAvailability;
+  equipments: PropertyEquipment[];
+  rules?: string;
+  images: string[];
+  coverImage?: string;
+  moderationStatus: PropertyModerationStatus;
+  moderationReason?: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+// ADMIN-only read of a full listing for the moderation detail panel.
+// Does not reuse the public queries: moderation owns its own read model.
+export async function getModerationPropertyById(
+  propertyId: string,
+): Promise<ModerationPropertyDetail | null> {
+  const session = await getSession();
+  if (!session || session.activeRole !== "ADMIN") {
+    return null;
+  }
+
+  await connectDB();
+
+  const property = await Property.findOne({
+    _id: propertyId,
+    deletedAt: null,
+  })
+    .select(
+      "_id title description price city zone address latitude longitude surface bedrooms bathrooms type condition availability equipments images coverImage rules moderationStatus moderationReason createdAt updatedAt",
+    )
+    .lean();
+
+  if (!property) {
+    return null;
+  }
+
+  return {
+    _id: String(property._id),
+    title: property.title,
+    description: property.description,
+    price: property.price,
+    city: property.city,
+    zone: property.zone,
+    address: property.address,
+    latitude: property.latitude,
+    longitude: property.longitude,
+    surface: property.surface,
+    bedrooms: property.bedrooms,
+    bathrooms: property.bathrooms,
+    type: property.type,
+    condition: property.condition,
+    availability: property.availability,
+    equipments: property.equipments,
+    rules: property.rules,
+    images: property.images,
+    coverImage: property.coverImage,
+    moderationStatus: property.moderationStatus,
+    moderationReason: property.moderationReason,
+    createdAt: property.createdAt.toISOString(),
+    updatedAt: property.updatedAt.toISOString(),
+  };
 }

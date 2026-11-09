@@ -120,6 +120,26 @@ async function HomePropertiesCta() {
 
   if (!propertiesCta) return null;
 
+  // Admin: lead with the administration hub instead of tenant listings.
+  if (session.activeRole === "ADMIN") {
+    return (
+      <>
+        <Link
+          href="/dashboard/admin"
+          className="mt-6 inline-flex h-11 items-center justify-center rounded-xl bg-[#166534] px-5 text-sm font-semibold text-white shadow-xs transition-all hover:bg-[#14532d] active:scale-98 dark:bg-emerald-500 dark:text-zinc-950 dark:hover:bg-emerald-400 dark:shadow-[0_0_25px_-5px_rgba(34,197,94,0.45)]"
+        >
+          Tableau de bord admin
+        </Link>
+        <Link
+          href={propertiesCta.href}
+          className="mt-3 inline-flex h-11 items-center justify-center rounded-xl border border-[#DCFCE7] bg-white px-5 text-sm font-semibold text-[#166534] shadow-xs transition-all hover:bg-[#F0FDF4] active:scale-98 dark:border-emerald-500/20 dark:bg-[#0c1410] dark:text-emerald-300 dark:hover:bg-[#121c16]"
+        >
+          Voir les annonces
+        </Link>
+      </>
+    );
+  }
+
   return (
     <Link
       href={propertiesCta.href}

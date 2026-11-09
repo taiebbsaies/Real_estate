@@ -1,13 +1,16 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
-import { z } from "zod";
 import {
   getModerationCounts,
   getOpenReportsByProperty,
   getPropertiesForModeration,
+  type ModerationCounts,
 } from "@/lib/properties/admin-queries";
 import { getSession } from "@/lib/session";
+import { computePriceInsights } from "@/lib/properties/price-insight";
+import { parseAdminModerationQuery } from "@/lib/validations/property-search";
+import AdminHeader from "../_components/AdminHeader";
 import ModerationCard from "./_components/ModerationCard";
 import ReportModerationCard from "./_components/ReportModerationCard";
 
@@ -18,7 +21,8 @@ export const metadata: Metadata = {
   description: "Examinez et modérez les annonces de logements.",
 };
 
-const statusSchema = z.enum(["pending", "approved", "rejected", "reports"]);
+const MODERATION_PAGE_SIZE = 12;
+
 const statusTabs = [
   { value: "pending", label: "En attente" },
   { value: "approved", label: "Approuvés" },
@@ -40,60 +44,88 @@ export default async function AdminPropertiesPage({
 
   const params = await searchParams;
   const rawStatus = params.status;
-  const parsedStatus = statusSchema.safeParse(
-    Array.isArray(rawStatus) ? rawStatus[0] : rawStatus,
-  );
-  const status = parsedStatus.success ? parsedStatus.data : "pending";
+  const rawPage = params.page;
+  const statusValue = Array.isArray(rawStatus) ? rawStatus[0] : rawStatus;
+  const pageValue = Array.isArray(rawPage) ? rawPage[0] : rawPage;
+  const { status, page: requestedPage } = parseAdminModerationQuery({
+    status: statusValue,
+    page: pageValue,
+  });
 
-  const [counts, reportGroups, properties] = await Promise.all([
-    getModerationCounts(),
-    getOpenReportsByProperty(),
+  let counts: ModerationCounts | null = null;
+
+  try {
+    counts = await getModerationCounts();
+  } catch (error: unknown) {
+    console.error(error instanceof Error ? error.name : "UnknownError");
+  }
+
+  const sortDirection = status === "pending" ? "asc" : "desc";
+  const reportGroups = await getOpenReportsByProperty();
+  const properties =
     status === "reports"
-      ? Promise.resolve([])
-      : getPropertiesForModeration(status),
-  ]);
+      ? []
+      : await getPropertiesForModeration(status, sortDirection);
+
   const reportCountsByProperty = new Map(
     reportGroups.map((group) => [group.propertyId, group.reportCount]),
+  );
+  const reportsByPropertyId = new Map(
+    reportGroups.map((group) => [group.propertyId, group.reports]),
   );
   const propertiesWithReportCounts = properties.map((property) => ({
     ...property,
     reportCount: reportCountsByProperty.get(property._id) ?? property.reportCount,
   }));
+  const priceInsights = await computePriceInsights(
+    propertiesWithReportCounts.map((property) => ({
+      id: property._id,
+      city: property.city,
+      type: property.type,
+      price: property.price,
+      surface: property.surface,
+    })),
+  );
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(propertiesWithReportCounts.length / MODERATION_PAGE_SIZE),
+  );
+  const reportTotalPages = Math.max(
+    1,
+    Math.ceil(reportGroups.length / MODERATION_PAGE_SIZE),
+  );
+  const page = Math.min(
+    requestedPage,
+    status === "reports" ? reportTotalPages : totalPages,
+  );
+  const startIndex = (page - 1) * MODERATION_PAGE_SIZE;
+  const paginatedProperties = propertiesWithReportCounts.slice(
+    startIndex,
+    startIndex + MODERATION_PAGE_SIZE,
+  );
+  const paginatedReportGroups = reportGroups.slice(
+    startIndex,
+    startIndex + MODERATION_PAGE_SIZE,
+  );
+  const hasNextPage =
+    startIndex + MODERATION_PAGE_SIZE < propertiesWithReportCounts.length;
+  const hasNextReportPage =
+    startIndex + MODERATION_PAGE_SIZE < reportGroups.length;
 
   return (
     <div className="min-h-full bg-zinc-50 dark:bg-zinc-950">
-      <header className="sticky top-0 z-50 border-b border-zinc-200/80 bg-white/75 backdrop-blur-md dark:border-zinc-800/80 dark:bg-[#08080a]/80">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-3.5 sm:px-8">
-          <div className="flex items-center gap-3">
-            <Link
-              href="/"
-              className="text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-50"
-            >
-              HomeCheck
-            </Link>
-            <span className="text-zinc-300 dark:text-zinc-700">/</span>
-            <Link
-              href="/dashboard/admin"
-              className="text-xs font-medium text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300"
-            >
-              Administration
-            </Link>
-            <span className="text-zinc-300 dark:text-zinc-700">/</span>
-            <span className="text-xs font-semibold text-zinc-800 dark:text-zinc-200">
-              Logements
-            </span>
-          </div>
-          <Link
-            href="/profile"
-            className="text-xs font-medium text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100"
-          >
-            Mon profil
-          </Link>
-        </div>
-      </header>
+      <AdminHeader active="properties" />
 
       <main className="mx-auto max-w-7xl px-5 py-8 sm:px-8">
-        <div className="mb-7">
+        <Link
+          href="/dashboard/admin"
+          className="inline-flex items-center gap-1.5 text-xs font-medium text-zinc-500 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+        >
+          ← Tableau de bord
+        </Link>
+
+        <div className="mt-4 mb-7">
           <h1 className="text-2xl font-extrabold tracking-tight text-zinc-950 dark:text-zinc-50">
             Modération des logements
           </h1>
@@ -111,7 +143,9 @@ export default async function AdminPropertiesPage({
             return (
               <Link
                 key={tab.value}
-                href={`/dashboard/admin/properties?status=${tab.value}`}
+                href={`/dashboard/admin/properties?status=${tab.value}${
+                  tab.value === "pending" ? "" : `&page=1`
+                }`}
                 aria-current={isCurrent ? "page" : undefined}
                 className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-semibold transition ${
                   isCurrent
@@ -127,7 +161,13 @@ export default async function AdminPropertiesPage({
                       : "bg-zinc-100 dark:bg-zinc-800"
                   }`}
                 >
-                  {counts[tab.value]}
+                  {tab.value === "reports"
+                    ? (counts?.reports ?? "—")
+                    : tab.value === "pending"
+                      ? (counts?.pending ?? "—")
+                      : tab.value === "approved"
+                        ? (counts?.approved ?? "—")
+                        : (counts?.rejected ?? "—")}
                 </span>
               </Link>
             );
@@ -147,7 +187,7 @@ export default async function AdminPropertiesPage({
             </div>
           ) : (
             <ul className="space-y-5">
-              {reportGroups.map((group) => (
+              {paginatedReportGroups.map((group) => (
                 <li key={group.propertyId}>
                   <ReportModerationCard group={group} />
                 </li>
@@ -169,13 +209,81 @@ export default async function AdminPropertiesPage({
             </p>
           </div>
         ) : (
-          <ul className="space-y-5">
-            {propertiesWithReportCounts.map((property) => (
-              <li key={property._id}>
-                <ModerationCard property={property} status={status} />
-              </li>
-            ))}
-          </ul>
+          <>
+            <ul className="space-y-5">
+              {paginatedProperties.map((property) => (
+                <li key={property._id}>
+                  <ModerationCard
+                    property={property}
+                    status={status}
+                    reports={reportsByPropertyId.get(property._id)}
+                    priceInsight={priceInsights[property._id] ?? null}
+                  />
+                </li>
+              ))}
+            </ul>
+
+            <nav
+              aria-label="Pagination des annonces"
+              className="mt-8 flex items-center justify-between"
+            >
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                Page {page}
+              </p>
+              <div className="flex gap-2">
+                {page > 1 && (
+                  <Link
+                    href={`/dashboard/admin/properties?status=${status}&page=${
+                      page - 1
+                    }`}
+                    className="inline-flex h-9 items-center rounded-xl border border-zinc-200 bg-white px-4 text-xs font-semibold text-zinc-700 transition hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                  >
+                    Précédent
+                  </Link>
+                )}
+
+                {hasNextPage && (
+                  <Link
+                    href={`/dashboard/admin/properties?status=${status}&page=${
+                      page + 1
+                    }`}
+                    className="inline-flex h-9 items-center rounded-xl border border-zinc-200 bg-white px-4 text-xs font-semibold text-zinc-700 transition hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                  >
+                    Suivant
+                  </Link>
+                )}
+              </div>
+            </nav>
+          </>
+        )}
+
+        {status === "reports" && reportGroups.length > MODERATION_PAGE_SIZE && (
+          <nav
+            aria-label="Pagination des signalements"
+            className="mt-8 flex items-center justify-between"
+          >
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              Page {page} sur {reportTotalPages}
+            </p>
+            <div className="flex gap-2">
+              {page > 1 && (
+                <Link
+                  href={`/dashboard/admin/properties?status=reports&page=${page - 1}`}
+                  className="inline-flex h-9 items-center rounded-xl border border-zinc-200 bg-white px-4 text-xs font-semibold text-zinc-700 transition hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                >
+                  Précédent
+                </Link>
+              )}
+              {hasNextReportPage && (
+                <Link
+                  href={`/dashboard/admin/properties?status=reports&page=${page + 1}`}
+                  className="inline-flex h-9 items-center rounded-xl border border-zinc-200 bg-white px-4 text-xs font-semibold text-zinc-700 transition hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                >
+                  Suivant
+                </Link>
+              )}
+            </div>
+          </nav>
         )}
       </main>
     </div>
