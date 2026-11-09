@@ -37,6 +37,17 @@ function serializeComplaint(doc: IComplaint & { _id: unknown }): SerializedCompl
 }
 
 /**
+ * The AI explanation and recommended intervention are reserved for owners and
+ * admins. Removing them here keeps them out of other users' browser payloads.
+ */
+function withoutAiAnalysis(complaint: SerializedComplaint): SerializedComplaint {
+  const { aiExplanation, recommendedAction, ...visible } = complaint;
+  void aiExplanation;
+  void recommendedAction;
+  return visible;
+}
+
+/**
  * Attach the logement details used by the complaint cards.
  * Complaints without a property (including all legacy complaints) are untouched.
  */
@@ -76,7 +87,7 @@ export async function getMyComplaints(): Promise<SerializedComplaint[]> {
     .sort({ createdAt: -1 })
     .lean();
 
-  const complaints = docs.map(serializeComplaint);
+  const complaints = docs.map(serializeComplaint).map(withoutAiAnalysis);
   await attachProperties(complaints);
 
   return complaints;
@@ -125,7 +136,11 @@ export async function getAllComplaints(
 
   const docs = await Complaint.find(query).sort({ createdAt: -1 }).lean();
 
-  const complaints = docs.map(serializeComplaint);
+  const serialized = docs.map(serializeComplaint);
+  const complaints =
+    session.activeRole === "TECHNICIAN"
+      ? serialized.map(withoutAiAnalysis)
+      : serialized;
   await attachProperties(complaints);
 
   return complaints;

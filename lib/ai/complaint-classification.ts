@@ -17,6 +17,7 @@ export const AI_BASE_URL_ENV = "AI_BASE_URL";
 
 const DEFAULT_BASE_URL = "https://api.openai.com/v1";
 const DEFAULT_TIMEOUT_MS = 15_000;
+const MAX_COMPLETION_TOKENS = 1500;
 
 export const AI_NOT_CONFIGURED_MESSAGE =
   "La classification automatique n'est pas configurée sur ce serveur.";
@@ -84,6 +85,16 @@ export function parseComplaintClassification(
   }
 }
 
+const CATEGORY_GUIDANCE = [
+  "plumbing = fuites, robinets, canalisations, évacuations, eau chaude, sanitaires",
+  "electricity = pannes de courant, prises, disjoncteur, éclairage, câblage",
+  "heating = chauffage, climatisation, chaudière, ventilation, odeur ou installation de gaz",
+  "structural = murs, plafonds, sols, fissures, humidité, moisissure, portes, serrures, fenêtres",
+  "noise = bruit, voisinage bruyant, nuisances sonores",
+  "common_areas = ascenseur, escaliers, hall, parking, jardin et autres espaces partagés",
+  "other = tout problème qui n'entre dans aucune catégorie ci-dessus, ou description trop vague",
+].join(" ; ");
+
 const PRIORITY_GUIDANCE = [
   "low = gêne mineure, peut attendre",
   "medium = gêne réelle sans danger immédiat",
@@ -101,6 +112,8 @@ const SYSTEM_PROMPT = [
   `Priorités autorisées : ${COMPLAINT_PRIORITIES.map(
     (priority) => `${priority} (${COMPLAINT_PRIORITY_LABELS[priority]})`,
   ).join(", ")}.`,
+  `Guide des catégories : ${CATEGORY_GUIDANCE}.`,
+  "N'utilise other que si aucune autre catégorie ne correspond au problème décrit.",
   `Guide des priorités : ${PRIORITY_GUIDANCE}.`,
   "Règles de rédaction :",
   "- explanation : une à deux phrases en français qui justifient la priorité en s'appuyant sur des éléments concrets de la description.",
@@ -176,28 +189,37 @@ export async function requestComplaintClassification(
   );
 
   try {
-    const response = await fetchImpl(`${config.baseUrl}/chat/completions`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${config.apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: config.model,
-        temperature: 0,
-        max_tokens: 400,
-        response_format: { type: "json_object" },
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          {
-            role: "user",
-            content: `Titre : ${input.title.trim()}\nDescription : ${input.description.trim()}`,
-          },
-        ],
-      }),
-      signal: controller.signal,
-      cache: "no-store",
-    });
+    const send = () =>
+      fetchImpl(`${config.baseUrl}/chat/completions`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${config.apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: config.model,
+          temperature: 0,
+          // Reasoning models spend part of this budget before writing the JSON;
+          // a low limit makes the provider reject the answer as truncated.
+          max_tokens: MAX_COMPLETION_TOKENS,
+          response_format: { type: "json_object" },
+          messages: [
+            { role: "system", content: SYSTEM_PROMPT },
+            {
+              role: "user",
+              content: `Titre : ${input.title.trim()}\nDescription : ${input.description.trim()}`,
+            },
+          ],
+        }),
+        signal: controller.signal,
+        cache: "no-store",
+      });
+
+    // JSON generation can fail occasionally, so try once more within the timeout.
+    let response = await send();
+    if (!response.ok) {
+      response = await send();
+    }
 
     if (!response.ok) {
       return {
