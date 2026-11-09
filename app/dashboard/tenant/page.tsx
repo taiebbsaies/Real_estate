@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Logo from "@/app/_components/Logo";
 import { getSession } from "@/lib/session";
 import { redirect } from "next/navigation";
 import { getMyComplaints } from "@/lib/complaints/queries";
@@ -32,12 +33,7 @@ export default async function TenantDashboardPage() {
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3.5">
           <div className="flex items-center gap-3">
             <Link href="/" className="flex items-center gap-2 group">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#166534] text-xs font-bold text-white shadow-sm dark:bg-emerald-500 dark:text-zinc-950 dark:shadow-[0_0_15px_-2px_rgba(34,197,94,0.5)]">
-                H
-              </div>
-              <span className="text-sm font-bold tracking-tight text-[#1F2937] dark:text-zinc-50">
-                HomeCheck
-              </span>
+              <Logo />
             </Link>
             <span className="text-zinc-300 dark:text-zinc-700">/</span>
             <span className="rounded-full bg-[#DCFCE7] px-2.5 py-0.5 text-xs font-semibold text-[#166534] dark:bg-emerald-950/70 dark:text-emerald-300 dark:border dark:border-emerald-500/30">

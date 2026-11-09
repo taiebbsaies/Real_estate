@@ -12,7 +12,7 @@ export default function RegisterServiceWorker() {
       typeof window !== "undefined" &&
       "serviceWorker" in navigator
     ) {
-      window.addEventListener("load", () => {
+      const register = () => {
         navigator.serviceWorker
           .register("/sw.js")
           .then((registration) => {
@@ -21,7 +21,15 @@ export default function RegisterServiceWorker() {
           .catch((error) => {
             console.error("HomeCheck PWA ServiceWorker registration failed:", error);
           });
-      });
+      };
+
+      // Hydration often finishes after "load" has fired, and that event would never come again.
+      if (document.readyState === "complete") {
+        register();
+      } else {
+        window.addEventListener("load", register, { once: true });
+        return () => window.removeEventListener("load", register);
+      }
     }
   }, []);
 

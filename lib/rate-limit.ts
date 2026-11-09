@@ -1,28 +1,33 @@
 import "server-only";
 
+type RateLimitOptions = { limit: number; windowMs: number };
 type Bucket = { count: number; resetAt: number };
 
-/**
- * Small in-memory rate limiter. It resets on server restart and is not shared
- * between instances; it is a best-effort guard, not a durable quota.
- */
-export function createRateLimiter(limit: number, windowMs: number) {
-  const buckets = new Map<string, Bucket>();
+const buckets = new Map<string, Bucket>();
 
-  return function consume(key: string): boolean {
-    const now = Date.now();
-    const bucket = buckets.get(key);
+function pruneExpired(now: number): void {
+  if (buckets.size < 1000) return;
+  for (const [key, bucket] of buckets) {
+    if (bucket.resetAt <= now) buckets.delete(key);
+  }
+}
 
-    if (!bucket || bucket.resetAt <= now) {
-      buckets.set(key, { count: 1, resetAt: now + windowMs });
-      return true;
-    }
-
-    if (bucket.count >= limit) {
-      return false;
-    }
-
-    bucket.count += 1;
+export function checkRateLimit(key: string, options: RateLimitOptions): boolean {
+  const now = Date.now();
+  pruneExpired(now);
+  const bucket = buckets.get(key);
+  if (!bucket || bucket.resetAt <= now) {
+    buckets.set(key, { count: 1, resetAt: now + options.windowMs });
     return true;
-  };
+  }
+  if (bucket.count >= options.limit) return false;
+  bucket.count += 1;
+  return true;
+}
+
+/** Compatibility wrapper used by the houses module. */
+export function createRateLimiter(limit: number, windowMs: number) {
+  const prefix = `houses:${Math.random().toString(36).slice(2)}:`;
+  return (key: string): boolean =>
+    checkRateLimit(`${prefix}${key}`, { limit, windowMs });
 }

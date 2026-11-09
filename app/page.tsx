@@ -1,8 +1,10 @@
-import { Suspense } from "react";
+﻿import { Suspense } from "react";
 import Link from "next/link";
+import Logo from "@/app/_components/Logo";
 import { getSession } from "@/lib/session";
 import { signOut } from "@/app/actions/auth";
 import ThemeToggle from "./_components/ThemeToggle";
+import OnlineOnly from "./_components/OnlineOnly";
 
 async function UserNav() {
   const session = await getSession();
@@ -56,6 +58,15 @@ async function UserNav() {
           <span className="hidden md:inline">Budget</span>
         </Link>
         <Link
+          href="/maintenance"
+          className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium text-[#1F2937] transition-colors hover:bg-[#DCFCE7] hover:text-[#166534] dark:text-zinc-300 dark:hover:bg-emerald-950/50 dark:hover:text-emerald-300"
+        >
+          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+          </svg>
+          <span className="hidden md:inline">Maintenance</span>
+        </Link>
+        <Link
           href="/profile"
           className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#166534] text-xs font-bold text-white transition-opacity hover:opacity-90 dark:bg-emerald-500 dark:text-zinc-950 dark:shadow-[0_0_15px_-3px_rgba(34,197,94,0.4)]"
           title="Mon profil"
@@ -86,13 +97,13 @@ async function UserNav() {
     <div className="flex items-center gap-2">
       <Link
         href="/login"
-        className="px-3 py-2 text-sm font-medium text-[#1F2937] transition-colors hover:text-[#166534] dark:text-zinc-300 dark:hover:text-emerald-300"
+        className="whitespace-nowrap px-2 py-2 text-xs sm:px-3 sm:text-sm font-medium text-[#1F2937] transition-colors hover:text-[#166534] dark:text-zinc-300 dark:hover:text-emerald-300"
       >
         Sign in
       </Link>
       <Link
         href="/signup"
-        className="rounded-full bg-[#166534] px-4 py-2 text-sm font-semibold text-white shadow-xs transition-all hover:bg-[#14532d] dark:bg-emerald-500 dark:text-zinc-950 dark:hover:bg-emerald-400 dark:shadow-[0_0_20px_-3px_rgba(34,197,94,0.4)]"
+        className="whitespace-nowrap rounded-full bg-[#166534] px-3 py-2 text-xs sm:px-4 sm:text-sm font-semibold text-white shadow-xs transition-all hover:bg-[#14532d] dark:bg-emerald-500 dark:text-zinc-950 dark:hover:bg-emerald-400 dark:shadow-[0_0_20px_-3px_rgba(34,197,94,0.4)]"
       >
         Sign up
       </Link>
@@ -161,15 +172,10 @@ export default function Home() {
 
       {/* Modern Top Blur Navigation */}
       <header className="sticky top-0 z-50 border-b border-[#DCFCE7] bg-white/80 backdrop-blur-md dark:border-emerald-500/15 dark:bg-[#060907]/80">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3.5">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-2 px-4 py-3.5 sm:px-6">
           <div className="flex items-center gap-4">
             <Link href="/" className="flex items-center gap-2 group">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#166534] text-xs font-bold text-white shadow-sm dark:bg-emerald-500 dark:text-zinc-950 dark:shadow-[0_0_15px_-2px_rgba(34,197,94,0.5)]">
-                H
-              </div>
-              <span className="text-base font-bold tracking-tight text-[#1F2937] dark:text-zinc-50">
-                HomeCheck
-              </span>
+              <Logo />
             </Link>
           </div>
 
@@ -186,6 +192,7 @@ export default function Home() {
       </header>
 
       {/* Hero Section */}
+      <OnlineOnly>
       <main className="mx-auto max-w-6xl px-6 pt-16 pb-24">
         {/* Subtle pill banner */}
         <div className="flex justify-center sm:justify-start">
@@ -382,7 +389,10 @@ export default function Home() {
             </div>
 
             {/* Technicien Card */}
-            <div className="linear-card group relative flex flex-col justify-between rounded-2xl border border-[#DCFCE7] bg-white p-6 shadow-sm shadow-[#166534]/5 dark:border-emerald-500/15 dark:bg-[#0c1410]/80 dark:backdrop-blur-md">
+            <Link
+              href="/maintenance"
+              className="linear-card group relative flex flex-col justify-between rounded-2xl border border-[#DCFCE7] bg-white p-6 shadow-sm shadow-[#166534]/5 dark:border-emerald-500/15 dark:bg-[#0c1410]/80 dark:backdrop-blur-md hover:border-emerald-500/40 transition-all hover:-translate-y-0.5"
+            >
               <div>
                 <div className="flex items-center justify-between">
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#DCFCE7] text-sm font-bold text-[#166534] dark:bg-emerald-500/15 dark:text-emerald-400 dark:shadow-[0_0_15px_-3px_rgba(34,197,94,0.3)]">
@@ -436,10 +446,11 @@ export default function Home() {
                 <span>Diagnostics &amp; SLA garantis</span>
                 <span className="text-zinc-400 group-hover:translate-x-1 transition-transform">Voir les interventions →</span>
               </div>
-            </div>
+            </Link>
           </div>
         </div>
       </main>
+      </OnlineOnly>
     </div>
   );
 }

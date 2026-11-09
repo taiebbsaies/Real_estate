@@ -26,6 +26,12 @@
   --card: #ffffff;
   --border: #dcfce7;
   --accent: #22c55e;
+
+  /* Maintenance module tokens */
+  --color-primary: #2563eb;
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-danger: #f43f5e;
 }
 
 html.dark {
@@ -42,6 +48,12 @@ html.dark {
   --dark-text: #f4f4f5;
   --secondary-text: #9ca3af;
   --bg-green: #060907;
+
+  /* Maintenance module tokens in dark mode */
+  --color-primary: #3b82f6;
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-danger: #f43f5e;
 }
 
 @theme inline {
@@ -93,4 +105,43 @@ html.dark .linear-card:hover {
   border-color: rgba(34, 197, 94, 0.35);
   box-shadow: 0 12px 35px -10px rgba(0, 0, 0, 0.85), 
               0 0 25px -5px rgba(34, 197, 94, 0.2);
+}
+
+/* =========================================================
+   MAINTENANCE MODULE - LIGHT THEME
+   The module's classes are written for a dark UI (slate/blue).
+   Tailwind utilities read these variables, so remapping them here
+   gives the app's green palette in light mode and changes nothing
+   in dark mode or outside the module.
+   ========================================================= */
+html:not(.dark) .maintenance-theme {
+  --color-slate-950: var(--bg-green);
+  --color-slate-900: var(--white);
+  --color-slate-800: var(--light-green);
+  --color-slate-700: #bbf7d0;
+  --color-slate-600: #9ca3af;
+  --color-slate-500: var(--secondary-text);
+  --color-slate-400: #4b5563;
+  --color-slate-300: #374151;
+  --color-slate-200: var(--dark-text);
+  --color-slate-100: var(--dark-text);
+
+  --color-blue-300: var(--primary-green);
+  --color-blue-400: var(--primary-green);
+  --color-blue-500: #14532d;
+  --color-blue-600: var(--primary-green);
+  --color-indigo-600: #15803d;
+
+  /* Pale accents are unreadable on white: use their dark shades. */
+  --color-emerald-300: #15803d;
+  --color-emerald-400: #15803d;
+  --color-rose-300: #be123c;
+  --color-rose-400: #be123c;
+  --color-red-400: #b91c1c;
+  --color-amber-300: #b45309;
+  --color-amber-400: #b45309;
+  --color-orange-400: #c2410c;
+  --color-cyan-400: #0e7490;
+  --color-indigo-400: #4338ca;
+  --color-purple-400: #7e22ce;
 }

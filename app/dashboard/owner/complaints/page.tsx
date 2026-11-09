@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Logo from "@/app/_components/Logo";
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { getSession } from "@/lib/session";
@@ -86,13 +87,11 @@ export default async function OwnerComplaintsPage({
     <div className="min-h-full bg-zinc-50 dark:bg-zinc-950">
       {/* Header */}
       <header className="border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 sm:px-6 py-4">
           <div className="flex items-center gap-3">
-            <Link href="/" className="text-lg font-semibold tracking-tight text-blue-600 dark:text-blue-400">
-              HomeCheck
-            </Link>
-            <span className="text-zinc-400">/</span>
-            <Link href="/dashboard/owner" className="text-sm text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300">
+            <Link href="/" className="text-lg font-semibold tracking-tight text-blue-600 dark:text-blue-400"><Logo /></Link>
+            <span className="hidden sm:inline text-zinc-400">/</span>
+            <Link href="/dashboard/owner" className="hidden sm:inline text-sm text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300">
               Propriétaire
             </Link>
             <span className="text-zinc-400">/</span>
@@ -104,7 +103,7 @@ export default async function OwnerComplaintsPage({
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl px-6 py-8">
+      <main className="mx-auto max-w-6xl px-4 sm:px-6 py-8">
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
             Gestion des réclamations 📋

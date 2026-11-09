@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import ScreenHeader from "@/app/budget/_components/ScreenHeader";
-import ExpenseForm from "@/app/budget/_components/ExpenseForm";
+import NewExpenseFlow from "./_components/NewExpenseFlow";
 
 export const metadata: Metadata = {
   title: "Nouvelle dépense",
@@ -15,7 +15,7 @@ export default function NewExpensePage() {
         backLabel="Retour aux dépenses"
       />
       <div className="px-4 pb-8 pt-2">
-        <ExpenseForm mode="create" />
+        <NewExpenseFlow />
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 {
   "id": "/",
-  "name": "HomeCheck — Plateforme de matching, inspection et maintenance",
-  "short_name": "HomeCheck",
+  "name": "Home-Check — Real Estate",
+  "short_name": "Home-Check",
   "description": "Application PWA intelligente dédiée à la gestion du cycle de vie d'un logement locatif.",
   "lang": "fr",
   "dir": "ltr",
@@ -9,9 +9,8 @@
   "scope": "/",
   "display": "standalone",
   "display_override": ["standalone"],
-  "background_color": "#fbfbfb",
-  "theme_color": "#18181b",
-  "orientation": "portrait-primary",
+  "background_color": "#14213D",
+  "theme_color": "#14213D",
   "icons": [
     {
       "src": "/icons/icon-192x192.png",

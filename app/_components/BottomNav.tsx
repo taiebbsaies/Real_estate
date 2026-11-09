@@ -13,14 +13,14 @@ interface NavItem {
 
 export default function BottomNav() {
   const pathname = usePathname();
-
+  const isTenantArea = pathname.startsWith("/dashboard/tenant");
   const isConversationThread =
     /^\/dashboard\/(?:tenant|owner)\/messages\/[^/]+$/.test(pathname);
-  const isTenantArea = pathname.startsWith("/dashboard/tenant");
 
   if (
     pathname === "/login" ||
     pathname === "/signup" ||
+    pathname.startsWith("/budget") ||
     isConversationThread
   ) {
     return null;
@@ -48,7 +48,7 @@ export default function BottomNav() {
       ),
     },
     ...(isTenantArea
-      ? ([
+      ? [
           {
             name: "Logements",
             href: "/dashboard/tenant/properties",
@@ -109,51 +109,50 @@ export default function BottomNav() {
               </svg>
             ),
           },
-        ] satisfies NavItem[])
-      : ([
-          {
-            name: "Budget",
-            href: "/budget",
-            icon: (active: boolean) => (
-              <svg
-                className={`h-5 w-5 transition-transform duration-200 ${
-                  active ? "scale-110" : ""
-                }`}
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M12 2v20" />
-                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-              </svg>
-            ),
-          },
-          {
-            name: "Tableau de bord",
-            href: "/dashboard/tenant",
-            icon: (active: boolean) => (
-              <svg
-                className={`h-5 w-5 transition-transform duration-200 ${
-                  active ? "scale-110" : ""
-                }`}
-                viewBox="0 0 24 24"
-                fill={active ? "currentColor" : "none"}
-                stroke="currentColor"
-                strokeWidth={active ? "1.5" : "2"}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <rect x="3" y="3" width="7" height="9" rx="1" />
-                <rect x="14" y="3" width="7" height="5" rx="1" />
-                <rect x="14" y="12" width="7" height="9" rx="1" />
-                <rect x="3" y="16" width="7" height="5" rx="1" />
-              </svg>
-            ),
-          },
-        ] satisfies NavItem[])),
+        ]
+      : []),
+    {
+      name: "Budget",
+      href: "/budget",
+      icon: (active) => (
+        <svg
+          className={`h-5 w-5 transition-transform duration-200 ${
+            active ? "scale-110" : ""
+          }`}
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M12 2v20" />
+          <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+        </svg>
+      ),
+    },
+    {
+      name: "Tableau de bord",
+      href: isTenantArea ? "/dashboard/tenant" : "/dashboard",
+      icon: (active) => (
+        <svg
+          className={`h-5 w-5 transition-transform duration-200 ${
+            active ? "scale-110" : ""
+          }`}
+          viewBox="0 0 24 24"
+          fill={active ? "currentColor" : "none"}
+          stroke="currentColor"
+          strokeWidth={active ? "1.5" : "2"}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <rect x="3" y="3" width="7" height="9" rx="1" />
+          <rect x="14" y="3" width="7" height="5" rx="1" />
+          <rect x="14" y="12" width="7" height="9" rx="1" />
+          <rect x="3" y="16" width="7" height="5" rx="1" />
+        </svg>
+      ),
+    },
     {
       name: "Profil",
       href: "/profile",
@@ -185,7 +184,7 @@ export default function BottomNav() {
         {items.map((item) => {
           const isActive =
             item.href === "/"
-              ? pathname === "/"
+              ? pathname === "/" || pathname === "/offline"
               : pathname.startsWith(item.href);
 
           return (
@@ -198,7 +197,6 @@ export default function BottomNav() {
                   : "text-[#6B7280] hover:text-[#1F2937] dark:text-zinc-400 dark:hover:text-zinc-200"
               }`}
             >
-              {/* Active top glow indicator pill */}
               {isActive && (
                 <span className="absolute -top-1.5 h-1 w-8 rounded-full bg-[#166534] dark:bg-emerald-400 dark:shadow-[0_0_12px_2px_rgba(34,197,94,0.6)]" />
               )}

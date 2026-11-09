@@ -8,27 +8,38 @@
     "start": "next start",
     "lint": "eslint",
     "seed:properties": "node --env-file=.env.local --conditions=react-server --import tsx scripts/seed-properties.ts",
-    "admin:promote": "node --env-file=.env.local --conditions=react-server --import tsx scripts/promote-admin.ts"
+    "admin:promote": "node --env-file=.env.local --conditions=react-server --import tsx scripts/promote-admin.ts",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
+    "@ai-sdk/google": "^4.0.109",
+    "@vercel/blob": "^2.8.2",
+    "ai": "^7.0.159",
     "bcryptjs": "^3.0.3",
     "jose": "^6.2.13",
+    "lucide-react": "^1.59.0",
     "mongoose": "^9.11.2",
     "next": "^16.4.3",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "server-only": "^0.0.1",
+    "sharp": "^0.35.5",
+    "tesseract.js": "^7.0.0",
+    "unpdf": "^2.1.0",
     "zod": "^4.6.7"
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "^4",
-    "@types/node": "^20",
+    "@types/node": "^24.19.2",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.4.0",
+    "eslint-config-next": "^16.4.3",
     "tailwindcss": "^4",
     "tsx": "^4.23.15",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vite": "^8.3.4",
+    "vitest": "^5.0.5"
   }
 }

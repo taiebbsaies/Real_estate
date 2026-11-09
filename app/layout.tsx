@@ -18,23 +18,27 @@ import BottomNav from "./_components/BottomNav";
 
 export const metadata: Metadata = {
   title: {
-    default: "HomeCheck",
+    default: "HomeCheck — Gestion & Maintenance Locative",
     template: "%s | HomeCheck",
   },
-  description: "Browse and manage real estate with HomeCheck.",
+  description: "Plateforme PWA de gestion du cycle de vie locatif, maintenance et budget HomeCheck.",
   manifest: "/manifest.json",
   icons: {
+    icon: [{ url: "/icons/favicon.svg", type: "image/svg+xml" }],
     apple: "/icons/apple-touch-icon.png",
   },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "HomeCheck",
+    title: "Home-Check",
   },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#166534",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#FFFFFF" },
+    { media: "(prefers-color-scheme: dark)", color: "#14213D" },
+  ],
 };
 
 const themeScript = `

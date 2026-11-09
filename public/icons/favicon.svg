@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-4 -12 124 124">
+  <style>
+    .house { stroke: #14213D; }
+    .door { fill: #C9973B; }
+    @media (prefers-color-scheme: dark) {
+      .house { stroke: #FFFFFF; }
+      .door { fill: #E0AE55; }
+    }
+  </style>
+  <path class="house" d="M5 52 58 6l53 46M23 42v53h70V42" fill="none" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  <path class="door" d="M47 92V71a11 11 0 0 1 22 0v21z"/>
+</svg>

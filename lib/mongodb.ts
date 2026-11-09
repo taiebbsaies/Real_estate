@@ -1,21 +1,17 @@
 import dns from "node:dns";
 import "server-only";
 import mongoose from "mongoose";
+import "@/src/models";
 
 try {
-  dns.setDefaultResultOrder("ipv4first");
+  dns.setDefaultResultOrder?.("ipv4first");
   dns.setServers(["8.8.8.8", "8.8.4.4", "1.1.1.1"]);
 } catch {
   // Ignore in environments where setting DNS servers is restricted
 }
 
 function getMongoUri(): string {
-  const uri = process.env.MONGODB_URI;
-
-  if (!uri) {
-    throw new Error("Please define MONGODB_URI in your .env.local file");
-  }
-
+  const uri = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/homecheck_maintenance";
   return uri;
 }
 
@@ -25,6 +21,7 @@ type MongooseCache = {
 };
 
 declare global {
+  // eslint-disable-next-line no-var
   var mongooseCache: MongooseCache | undefined;
 }
 
@@ -35,14 +32,14 @@ const cached: MongooseCache = global.mongooseCache ?? {
 
 global.mongooseCache = cached;
 
-export async function connectDB() {
+export async function connectDB(): Promise<typeof mongoose> {
   if (cached.conn) {
     return cached.conn;
   }
 
   if (!cached.promise) {
     try {
-      dns.setDefaultResultOrder("ipv4first");
+      dns.setDefaultResultOrder?.("ipv4first");
       dns.setServers(["8.8.8.8", "8.8.4.4", "1.1.1.1"]);
     } catch {
       // Ignore
@@ -62,3 +59,5 @@ export async function connectDB() {
 
   return cached.conn;
 }
+
+export default connectDB;

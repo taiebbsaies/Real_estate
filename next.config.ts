@@ -1,6 +1,14 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  allowedDevOrigins: ["192.168.1.15", "localhost:3000"],
+  serverExternalPackages: ["unpdf", "tesseract.js", "sharp"],
+  experimental: {
+    agentUpgrade: "security",
+    serverActions: {
+      bodySizeLimit: "6mb",
+    },
+  },
   turbopack: {
     rules: {
       "*.css": {
