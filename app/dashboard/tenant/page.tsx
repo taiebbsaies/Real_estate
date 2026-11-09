@@ -2,6 +2,8 @@ import Link from "next/link";
 import { getSession } from "@/lib/session";
 import { redirect } from "next/navigation";
 import { getMyComplaints } from "@/lib/complaints/queries";
+import { getUnreadTotal } from "@/lib/messages/queries";
+import UnreadMessagesBadge from "@/app/dashboard/_components/UnreadMessagesBadge";
 import ThemeToggle from "@/app/_components/ThemeToggle";
 
 export const dynamic = "force-dynamic";
@@ -14,6 +16,7 @@ export default async function TenantDashboardPage() {
   }
 
   const complaints = await getMyComplaints();
+  const unreadTotal = await getUnreadTotal();
   const openComplaints = complaints.filter(
     (complaint) => complaint.status === "pending" || complaint.status === "in_progress",
   ).length;
@@ -41,7 +44,30 @@ export default async function TenantDashboardPage() {
               Espace Locataire
             </span>
           </div>
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex flex-wrap items-center justify-end gap-x-3 gap-y-1">
+            <Link
+              href="/dashboard/tenant/properties"
+              className="text-xs font-medium text-[#6B7280] hover:text-[#166534] dark:text-zinc-400 dark:hover:text-emerald-300 transition-colors"
+            >
+              Logements
+            </Link>
+            {session.activeRole === "TENANT" && (
+              <Link
+                href="/dashboard/tenant/favorites"
+                className="text-xs font-medium text-[#6B7280] hover:text-[#166534] dark:text-zinc-400 dark:hover:text-emerald-300 transition-colors"
+              >
+                Mes favoris
+              </Link>
+            )}
+            {session.activeRole === "TENANT" && (
+              <Link
+                href="/dashboard/tenant/messages"
+                className="text-xs font-medium text-[#6B7280] hover:text-[#166534] dark:text-zinc-400 dark:hover:text-emerald-300 transition-colors"
+              >
+                Messages
+                <UnreadMessagesBadge initialUnread={unreadTotal} />
+              </Link>
+            )}
             <Link
               href="/dashboard/tenant/complaints"
               className="text-xs font-medium text-[#6B7280] hover:text-[#166534] dark:text-zinc-400 dark:hover:text-emerald-300 transition-colors"

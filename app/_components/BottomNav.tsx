@@ -2,18 +2,27 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import UnreadMessagesBadge from "@/app/dashboard/_components/UnreadMessagesBadge";
 
 interface NavItem {
   name: string;
   href: string;
   icon: (active: boolean) => React.ReactNode;
+  badge?: boolean;
 }
 
 export default function BottomNav() {
   const pathname = usePathname();
 
-  // Hide bottom bar on auth pages to avoid virtual keyboard overlap
-  if (pathname === "/login" || pathname === "/signup") {
+  const isConversationThread =
+    /^\/dashboard\/(?:tenant|owner)\/messages\/[^/]+$/.test(pathname);
+  const isTenantArea = pathname.startsWith("/dashboard/tenant");
+
+  if (
+    pathname === "/login" ||
+    pathname === "/signup" ||
+    isConversationThread
+  ) {
     return null;
   }
 
@@ -38,48 +47,113 @@ export default function BottomNav() {
         </svg>
       ),
     },
-    {
-      name: "Budget",
-      href: "/budget",
-      icon: (active) => (
-        <svg
-          className={`h-5 w-5 transition-transform duration-200 ${
-            active ? "scale-110" : ""
-          }`}
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M12 2v20" />
-          <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-        </svg>
-      ),
-    },
-    {
-      name: "Tableau de bord",
-      href: "/dashboard/tenant",
-      icon: (active) => (
-        <svg
-          className={`h-5 w-5 transition-transform duration-200 ${
-            active ? "scale-110" : ""
-          }`}
-          viewBox="0 0 24 24"
-          fill={active ? "currentColor" : "none"}
-          stroke="currentColor"
-          strokeWidth={active ? "1.5" : "2"}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <rect x="3" y="3" width="7" height="9" rx="1" />
-          <rect x="14" y="3" width="7" height="5" rx="1" />
-          <rect x="14" y="12" width="7" height="9" rx="1" />
-          <rect x="3" y="16" width="7" height="5" rx="1" />
-        </svg>
-      ),
-    },
+    ...(isTenantArea
+      ? ([
+          {
+            name: "Logements",
+            href: "/dashboard/tenant/properties",
+            icon: (active: boolean) => (
+              <svg
+                className={`h-5 w-5 transition-transform duration-200 ${
+                  active ? "scale-110" : ""
+                }`}
+                viewBox="0 0 24 24"
+                fill={active ? "currentColor" : "none"}
+                stroke="currentColor"
+                strokeWidth={active ? "1.5" : "2"}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M3 21h18" />
+                <path d="M5 21V7l7-4 7 4v14" />
+                <path d="M9 21v-6h6v6" />
+              </svg>
+            ),
+          },
+          {
+            name: "Favoris",
+            href: "/dashboard/tenant/favorites",
+            icon: (active: boolean) => (
+              <svg
+                className={`h-5 w-5 transition-transform duration-200 ${
+                  active ? "scale-110" : ""
+                }`}
+                viewBox="0 0 24 24"
+                fill={active ? "currentColor" : "none"}
+                stroke="currentColor"
+                strokeWidth={active ? "1.5" : "2"}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21l7.8-7.5 1.1-1.1a5.5 5.5 0 0 0-.1-7.8Z" />
+              </svg>
+            ),
+          },
+          {
+            name: "Messages",
+            href: "/dashboard/tenant/messages",
+            badge: true,
+            icon: (active: boolean) => (
+              <svg
+                className={`h-5 w-5 transition-transform duration-200 ${
+                  active ? "scale-110" : ""
+                }`}
+                viewBox="0 0 24 24"
+                fill={active ? "currentColor" : "none"}
+                stroke="currentColor"
+                strokeWidth={active ? "1.5" : "2"}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+              </svg>
+            ),
+          },
+        ] satisfies NavItem[])
+      : ([
+          {
+            name: "Budget",
+            href: "/budget",
+            icon: (active: boolean) => (
+              <svg
+                className={`h-5 w-5 transition-transform duration-200 ${
+                  active ? "scale-110" : ""
+                }`}
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M12 2v20" />
+                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+              </svg>
+            ),
+          },
+          {
+            name: "Tableau de bord",
+            href: "/dashboard/tenant",
+            icon: (active: boolean) => (
+              <svg
+                className={`h-5 w-5 transition-transform duration-200 ${
+                  active ? "scale-110" : ""
+                }`}
+                viewBox="0 0 24 24"
+                fill={active ? "currentColor" : "none"}
+                stroke="currentColor"
+                strokeWidth={active ? "1.5" : "2"}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <rect x="3" y="3" width="7" height="9" rx="1" />
+                <rect x="14" y="3" width="7" height="5" rx="1" />
+                <rect x="14" y="12" width="7" height="9" rx="1" />
+                <rect x="3" y="16" width="7" height="5" rx="1" />
+              </svg>
+            ),
+          },
+        ] satisfies NavItem[])),
     {
       name: "Profil",
       href: "/profile",
@@ -131,6 +205,11 @@ export default function BottomNav() {
 
               <div className="relative">
                 {item.icon(isActive)}
+                {item.badge && (
+                  <span className="absolute -right-3 -top-1.5">
+                    <UnreadMessagesBadge />
+                  </span>
+                )}
               </div>
 
               <span className="mt-1 text-[10px] tracking-tight truncate max-w-[70px]">
