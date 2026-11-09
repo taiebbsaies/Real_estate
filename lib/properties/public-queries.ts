@@ -8,7 +8,7 @@ import {
   type PropertySearchFilters,
 } from "@/lib/validations/property-search";
 
-function escapeRegex(value: string): string {
+export function escapeRegex(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
