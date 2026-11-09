@@ -53,7 +53,7 @@ const MaintenanceRequestSchema = new Schema<IMaintenanceRequest>(
     title: { type: String, required: true, trim: true },
     description: { type: String, required: true, trim: true },
     categoryId: { type: Schema.Types.ObjectId, ref: "Category", required: true, index: true },
-    propertyId: { type: Schema.Types.ObjectId, ref: "Property", required: true, index: true },
+    propertyId: { type: Schema.Types.ObjectId, ref: "MaintenanceProperty", required: true, index: true },
     tenantId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
     equipmentId: { type: Schema.Types.ObjectId, ref: "Equipment" },
     assignedTechnicianId: { type: Schema.Types.ObjectId, ref: "User", index: true },

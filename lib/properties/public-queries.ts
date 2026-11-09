@@ -34,8 +34,9 @@ export function serializePublicProperty(
     availableFrom: doc.availableFrom?.toISOString(),
     hasParking: doc.hasParking,
     hasElevator: doc.hasElevator,
-    equipments: doc.equipments,
-    images: doc.images,
+    // .lean() skips schema defaults, so older documents may lack these arrays.
+    equipments: doc.equipments ?? [],
+    images: doc.images ?? [],
     coverImage: doc.coverImage,
     rules: doc.rules,
     createdAt: doc.createdAt.toISOString(),

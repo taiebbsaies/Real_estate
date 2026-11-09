@@ -24,7 +24,7 @@ export interface IMaintenanceHistory extends Document {
 const MaintenanceHistorySchema = new Schema<IMaintenanceHistory>(
   {
     requestId: { type: Schema.Types.ObjectId, ref: "MaintenanceRequest", required: true, index: true },
-    propertyId: { type: Schema.Types.ObjectId, ref: "Property", required: true, index: true },
+    propertyId: { type: Schema.Types.ObjectId, ref: "MaintenanceProperty", required: true, index: true },
     action: {
       type: String,
       enum: HISTORY_ACTIONS,

@@ -159,10 +159,13 @@ const PropertySchema = new Schema<IProperty>(
       },
     },
   },
-  { timestamps: true }
+  { timestamps: true, collection: "properties" }
 );
 
-export const PropertyModel = getOrCreateModel<IProperty>("Property", PropertySchema);
+// Maintenance view of the "properties" collection. It must keep its own model
+// name: "Property" belongs to the listing schema in models/property.ts, and
+// registering this one under that name makes listing saves drop their fields.
+export const PropertyModel = getOrCreateModel<IProperty>("MaintenanceProperty", PropertySchema);
 
 // Equipment Stub
 export interface IEquipment extends Document {
@@ -181,7 +184,7 @@ export interface IEquipment extends Document {
 
 const EquipmentSchema = new Schema<IEquipment>(
   {
-    propertyId: { type: Schema.Types.ObjectId, ref: "Property", required: true },
+    propertyId: { type: Schema.Types.ObjectId, ref: "MaintenanceProperty", required: true },
     name: { type: String, required: true },
     category: { type: String, required: true },
     brand: { type: String },
