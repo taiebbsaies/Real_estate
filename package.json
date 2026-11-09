@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "seed:properties": "node --env-file=.env.local --conditions=react-server --import tsx scripts/seed-properties.ts"
+    "seed:properties": "node --env-file=.env.local --conditions=react-server --import tsx scripts/seed-properties.ts",
+    "admin:promote": "node --env-file=.env.local --conditions=react-server --import tsx scripts/promote-admin.ts"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
