@@ -12,6 +12,7 @@ export const metadata: Metadata = {
 
 const LINKS = [
   { href: "/dashboard/admin", label: "Aperçu" },
+  { href: "/dashboard/admin/properties", label: "Logements" },
   { href: "/dashboard/admin/users", label: "Utilisateurs" },
   { href: "/dashboard/admin/technicians", label: "Techniciens" },
   { href: "/dashboard/admin/maintenance", label: "Maintenance" },

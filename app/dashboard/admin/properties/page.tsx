@@ -10,7 +10,6 @@ import {
 import { getSession } from "@/lib/session";
 import { computePriceInsights } from "@/lib/properties/price-insight";
 import { parseAdminModerationQuery } from "@/lib/validations/property-search";
-import AdminHeader from "../_components/AdminHeader";
 import ModerationCard from "./_components/ModerationCard";
 import ReportModerationCard from "./_components/ReportModerationCard";
 
@@ -114,10 +113,8 @@ export default async function AdminPropertiesPage({
     startIndex + MODERATION_PAGE_SIZE < reportGroups.length;
 
   return (
-    <div className="min-h-full bg-zinc-50 dark:bg-zinc-950">
-      <AdminHeader active="properties" />
-
-      <main className="mx-auto max-w-7xl px-5 py-8 sm:px-8">
+    <div>
+      <div>
         <Link
           href="/dashboard/admin"
           className="inline-flex items-center gap-1.5 text-xs font-medium text-zinc-500 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
@@ -285,7 +282,7 @@ export default async function AdminPropertiesPage({
             </div>
           </nav>
         )}
-      </main>
+      </div>
     </div>
   );
 }

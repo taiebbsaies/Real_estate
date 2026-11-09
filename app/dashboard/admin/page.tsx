@@ -3,19 +3,20 @@ import connectDB from "@/src/lib/mongoose";
 import { MaintenanceRequestModel } from "@/src/models/maintenance-request";
 import { TechnicianProfileModel, UserModel } from "@/src/models/shared";
 import { OPEN_REQUEST_STATUSES, STUCK_AFTER_DAYS, stuckCutoffDate } from "@/lib/admin/rules";
+import { getModerationCounts } from "@/lib/properties/admin-queries";
 import { cardClass, headingClass, mutedClass } from "./_components/styles";
 import { requireAdminPage } from "./_components/guard";
 
-function Stat({ label, value, href, alert }: { label: string; value: number; href: string; alert?: boolean }) {
+function Stat({ label, value, href, alert }: { label: string; value: number | null; href: string; alert?: boolean }) {
   return (
     <Link href={href} className={`${cardClass} block p-5 hover:border-[#166534] dark:hover:border-emerald-400`}>
       <p className={mutedClass}>{label}</p>
       <p
         className={`mt-1 text-2xl font-bold ${
-          alert && value > 0 ? "text-red-700 dark:text-red-400" : "text-[#1F2937] dark:text-zinc-50"
+          alert && value !== null && value > 0 ? "text-red-700 dark:text-red-400" : "text-[#1F2937] dark:text-zinc-50"
         }`}
       >
-        {value}
+        {value ?? "—"}
       </p>
     </Link>
   );
@@ -29,7 +30,7 @@ export default async function AdminOverviewPage() {
   const open = { status: { $in: OPEN_REQUEST_STATUSES } };
   const existing = { deletedAt: { $exists: false } };
 
-  const [tenants, owners, technicians, suspended, openRequests, urgent, unassigned, stuck, pending, incomplete] =
+  const [tenants, owners, technicians, suspended, openRequests, urgent, unassigned, stuck, pending, incomplete, listings] =
     await Promise.all([
       UserModel.countDocuments({ ...existing, roles: "TENANT" }),
       UserModel.countDocuments({ ...existing, roles: "OWNER" }),
@@ -43,11 +44,22 @@ export default async function AdminOverviewPage() {
       TechnicianProfileModel.countDocuments({
         $or: [{ skills: { $size: 0 } }, { city: { $exists: false } }],
       }),
+      getModerationCounts(),
     ]);
 
   return (
     <>
       <h1 className={headingClass}>Aperçu</h1>
+
+      <section className="space-y-3">
+        <h2 className="text-sm font-semibold text-[#1F2937] dark:text-zinc-100">Logements</h2>
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+          <Stat label="Logements à valider" value={listings.pending} href="/dashboard/admin/properties?status=pending" alert />
+          <Stat label="Signalements ouverts" value={listings.reports} href="/dashboard/admin/properties?status=reports" alert />
+          <Stat label="Logements approuvés" value={listings.approved} href="/dashboard/admin/properties?status=approved" />
+          <Stat label="Logements rejetés" value={listings.rejected} href="/dashboard/admin/properties?status=rejected" />
+        </div>
+      </section>
 
       <section className="space-y-3">
         <h2 className="text-sm font-semibold text-[#1F2937] dark:text-zinc-100">À traiter</h2>
