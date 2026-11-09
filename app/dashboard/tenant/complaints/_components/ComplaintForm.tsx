@@ -39,7 +39,13 @@ function fieldErrors(error: {
 
 // ─── Submit button ─────────────────────────────────────────────────────────────
 
-function SubmitButton({ label, disabled = false }: { label: string; disabled?: boolean }) {
+function SubmitButton({
+  label,
+  disabled = false,
+}: {
+  label: string;
+  disabled?: boolean;
+}) {
   const { pending } = useFormStatus();
   return (
     <button
@@ -79,7 +85,13 @@ function SubmitButton({ label, disabled = false }: { label: string; disabled?: b
   );
 }
 
-function FieldError({ errors, field }: { errors?: Record<string, string[]>; field: string }) {
+function FieldError({
+  errors,
+  field,
+}: {
+  errors?: Record<string, string[]>;
+  field: string;
+}) {
   const msgs = errors?.[field];
   if (!msgs?.length) return null;
   return (
@@ -104,7 +116,13 @@ interface ComplaintFormProps {
 
 // ─── Main form ────────────────────────────────────────────────────────────────
 
-export default function ComplaintForm({ ownerId, properties = [], requireProperty = false, editTarget, onClose }: ComplaintFormProps) {
+export default function ComplaintForm({
+  ownerId,
+  properties = [],
+  requireProperty = false,
+  editTarget,
+  onClose,
+}: ComplaintFormProps) {
   const isEditing = !!editTarget;
   // Keep the logement already targeted selectable, even after a move-out.
   const propertyOptions =
@@ -114,11 +132,15 @@ export default function ComplaintForm({ ownerId, properties = [], requirePropert
       : properties;
   const defaultPropertyId =
     editTarget?.propertyId ??
-    (requireProperty && propertyOptions.length === 1 ? propertyOptions[0]._id : "");
-  const blockedWithoutProperty = requireProperty && propertyOptions.length === 0;
+    (requireProperty && propertyOptions.length === 1
+      ? propertyOptions[0]._id
+      : "");
+  const blockedWithoutProperty =
+    requireProperty && propertyOptions.length === 0;
   const formRef = useRef<HTMLFormElement>(null);
   const clientKeyRef = useRef<string | null>(null);
-  const [dismissedState, setDismissedState] = useState<ComplaintActionState | null>(null);
+  const [dismissedState, setDismissedState] =
+    useState<ComplaintActionState | null>(null);
 
   const submitAction = useCallback(
     async (
@@ -275,9 +297,7 @@ export default function ComplaintForm({ ownerId, properties = [], requirePropert
 
       <form ref={formRef} action={formAction} noValidate className="space-y-4">
         {/* Hidden id for edit mode */}
-        {isEditing && (
-          <input type="hidden" name="id" value={editTarget._id} />
-        )}
+        {isEditing && <input type="hidden" name="id" value={editTarget._id} />}
 
         {/* Logement */}
         {blockedWithoutProperty && (
@@ -298,7 +318,9 @@ export default function ComplaintForm({ ownerId, properties = [], requirePropert
             >
               Logement concerné{" "}
               {requireProperty && (
-                <span className="text-red-500" aria-hidden="true">*</span>
+                <span className="text-red-500" aria-hidden="true">
+                  *
+                </span>
               )}
             </label>
             <select
@@ -329,7 +351,10 @@ export default function ComplaintForm({ ownerId, properties = [], requirePropert
             htmlFor="complaint-title"
             className="mb-1 block text-xs font-semibold text-zinc-700 dark:text-zinc-300"
           >
-            Titre <span className="text-red-500" aria-hidden="true">*</span>
+            Titre{" "}
+            <span className="text-red-500" aria-hidden="true">
+              *
+            </span>
           </label>
           <input
             id="complaint-title"
@@ -338,7 +363,7 @@ export default function ComplaintForm({ ownerId, properties = [], requirePropert
             required
             maxLength={120}
             defaultValue={editTarget?.title ?? ""}
-            placeholder="Ex. : Fuite d'eau dans la cuisine"
+            placeholder="Ex. : Objet de la réclamation"
             className="w-full rounded-xl border border-zinc-200 bg-white px-3.5 py-2.5 text-sm text-zinc-900 placeholder-zinc-400 outline-none transition focus:border-zinc-950 focus:ring-2 focus:ring-zinc-950/10 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:focus:border-zinc-400"
             aria-describedby={state?.errors?.title ? "err-title" : undefined}
           />
@@ -352,7 +377,9 @@ export default function ComplaintForm({ ownerId, properties = [], requirePropert
             className="mb-1 block text-xs font-semibold text-zinc-700 dark:text-zinc-300"
           >
             Description du problème{" "}
-            <span className="text-red-500" aria-hidden="true">*</span>
+            <span className="text-red-500" aria-hidden="true">
+              *
+            </span>
           </label>
           <textarea
             id="complaint-description"
@@ -369,14 +396,18 @@ export default function ComplaintForm({ ownerId, properties = [], requirePropert
 
         {/* Automatic classification note */}
         <p className="rounded-xl border border-blue-200/80 bg-blue-50/60 px-4 py-3 text-xs leading-relaxed text-blue-900/80 dark:border-blue-900/60 dark:bg-blue-950/20 dark:text-blue-200/80">
-          <span aria-hidden="true" className="mr-1.5">✨</span>
+          <span aria-hidden="true" className="mr-1.5">
+            ✨
+          </span>
           La catégorie et la priorité sont déterminées automatiquement par
           HomeCheck à partir de votre description. L&apos;équipe peut les
           vérifier et les ajuster si nécessaire.
         </p>
 
         {/* Actions */}
-        <div className={`flex gap-3 pt-1 ${isEditing ? "flex-row-reverse" : ""}`}>
+        <div
+          className={`flex gap-3 pt-1 ${isEditing ? "flex-row-reverse" : ""}`}
+        >
           <div className="flex-1">
             <SubmitButton
               label={isEditing ? "Enregistrer" : "Soumettre la réclamation"}
