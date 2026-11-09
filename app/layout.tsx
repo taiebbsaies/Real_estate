@@ -15,6 +15,7 @@ const geistMono = Geist_Mono({
 import RegisterServiceWorker from "./RegisterServiceWorker";
 import OfflineBanner from "./_components/OfflineBanner";
 import BottomNav from "./_components/BottomNav";
+import ChatWidget from "./_components/ChatWidget";
 
 export const metadata: Metadata = {
   title: {
@@ -70,6 +71,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <RegisterServiceWorker />
         <OfflineBanner />
         {children}
+        <ChatWidget />
         <BottomNav />
       </body>
     </html>
