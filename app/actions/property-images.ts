@@ -11,6 +11,7 @@ import type {
   PropertyImageActionState,
 } from "@/lib/properties/types";
 import { storage } from "@/lib/storage";
+import { isManagedImageUrl } from "@/lib/storage/managed-url";
 
 export type { PropertyImageActionState };
 
@@ -200,7 +201,7 @@ export async function removePropertyImage(
       ? (formData.get("image") as string)
       : "";
 
-  if (!imageUrl.startsWith(`/uploads/properties/${propertyId}/`)) {
+  if (!isManagedImageUrl(imageUrl, propertyId)) {
     return { success: false, message: "Logement introuvable." };
   }
 
@@ -290,7 +291,7 @@ export async function setCoverImage(
       ? (formData.get("image") as string)
       : "";
 
-  if (!imageUrl.startsWith(`/uploads/properties/${propertyId}/`)) {
+  if (!isManagedImageUrl(imageUrl, propertyId)) {
     return { success: false, message: "Logement introuvable." };
   }
 

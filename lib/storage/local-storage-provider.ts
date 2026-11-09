@@ -24,6 +24,10 @@ export class LocalStorageProvider implements StorageProvider {
   }
 
   async delete(url: string): Promise<void> {
+    // Ignore URLs managed by another provider (e.g. legacy Cloudinary records).
+    if (!url.startsWith("/uploads/")) {
+      return;
+    }
     const relative = url.split("?")[0].replace(/^\/+/, "");
     const filePath = path.resolve(PUBLIC_ROOT, relative);
     const rootWithSeparator = PUBLIC_ROOT + path.sep;
