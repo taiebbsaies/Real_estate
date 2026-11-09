@@ -116,6 +116,32 @@ export const propertySearchSchema = z.preprocess(
   }),
 );
 
+const adminPageSchema = z.preprocess(
+  (value) => {
+    if (typeof value !== "string" || value.trim() === "") return undefined;
+    const number = Number(value.trim());
+    return Number.isInteger(number) && number >= 1 ? number : undefined;
+  },
+  z.number().int().min(1).max(100).default(1),
+);
+
+export const adminModerationQuerySchema = z.object({
+  status: z.enum(["pending", "approved", "rejected", "reports"]).default("pending"),
+  page: adminPageSchema,
+});
+
+export type AdminModerationQuery = z.infer<typeof adminModerationQuerySchema>;
+
+export function parseAdminModerationQuery(
+  raw: unknown,
+): AdminModerationQuery {
+  const parsed = adminModerationQuerySchema.safeParse(raw);
+  if (!parsed.success) {
+    return { status: "pending", page: 1 };
+  }
+  return parsed.data;
+}
+
 type ParsedPropertySearchFilters = z.infer<typeof propertySearchSchema>;
 
 export type PropertySearchFilters = Omit<
