@@ -15,7 +15,7 @@ interface PropertyImagesManagerProps {
 }
 
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
-const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5 Mo
+const MAX_FILE_SIZE_BYTES = 4 * 1024 * 1024; // 4 Mo
 const MAX_IMAGES = 6;
 
 interface UploadResult {

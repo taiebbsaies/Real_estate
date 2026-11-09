@@ -18,7 +18,8 @@ export type { PropertyImageActionState };
 // ─── Constants ─────────────────────────────────────────────────────────────────
 
 const MAX_IMAGES = 6;
-const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5 Mo
+// Vercel rejects function requests above 4.5 MB, multipart overhead included.
+const MAX_FILE_SIZE_BYTES = 4 * 1024 * 1024; // 4 Mo
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -118,7 +119,7 @@ export async function uploadPropertyImage(
     if (file.size > MAX_FILE_SIZE_BYTES) {
       return {
         success: false,
-        message: "Le fichier dépasse la taille maximale de 5 Mo.",
+        message: "Le fichier dépasse la taille maximale de 4 Mo.",
       };
     }
 

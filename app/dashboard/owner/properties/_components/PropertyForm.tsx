@@ -30,7 +30,7 @@ import {
 } from "@/lib/constants/property";
 
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
-const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5 Mo
+const MAX_FILE_SIZE_BYTES = 4 * 1024 * 1024; // 4 Mo
 const MAX_IMAGES = 6;
 
 interface UploadResult {
@@ -230,7 +230,7 @@ export default function PropertyForm({
 
     if (invalid.length > 0) {
       errors.push(
-        `Format ou taille invalide pour : ${invalid.map((f) => f.name).join(", ")}. Formats acceptés : JPEG, PNG, WebP ; taille maximale : 5 Mo par photo.`,
+        `Format ou taille invalide pour : ${invalid.map((f) => f.name).join(", ")}. Formats acceptés : JPEG, PNG, WebP ; taille maximale : 4 Mo par photo.`,
       );
     }
     if (skipped.length > 0) {
@@ -791,7 +791,7 @@ export default function PropertyForm({
               Photos du logement
             </span>
             <p className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">
-              Formats acceptés : JPEG, PNG, WebP. Taille maximale : 5 Mo par photo.
+              Formats acceptés : JPEG, PNG, WebP. Taille maximale : 4 Mo par photo.
             </p>
             <input
               ref={fileInputRef}

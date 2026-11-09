@@ -3,6 +3,7 @@ import "server-only";
 /**
  * Accept only URLs this application manages for the given listing:
  * - legacy/local URLs under /uploads/properties/<propertyId>/
+ * - Vercel Blob images served from /api/property-images/<propertyId>/
  * - Cloudinary URLs inside properties/<propertyId>/
  * The database filter still checks the exact URL, this only narrows input.
  */
@@ -11,7 +12,10 @@ export function isManagedImageUrl(url: string, propertyId: string): boolean {
     return false;
   }
 
-  if (url.startsWith(`/uploads/properties/${propertyId}/`)) {
+  if (
+    url.startsWith(`/uploads/properties/${propertyId}/`) ||
+    url.startsWith(`/api/property-images/${propertyId}/`)
+  ) {
     return true;
   }
 
