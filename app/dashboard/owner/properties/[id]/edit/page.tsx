@@ -3,6 +3,8 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { getMyPropertyById } from "@/lib/properties/queries";
+import { computeQualityScore } from "@/lib/properties/quality-score";
+import QualityScoreBadge from "@/app/dashboard/_components/QualityScoreBadge";
 import PropertyForm from "../../_components/PropertyForm";
 import PropertyImagesManager from "../../_components/PropertyImagesManager";
 
@@ -33,6 +35,8 @@ export default async function EditPropertyPage({
     return notFound();
   }
 
+  const quality = computeQualityScore(property);
+
   return (
     <main className="mx-auto max-w-6xl px-6 py-8">
       <Link
@@ -41,6 +45,14 @@ export default async function EditPropertyPage({
       >
         ← Mes logements
       </Link>
+      <div className="mb-4">
+        <QualityScoreBadge
+          score={quality.score}
+          level={quality.level}
+          tips={quality.tips}
+          showTips
+        />
+      </div>
       <PropertyForm mode="edit" property={property} />
       <PropertyImagesManager property={property} />
     </main>

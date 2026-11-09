@@ -10,7 +10,16 @@ import {
 } from "@/lib/constants/property";
 import { getMyFavoriteIds } from "@/lib/properties/favorite-queries";
 import { getPublicPropertyById } from "@/lib/properties/public-queries";
+import { computePriceInsights } from "@/lib/properties/price-insight";
 import { getSession } from "@/lib/session";
+import {
+  getConversationByPropertyAndTenant,
+  getUnreadTotal,
+} from "@/lib/messages/queries";
+import UnreadMessagesBadge from "@/app/dashboard/_components/UnreadMessagesBadge";
+import PriceInsightBadge from "@/app/dashboard/_components/PriceInsightBadge";
+import ContactOwnerForm from "../_components/ContactOwnerForm";
+import DescriptionTranslation from "../_components/DescriptionTranslation";
 import FavoriteButton from "../_components/FavoriteButton";
 import RecordPropertyView from "../_components/RecordPropertyView";
 import ReportPropertyForm from "../_components/ReportPropertyForm";
@@ -49,6 +58,23 @@ export default async function TenantPropertyDetailPage({
     notFound();
   }
 
+  const priceInsights = await computePriceInsights([
+    {
+      id: property._id,
+      city: property.city,
+      type: property.type,
+      price: property.price,
+      surface: property.surface,
+    },
+  ]);
+  const priceInsight = priceInsights[property._id] ?? null;
+
+  const conversation = await getConversationByPropertyAndTenant(
+    id,
+    session.userId,
+  );
+  const unreadTotal = await getUnreadTotal();
+
   const coverImage =
     property.coverImage && property.images.includes(property.coverImage)
       ? property.coverImage
@@ -57,7 +83,7 @@ export default async function TenantPropertyDetailPage({
   return (
     <div className="relative min-h-full bg-zinc-50 dark:bg-zinc-950">
       <header className="sticky top-0 z-50 border-b border-zinc-200/80 bg-white/75 backdrop-blur-md dark:border-zinc-800/80 dark:bg-[#08080a]/80">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3.5">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-6 py-3.5">
           <div className="flex items-center gap-3">
             <Link href="/" className="text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
               HomeCheck
@@ -71,9 +97,28 @@ export default async function TenantPropertyDetailPage({
               Logements
             </Link>
           </div>
-          <Link href="/profile" className="text-xs font-medium text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100">
-            Mon profil
-          </Link>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            {session.activeRole === "TENANT" && (
+              <Link
+                href="/dashboard/tenant/messages"
+                className="text-xs font-medium text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100"
+              >
+                Messages
+                <UnreadMessagesBadge initialUnread={unreadTotal} />
+              </Link>
+            )}
+            {session.activeRole === "TENANT" && (
+              <Link
+                href="/dashboard/tenant/favorites"
+                className="text-xs font-medium text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100"
+              >
+                Mes favoris
+              </Link>
+            )}
+            <Link href="/profile" className="text-xs font-medium text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100">
+              Mon profil
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -131,27 +176,59 @@ export default async function TenantPropertyDetailPage({
                   {property.address}{property.zone ? ` · ${property.zone}` : ""} — {property.city}
                 </p>
               </div>
-              <p className="text-2xl font-extrabold text-zinc-950 dark:text-zinc-50">
-                {property.price.toLocaleString("fr-FR")} DT
-                <span className="ml-1 text-sm font-medium text-zinc-500">/ mois</span>
-              </p>
+              <div className="flex flex-wrap items-center gap-3">
+                <p className="text-2xl font-extrabold text-zinc-950 dark:text-zinc-50">
+                  {property.price.toLocaleString("fr-FR")} DT
+                  <span className="ml-1 text-sm font-medium text-zinc-500">/ mois</span>
+                </p>
+                <PriceInsightBadge
+                  insight={priceInsight}
+                  city={property.city}
+                />
+                {session.activeRole === "TENANT" && (
+                  <FavoriteButton
+                    propertyId={property._id}
+                    initialIsFavorite={favoriteIds.includes(property._id)}
+                  />
+                )}
+              </div>
             </div>
             {session.activeRole === "TENANT" && (
-              <>
-                <FavoriteButton
-                  propertyId={property._id}
-                  initialIsFavorite={favoriteIds.includes(property._id)}
-                  className="mt-4"
-                />
-                <ReportPropertyForm propertyId={property._id} />
-              </>
+              <ReportPropertyForm propertyId={property._id} />
+            )}
+
+            {session.activeRole === "TENANT" && (
+              <section className="mt-5 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+                <h2 className="text-base font-bold text-zinc-900 dark:text-zinc-100">
+                  Contacter le propriétaire
+                </h2>
+                {conversation ? (
+                  <Link
+                    href={`/dashboard/tenant/messages/${conversation._id}`}
+                    className="mt-4 inline-flex h-10 items-center justify-center rounded-xl bg-zinc-950 px-5 text-xs font-semibold text-white transition hover:bg-zinc-800 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200"
+                  >
+                    Continuer la conversation
+                  </Link>
+                ) : (
+                  <div className="mt-4">
+                    <ContactOwnerForm propertyId={id} />
+                  </div>
+                )}
+              </section>
             )}
 
             <section className="mt-7">
               <h2 className="text-base font-bold text-zinc-900 dark:text-zinc-100">Description</h2>
-              <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-zinc-600 dark:text-zinc-400">
-                {property.description}
-              </p>
+              {session.activeRole === "TENANT" ? (
+                <DescriptionTranslation
+                  propertyId={property._id}
+                  description={property.description}
+                />
+              ) : (
+                <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+                  {property.description}
+                </p>
+              )}
             </section>
 
             <section className="mt-7">
@@ -180,14 +257,6 @@ export default async function TenantPropertyDetailPage({
                 <div className="rounded-xl bg-zinc-50 p-3 dark:bg-zinc-800/60">
                   <dt className="text-[11px] text-zinc-500">Disponible à partir du</dt>
                   <dd className="mt-1 text-sm font-semibold text-zinc-900 dark:text-zinc-100">{property.availableFrom ? formatDate(property.availableFrom) : "Immédiatement"}</dd>
-                </div>
-                <div className="rounded-xl bg-zinc-50 p-3 dark:bg-zinc-800/60">
-                  <dt className="text-[11px] text-zinc-500">Latitude</dt>
-                  <dd className="mt-1 text-sm font-semibold text-zinc-900 dark:text-zinc-100">{property.latitude}</dd>
-                </div>
-                <div className="rounded-xl bg-zinc-50 p-3 dark:bg-zinc-800/60">
-                  <dt className="text-[11px] text-zinc-500">Longitude</dt>
-                  <dd className="mt-1 text-sm font-semibold text-zinc-900 dark:text-zinc-100">{property.longitude}</dd>
                 </div>
                 <div className="rounded-xl bg-zinc-50 p-3 dark:bg-zinc-800/60">
                   <dt className="text-[11px] text-zinc-500">Stationnement</dt>

@@ -8,14 +8,19 @@ import {
   PROPERTY_TYPE_LABELS,
   PROPERTY_TYPES,
 } from "@/lib/constants/property";
+import { getUnreadTotal } from "@/lib/messages/queries";
+import { getSession } from "@/lib/session";
 import { getMyFavoriteIds } from "@/lib/properties/favorite-queries";
 import { searchProperties } from "@/lib/properties/public-queries";
-import { getSession } from "@/lib/session";
+import { computePriceInsights } from "@/lib/properties/price-insight";
+import UnreadMessagesBadge from "@/app/dashboard/_components/UnreadMessagesBadge";
+import PriceInsightBadge from "@/app/dashboard/_components/PriceInsightBadge";
 import {
   parsePropertySearchParams,
   type PropertySearchFilters,
 } from "@/lib/validations/property-search";
 import FavoriteButton from "./_components/FavoriteButton";
+import NaturalSearchBar from "./_components/NaturalSearchBar";
 
 export const metadata: Metadata = {
   title: "Trouver un logement — HomeCheck",
@@ -93,11 +98,21 @@ export default async function TenantPropertiesPage({
     session.activeRole === "TENANT" ? getMyFavoriteIds() : Promise.resolve([]),
   ]);
   const favoriteIdSet = new Set(favoriteIds);
+  const priceInsights = await computePriceInsights(
+    results.items.map((property) => ({
+      id: property._id,
+      city: property.city,
+      type: property.type,
+      price: property.price,
+      surface: property.surface,
+    })),
+  );
+  const unreadTotal = await getUnreadTotal();
 
   return (
     <div className="relative min-h-full bg-zinc-50 dark:bg-zinc-950">
       <header className="sticky top-0 z-50 border-b border-zinc-200/80 bg-white/75 backdrop-blur-md dark:border-zinc-800/80 dark:bg-[#08080a]/80">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3.5">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-6 py-3.5">
           <div className="flex items-center gap-3">
             <Link href="/" className="text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
               HomeCheck
@@ -111,7 +126,13 @@ export default async function TenantPropertiesPage({
               Logements
             </span>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            {session.activeRole === "TENANT" && (
+              <Link href="/dashboard/tenant/messages" className="text-xs font-medium text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100">
+                Messages
+                <UnreadMessagesBadge initialUnread={unreadTotal} />
+              </Link>
+            )}
             {session.activeRole === "TENANT" && (
               <Link href="/dashboard/tenant/favorites" className="text-xs font-medium text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100">
                 Mes favoris
@@ -134,7 +155,14 @@ export default async function TenantPropertiesPage({
           </p>
         </div>
 
+        {session.activeRole === "TENANT" && (
+          <div className="mb-6">
+            <NaturalSearchBar />
+          </div>
+        )}
+
         <form
+          key={buildPageHref(filters, 1)}
           method="get"
           className="grid items-start gap-6 lg:grid-cols-[18rem_minmax(0,1fr)]"
         >
@@ -307,10 +335,16 @@ export default async function TenantPropertiesPage({
                                 </span>
                               </div>
                               <div className="p-4">
-                                <p className="text-lg font-extrabold tracking-tight text-zinc-950 dark:text-zinc-50">
-                                  {property.price.toLocaleString("fr-FR")} DT
-                                  <span className="ml-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">/ mois</span>
-                                </p>
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <p className="text-lg font-extrabold tracking-tight text-zinc-950 dark:text-zinc-50">
+                                    {property.price.toLocaleString("fr-FR")} DT
+                                    <span className="ml-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">/ mois</span>
+                                  </p>
+                                  <PriceInsightBadge
+                                    insight={priceInsights[property._id] ?? null}
+                                    city={property.city}
+                                  />
+                                </div>
                                 <h2 className="mt-1 line-clamp-2 text-sm font-bold text-zinc-900 transition-colors group-hover:text-emerald-700 dark:text-zinc-100 dark:group-hover:text-emerald-400">
                                   {property.title}
                                 </h2>

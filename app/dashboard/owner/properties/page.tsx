@@ -3,8 +3,14 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { getSession } from "@/lib/session";
+import { getUnreadTotal } from "@/lib/messages/queries";
 import { getMyProperties } from "@/lib/properties/queries";
 import { getOwnerPropertyStats } from "@/lib/properties/owner-stats";
+import { computePriceInsights } from "@/lib/properties/price-insight";
+import { computeQualityScore } from "@/lib/properties/quality-score";
+import UnreadMessagesBadge from "@/app/dashboard/_components/UnreadMessagesBadge";
+import PriceInsightBadge from "@/app/dashboard/_components/PriceInsightBadge";
+import QualityScoreBadge from "@/app/dashboard/_components/QualityScoreBadge";
 import {
   PROPERTY_AVAILABILITY_LABELS,
   PROPERTY_CONDITION_LABELS,
@@ -77,10 +83,20 @@ export default async function OwnerPropertiesPage() {
   }
 
   const properties = await getMyProperties();
+  const priceInsights = await computePriceInsights(
+    properties.map((property) => ({
+      id: property._id,
+      city: property.city,
+      type: property.type,
+      price: property.price,
+      surface: property.surface,
+    })),
+  );
   const propertyStats = await getOwnerPropertyStats(
     session.userId,
     properties.map((property) => property._id),
   );
+  const unreadTotal = await getUnreadTotal();
 
   return (
     <div className="relative min-h-full bg-zinc-50 dark:bg-zinc-950">
@@ -100,9 +116,18 @@ export default async function OwnerPropertiesPage() {
               Logements
             </span>
           </div>
-          <Link href="/profile" className="text-sm font-medium text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300">
-            Mon Profil
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link
+              href="/dashboard/owner/messages"
+              className="text-xs font-medium text-zinc-500 hover:text-zinc-800 dark:text-zinc-300 dark:hover:text-zinc-100"
+            >
+              Messages
+              <UnreadMessagesBadge initialUnread={unreadTotal} />
+            </Link>
+            <Link href="/profile" className="text-sm font-medium text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300">
+              Mon Profil
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -149,6 +174,8 @@ export default async function OwnerPropertiesPage() {
               const availability =
                 AVAILABILITY_CONFIG[property.availability] ??
                 { label: property.availability, className: "" };
+              const quality = computeQualityScore(property);
+              const priceInsight = priceInsights[property._id] ?? null;
               const coverImage =
                 property.coverImage &&
                 property.images.includes(property.coverImage)
@@ -214,11 +241,15 @@ export default async function OwnerPropertiesPage() {
                         </div>
 
                         <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-zinc-600 dark:text-zinc-400">
-                          <span>
+                          <span className="inline-flex flex-wrap items-center gap-2">
                             Loyer :{" "}
                             <strong className="text-zinc-900 dark:text-zinc-100">
                               {property.price} DT / mois
                             </strong>
+                            <PriceInsightBadge
+                              insight={priceInsight}
+                              city={property.city}
+                            />
                           </span>
                           <span>
                             État :{" "}
@@ -236,6 +267,15 @@ export default async function OwnerPropertiesPage() {
                           👁 {propertyStats[property._id]?.views ?? 0} vues · ♥{" "}
                           {propertyStats[property._id]?.favorites ?? 0} favoris
                         </p>
+
+                        <div className="mt-3">
+                          <QualityScoreBadge
+                            score={quality.score}
+                            level={quality.level}
+                            tips={quality.tips}
+                            showTips
+                          />
+                        </div>
 
                         {property.moderationReason && (
                           <p className="mt-3 rounded-xl border border-red-100 bg-red-50/60 p-3 text-xs text-red-800 dark:border-red-800/40 dark:bg-red-950/30 dark:text-red-300">

@@ -5,6 +5,8 @@ import type { Metadata } from "next";
 import { PROPERTY_TYPE_LABELS } from "@/lib/constants/property";
 import { getMyFavorites } from "@/lib/properties/favorite-queries";
 import { getSession } from "@/lib/session";
+import { getUnreadTotal } from "@/lib/messages/queries";
+import UnreadMessagesBadge from "@/app/dashboard/_components/UnreadMessagesBadge";
 import FavoriteButton from "../properties/_components/FavoriteButton";
 
 export const metadata: Metadata = {
@@ -23,11 +25,12 @@ export default async function TenantFavoritesPage() {
   }
 
   const favorites = await getMyFavorites();
+  const unreadTotal = await getUnreadTotal();
 
   return (
     <div className="relative min-h-full bg-zinc-50 dark:bg-zinc-950">
       <header className="sticky top-0 z-50 border-b border-zinc-200/80 bg-white/75 backdrop-blur-md dark:border-zinc-800/80 dark:bg-[#08080a]/80">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3.5">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-6 py-3.5">
           <div className="flex items-center gap-3">
             <Link href="/" className="text-sm font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
               HomeCheck
@@ -41,9 +44,21 @@ export default async function TenantFavoritesPage() {
               Mes favoris
             </span>
           </div>
-          <Link href="/profile" className="text-xs font-medium text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100">
-            Mon profil
-          </Link>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <Link
+              href="/dashboard/tenant/messages"
+              className="text-xs font-medium text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100"
+            >
+              Messages
+              <UnreadMessagesBadge initialUnread={unreadTotal} />
+            </Link>
+            <Link href="/dashboard/tenant/properties" className="text-xs font-medium text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100">
+              Logements
+            </Link>
+            <Link href="/profile" className="text-xs font-medium text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100">
+              Mon profil
+            </Link>
+          </div>
         </div>
       </header>
 
